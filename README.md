@@ -4,58 +4,52 @@ Proyek ini adalah template dasar Flutter untuk project Androzon Mobile Engineer 
 
 ---
 
-## Struktur Direktori
- 
-Direktori proyek disusun menggunakan pendekatan berbasis fitur (*feature-first*) agar mudah dikembangkan dan dirapikan seiring bertambahnya modul.
+## Struktur direktori
+
+Proyek pada branch ini menggunakan arsitektur MVVM (Model-View-ViewModel) dengan pembagian folder berdasarkan fitur di bawah direktori `ui/`, serta pemisahan logika data ke dalam direktori `data/` (Data Layer).
+
+Berikut adalah pemetaan folder pada branch `feature/riverpod`:
+
 ```
 lib/
-├── main.dart                          # Entry point aplikasi
+├── main.dart                          # Entry point aplikasi (Inisialisasi ProviderScope)
 ├── app/
 │   └── config/
-│       └── router.dart                # Konfigurasi routing menggunakan GoRouter
+│       └── router.dart                # Pengaturan rute menggunakan GoRouter
 ├── core/
 │   └── theme/
-│       ├── app_colors.dart            # Token warna global aplikasi
-│       ├── app_text_styles.dart       # Tipografi global aplikasi
-│       └── app_theme.dart             # Konfigurasi ThemeData Material 3
-├── data/                              # Direktori Data Layer (Model, Service, Repository)
+│       ├── app_colors.dart            # Token warna aplikasi
+│       ├── app_text_styles.dart       # Gaya tipografi aplikasi
+│       └── app_theme.dart             # Tema utama Material 3
+├── data/                              # Lapisan Data (Data Layer)
+│   ├── models/
+│   │   └── user.dart                  # Model data pengguna
+│   ├── services/
+│   │   └── auth_service.dart          # Layanan simulasi API autentikasi
+│   └── repositories/
+│       └── auth_repository.dart       # Repositori untuk konversi data ke model
 └── ui/
-    └── features/
+    └── features/                      # Lapisan Tampilan (UI & State)
         ├── onboarding/
         │   └── views/
         │       └── onboarding_view.dart
-        ├── home/
-        │   └── views/
-        │       └── home_view.dart
-        ├── counter_provider/
-        │   ├── view_models/
-        │   │   └── provider_counter_notifier.dart
-        │   └── views/
-        │       └── provider_counter_view.dart
-        ├── counter_riverpod/
+        ├── auth/
         │   ├── providers/
-        │   │   └── riverpod_counter_provider.dart
+        │   │   ├── auth_provider.dart # NotifierProvider untuk mengelola status auth
+        │   │   └── auth_state.dart    # Status state dari auth
         │   └── views/
-        │       └── riverpod_counter_view.dart
-        └── counter_bloc/
-            ├── cubit/
-            │   └── bloc_counter_cubit.dart
+        │       ├── login_view.dart
+        │       └── register_view.dart
+        └── dashboard/
             └── views/
-                └── bloc_counter_view.dart
-
-assets/
-├── images/          # Gambar dan splash screen
-└── icons/           # Ikon launcher aplikasi
+                └── dashboard_view.dart
 ```
 
-### Penjelasan Folder Utama
+### Rincian folder utama
 
-- **`lib/main.dart`**: Entry point aplikasi. Mendaftarkan `ProviderScope` (Riverpod), `MultiProvider` (Provider), dan `MultiBlocProvider` (BLoC) secara bersama-sama di root widget tree.
-- **`lib/app/config/`**: Konfigurasi global seperti routing menggunakan GoRouter.
-- **`lib/core/theme/`**: Design system aplikasi — warna (`AppColors`), tipografi (`AppTextStyles`), dan tema Material 3 (`AppTheme`). Digunakan secara konsisten di seluruh aplikasi.
-- **`lib/data/`**: Direktori Data Layer (mencakup Model, Service, dan Repository) untuk logika data aplikasi (pada branch `main` folder ini sengaja dibiarkan kosong sebagai kerangka struktur).
-- **`lib/ui/features/`**: Folder fitur yang dibagi per domain. Setiap fitur memiliki sub-folder `views/` untuk UI dan folder terpisah untuk logika state (`view_models/`, `providers/`, atau `cubit/`) sesuai state management yang digunakan.
-- **`assets/`**: Penyimpanan berkas statis gambar dan ikon aplikasi.
+- **`lib/main.dart`**: Titik masuk utama aplikasi. Bagian ini membungkus aplikasi dengan widget `ProviderScope` dari Riverpod untuk mengelola daur hidup status (states) di seluruh aplikasi.
+- **`lib/data/`**: Berisi model data (`User`), layanan API (`AuthService`), dan repositori (`AuthRepository`). Semua logika pengambilan data dari server berada di lapisan ini.
+- **`lib/ui/features/`**: Berisi halaman visual (views) dan pengelola status berupa Notifier. Logika tampilan dipisahkan dari detail cara data diambil dari server.
 
 ---
 
@@ -167,4 +161,3 @@ Gunakan tautan di bawah ini untuk mempelajari dasar teori dari masing-masing pus
 - [Dokumentasi Resmi Riverpod](https://riverpod.dev)
 - [Dokumentasi Resmi BLoC](https://bloclibrary.dev)
 
----
