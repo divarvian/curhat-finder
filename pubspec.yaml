@@ -27,6 +27,22 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+  fonts:
+    - family: Gilroy-Light
+      fonts:
+        - asset: assets/fonts/Gilroy-Light.ttf
+    - family: Gilroy-Regular
+      fonts:
+        - asset: assets/fonts/Gilroy-Regular.ttf
+    - family: Gilroy-Medium
+      fonts:
+        - asset: assets/fonts/Gilroy-Medium.ttf
+    - family: Gilroy-Bold
+      fonts:
+        - asset: assets/fonts/Gilroy-Bold.ttf
+    - family: Gilroy-Heavy
+      fonts:
+        - asset: assets/fonts/Gilroy-Heavy.ttf
 icons_launcher:
   image_path: "assets/icons/icon_launcher.png" # Gambar Launcher
   platforms:
@@ -36,8 +52,13 @@ icons_launcher:
       enable: true
 
 flutter_native_splash:
-  color: "#232323" # Warna background splash screen
-  image: "assets/images/splash_screen.png" # Gambar splash screen
+  color: "#F4F8FB" # Warna background splash screen (Platinum)
+  color_dark: "#F4F8FB" # Pastikan tetap terang di Dark Mode
+  image: "assets/images/logo.png" # Menggunakan logo.png
   android: true # Aktifkan di Android
   ios: true # Aktifkan di iOS
+  android_12:
+    color: "#F4F8FB"
+    color_dark: "#F4F8FB"
+    image: "assets/images/logo.png"
 

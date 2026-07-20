@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 /// Disini tempat teman-teman mengatur gaya tulisan (font) aplikasi nya
@@ -7,47 +6,51 @@ import 'app_colors.dart';
 /// Supaya konsisten dan enak nantinya. Kalian ga bakalan ngatur style dan decoration manual lagi
 /// Tapi kalo mau yang beda nantinya tinggal di timpa aja di style widget nya.
 class AppTextStyles {
-  static TextStyle get _baseStyle => GoogleFonts.inter(); // ganti font disini
+  // Base style now explicitly takes the font family name
+  static TextStyle _baseStyle(double size, String family, Color color) {
+    return TextStyle(
+      fontFamily: family,
+      fontSize: size,
+      color: color,
+      letterSpacing: size * -0.05, // -5% letter spacing
+    );
+  }
 
-  static TextStyle get heading1 => _baseStyle.copyWith(
-        fontSize: 32,
-        fontWeight: FontWeight.bold,
-        color: AppColors.textPrimary,
-      );
+  // 45px
+  static TextStyle get displayLarge => _baseStyle(45, 'Gilroy-Heavy', AppColors.textPrimary);
+  
+  // 40px
+  static TextStyle get displayMedium => _baseStyle(40, 'Gilroy-Heavy', AppColors.textPrimary);
+  
+  // 35px
+  static TextStyle get displaySmall => _baseStyle(35, 'Gilroy-Bold', AppColors.textPrimary);
 
-  static TextStyle get heading2 => _baseStyle.copyWith(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: AppColors.textPrimary,
-      );
+  // 32px
+  static TextStyle get heading1 => _baseStyle(32, 'Gilroy-Bold', AppColors.textPrimary);
 
-  static TextStyle get heading3 => _baseStyle.copyWith(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-      );
+  // 28px
+  static TextStyle get heading2 => _baseStyle(28, 'Gilroy-Bold', AppColors.textPrimary);
 
-  static TextStyle get bodyLarge => _baseStyle.copyWith(
-        fontSize: 16,
-        fontWeight: FontWeight.normal,
-        color: AppColors.textPrimary,
-      );
+  // 24px
+  static TextStyle get heading3 => _baseStyle(24, 'Gilroy-Medium', AppColors.textPrimary);
 
-  static TextStyle get bodyMedium => _baseStyle.copyWith(
-        fontSize: 14,
-        fontWeight: FontWeight.normal,
-        color: AppColors.textSecondary,
-      );
+  // 20px
+  static TextStyle get titleLarge => _baseStyle(20, 'Gilroy-Medium', AppColors.textPrimary);
 
-  static TextStyle get labelLarge => _baseStyle.copyWith(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textPrimary,
-      );
+  // 15px
+  static TextStyle get bodyLarge => _baseStyle(15, 'Gilroy-Regular', AppColors.textSecondary);
 
-  static TextStyle get labelMedium => _baseStyle.copyWith(
-        fontSize: 12,
-        fontWeight: FontWeight.normal,
-        color: AppColors.textLight,
-      );
+  // 12px
+  static TextStyle get bodySmall => _baseStyle(12, 'Gilroy-Regular', AppColors.textSecondary);
+
+  // 14px (Ditambahkan agar tidak error di halaman yang sudah ada)
+  static TextStyle get bodyMedium => _baseStyle(14, 'Gilroy-Regular', AppColors.textSecondary);
+
+  // Custom weights for buttons/labels
+  static TextStyle get labelLarge => _baseStyle(15, 'Gilroy-Bold', AppColors.textPrimary);
+  
+  // 12px (Ditambahkan agar tidak error di TextField)
+  static TextStyle get labelMedium => _baseStyle(12, 'Gilroy-Medium', AppColors.textLight);
+  
+  static TextStyle get labelSmall => _baseStyle(12, 'Gilroy-Medium', AppColors.textLight);
 }

@@ -27,7 +27,7 @@ class AppContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Template Androzon',
+      title: 'Curhat Finder',
       theme: AppTheme.lightTheme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
