@@ -38,7 +38,10 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/register',
-      builder: (BuildContext context, GoRouterState state) => const RegisterView(),
+      builder: (BuildContext context, GoRouterState state) {
+        final isKonselor = (state.extra as int?) == 1;
+        return RegisterView(isKonselor: isKonselor);
+      },
     ),
     GoRoute(
       path: '/main',

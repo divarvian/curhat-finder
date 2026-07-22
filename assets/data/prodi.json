@@ -1,0 +1,777 @@
+[
+  {
+    "id": "01.01",
+    "fakultas_id": "01",
+    "nama": "S1 Ilmu Hukum"
+  },
+  {
+    "id": "01.02",
+    "fakultas_id": "01",
+    "nama": "S2 Ilmu Hukum"
+  },
+  {
+    "id": "01.03",
+    "fakultas_id": "01",
+    "nama": "S2 Kenotariatan"
+  },
+  {
+    "id": "01.04",
+    "fakultas_id": "01",
+    "nama": "S3 Ilmu Hukum"
+  },
+  {
+    "id": "02.01",
+    "fakultas_id": "02",
+    "nama": "S1 Ekonomi Pembangunan"
+  },
+  {
+    "id": "02.02",
+    "fakultas_id": "02",
+    "nama": "S1 Ekonomi, Keuangan, dan Perbankan"
+  },
+  {
+    "id": "02.03",
+    "fakultas_id": "02",
+    "nama": "S1 Ekonomi Islam"
+  },
+  {
+    "id": "02.04",
+    "fakultas_id": "02",
+    "nama": "S1 Manajemen"
+  },
+  {
+    "id": "02.05",
+    "fakultas_id": "02",
+    "nama": "S1 Kewirausahaan"
+  },
+  {
+    "id": "02.06",
+    "fakultas_id": "02",
+    "nama": "S1 Akuntansi"
+  },
+  {
+    "id": "02.07",
+    "fakultas_id": "02",
+    "nama": "S2 Ilmu Ekonomi"
+  },
+  {
+    "id": "02.08",
+    "fakultas_id": "02",
+    "nama": "S2 Ekonomi Bisnis dan Islam"
+  },
+  {
+    "id": "02.09",
+    "fakultas_id": "02",
+    "nama": "S2 Manajemen"
+  },
+  {
+    "id": "02.10",
+    "fakultas_id": "02",
+    "nama": "S2 Akuntansi"
+  },
+  {
+    "id": "02.11",
+    "fakultas_id": "02",
+    "nama": "S3 Ilmu Ekonomi"
+  },
+  {
+    "id": "02.12",
+    "fakultas_id": "02",
+    "nama": "S3 Ilmu Manajemen"
+  },
+  {
+    "id": "02.13",
+    "fakultas_id": "02",
+    "nama": "S3 Ilmu Akuntansi"
+  },
+  {
+    "id": "02.14",
+    "fakultas_id": "02",
+    "nama": "Pendidikan Profesi Akuntansi"
+  },
+  {
+    "id": "03.01",
+    "fakultas_id": "03",
+    "nama": "S1 Ilmu Administrasi Bisnis"
+  },
+  {
+    "id": "03.02",
+    "fakultas_id": "03",
+    "nama": "S1 Perpajakan"
+  },
+  {
+    "id": "03.03",
+    "fakultas_id": "03",
+    "nama": "S1 Pariwisata"
+  },
+  {
+    "id": "03.04",
+    "fakultas_id": "03",
+    "nama": "S1 Ilmu Administrasi Publik"
+  },
+  {
+    "id": "03.05",
+    "fakultas_id": "03",
+    "nama": "S1 Ilmu Perpustakaan"
+  },
+  {
+    "id": "03.06",
+    "fakultas_id": "03",
+    "nama": "S1 Administrasi Pendidikan"
+  },
+  {
+    "id": "03.07",
+    "fakultas_id": "03",
+    "nama": "S2 Administrasi Bisnis"
+  },
+  {
+    "id": "03.08",
+    "fakultas_id": "03",
+    "nama": "S2 Ilmu Administrasi Publik"
+  },
+  {
+    "id": "03.09",
+    "fakultas_id": "03",
+    "nama": "S2 Manajemen Pendidikan Tinggi"
+  },
+  {
+    "id": "03.10",
+    "fakultas_id": "03",
+    "nama": "S3 Ilmu Administrasi"
+  },
+  {
+    "id": "04.01",
+    "fakultas_id": "04",
+    "nama": "S1 Agroekoteknologi"
+  },
+  {
+    "id": "04.02",
+    "fakultas_id": "04",
+    "nama": "S1 Agribisnis"
+  },
+  {
+    "id": "04.03",
+    "fakultas_id": "04",
+    "nama": "S1 Kehutanan"
+  },
+  {
+    "id": "04.04",
+    "fakultas_id": "04",
+    "nama": "S2 Agronomi"
+  },
+  {
+    "id": "04.05",
+    "fakultas_id": "04",
+    "nama": "S2 Pengelolaan Tanah dan Air"
+  },
+  {
+    "id": "04.06",
+    "fakultas_id": "04",
+    "nama": "S2 Ekonomi Pertanian"
+  },
+  {
+    "id": "04.07",
+    "fakultas_id": "04",
+    "nama": "S2 Sosiologi"
+  },
+  {
+    "id": "04.08",
+    "fakultas_id": "04",
+    "nama": "S2 Agribisnis"
+  },
+  {
+    "id": "04.09",
+    "fakultas_id": "04",
+    "nama": "S2 Patologi Tumbuhan"
+  },
+  {
+    "id": "04.10",
+    "fakultas_id": "04",
+    "nama": "S2 Entomologi Pertanian"
+  },
+  {
+    "id": "04.11",
+    "fakultas_id": "04",
+    "nama": "S3 Ilmu Pertanian"
+  },
+  {
+    "id": "05.01",
+    "fakultas_id": "05",
+    "nama": "S1 Peternakan"
+  },
+  {
+    "id": "05.02",
+    "fakultas_id": "05",
+    "nama": "S1 Industri Peternakan Cerdas"
+  },
+  {
+    "id": "05.03",
+    "fakultas_id": "05",
+    "nama": "S2 Ilmu Peternakan"
+  },
+  {
+    "id": "05.04",
+    "fakultas_id": "05",
+    "nama": "S3 Ilmu Peternakan"
+  },
+  {
+    "id": "06.01",
+    "fakultas_id": "06",
+    "nama": "S1 Teknik Sipil"
+  },
+  {
+    "id": "06.02",
+    "fakultas_id": "06",
+    "nama": "S1 Teknik Mesin"
+  },
+  {
+    "id": "06.03",
+    "fakultas_id": "06",
+    "nama": "S1 Teknik Pengairan"
+  },
+  {
+    "id": "06.04",
+    "fakultas_id": "06",
+    "nama": "S1 Teknik Elektro"
+  },
+  {
+    "id": "06.05",
+    "fakultas_id": "06",
+    "nama": "S1 Teknik Industri"
+  },
+  {
+    "id": "06.06",
+    "fakultas_id": "06",
+    "nama": "S1 Teknik Kimia"
+  },
+  {
+    "id": "06.07",
+    "fakultas_id": "06",
+    "nama": "S1 Perencanaan Wilayah dan Kota"
+  },
+  {
+    "id": "06.08",
+    "fakultas_id": "06",
+    "nama": "S1 Arsitektur"
+  },
+  {
+    "id": "06.09",
+    "fakultas_id": "06",
+    "nama": "S2 Teknik Sipil"
+  },
+  {
+    "id": "06.10",
+    "fakultas_id": "06",
+    "nama": "S2 Teknik Mesin"
+  },
+  {
+    "id": "06.11",
+    "fakultas_id": "06",
+    "nama": "S2 Teknik Elektro"
+  },
+  {
+    "id": "06.12",
+    "fakultas_id": "06",
+    "nama": "S2 Arsitektur Lingkungan Binaan"
+  },
+  {
+    "id": "06.13",
+    "fakultas_id": "06",
+    "nama": "S2 Perencanaan Wilayah dan Kota"
+  },
+  {
+    "id": "06.14",
+    "fakultas_id": "06",
+    "nama": "S2 Teknik Industri"
+  },
+  {
+    "id": "06.15",
+    "fakultas_id": "06",
+    "nama": "S2 Teknik Pengairan"
+  },
+  {
+    "id": "06.16",
+    "fakultas_id": "06",
+    "nama": "S3 Ilmu Teknik Sipil"
+  },
+  {
+    "id": "06.17",
+    "fakultas_id": "06",
+    "nama": "S3 Ilmu Teknik Mesin"
+  },
+  {
+    "id": "06.18",
+    "fakultas_id": "06",
+    "nama": "S3 Teknik Elektro"
+  },
+  {
+    "id": "06.19",
+    "fakultas_id": "06",
+    "nama": "S3 Teknik Sumber Daya Air"
+  },
+  {
+    "id": "06.20",
+    "fakultas_id": "06",
+    "nama": "S3 Perencanaan Wilayah dan Kota"
+  },
+  {
+    "id": "06.21",
+    "fakultas_id": "06",
+    "nama": "Profesi Insinyur"
+  },
+  {
+    "id": "06.22",
+    "fakultas_id": "06",
+    "nama": "Profesi Arsitek"
+  },
+  {
+    "id": "07.01",
+    "fakultas_id": "07",
+    "nama": "S1 Kedokteran"
+  },
+  {
+    "id": "07.02",
+    "fakultas_id": "07",
+    "nama": "S1 Farmasi"
+  },
+  {
+    "id": "07.03",
+    "fakultas_id": "07",
+    "nama": "S1 Kebidanan"
+  },
+  {
+    "id": "07.04",
+    "fakultas_id": "07",
+    "nama": "S2 Kebidanan"
+  },
+  {
+    "id": "07.05",
+    "fakultas_id": "07",
+    "nama": "S2 Manajemen Rumah Sakit"
+  },
+  {
+    "id": "07.06",
+    "fakultas_id": "07",
+    "nama": "S2 Biomedik"
+  },
+  {
+    "id": "07.07",
+    "fakultas_id": "07",
+    "nama": "S3 Ilmu Kedokteran"
+  },
+  {
+    "id": "08.01",
+    "fakultas_id": "08",
+    "nama": "S1 Agrobisnis Perikanan"
+  },
+  {
+    "id": "08.02",
+    "fakultas_id": "08",
+    "nama": "S1 Budidaya Perairan"
+  },
+  {
+    "id": "08.03",
+    "fakultas_id": "08",
+    "nama": "S1 Ilmu Kelautan"
+  },
+  {
+    "id": "08.04",
+    "fakultas_id": "08",
+    "nama": "S1 Manajemen Sumberdaya Perairan"
+  },
+  {
+    "id": "08.05",
+    "fakultas_id": "08",
+    "nama": "S1 Pemanfaatan Sumberdaya Perikanan"
+  },
+  {
+    "id": "08.06",
+    "fakultas_id": "08",
+    "nama": "S1 Teknologi Hasil Perikanan"
+  },
+  {
+    "id": "08.07",
+    "fakultas_id": "08",
+    "nama": "S2 Budidaya Perairan"
+  },
+  {
+    "id": "08.08",
+    "fakultas_id": "08",
+    "nama": "S3 Ilmu Perikanan dan Kelautan"
+  },
+  {
+    "id": "09.01",
+    "fakultas_id": "09",
+    "nama": "S1 Biologi"
+  },
+  {
+    "id": "09.02",
+    "fakultas_id": "09",
+    "nama": "S1 Fisika"
+  },
+  {
+    "id": "09.03",
+    "fakultas_id": "09",
+    "nama": "S1 Kimia"
+  },
+  {
+    "id": "09.04",
+    "fakultas_id": "09",
+    "nama": "S1 Matematika"
+  },
+  {
+    "id": "09.05",
+    "fakultas_id": "09",
+    "nama": "S1 Statistika"
+  },
+  {
+    "id": "09.06",
+    "fakultas_id": "09",
+    "nama": "S1 Teknik Geofisika"
+  },
+  {
+    "id": "09.07",
+    "fakultas_id": "09",
+    "nama": "S1 Instrumentasi"
+  },
+  {
+    "id": "09.08",
+    "fakultas_id": "09",
+    "nama": "S1 Ilmu Aktuaria"
+  },
+  {
+    "id": "09.09",
+    "fakultas_id": "09",
+    "nama": "S2 Biologi"
+  },
+  {
+    "id": "09.10",
+    "fakultas_id": "09",
+    "nama": "S2 Kimia"
+  },
+  {
+    "id": "09.11",
+    "fakultas_id": "09",
+    "nama": "S2 Fisika"
+  },
+  {
+    "id": "09.12",
+    "fakultas_id": "09",
+    "nama": "S2 Matematika"
+  },
+  {
+    "id": "09.13",
+    "fakultas_id": "09",
+    "nama": "S2 Statistika"
+  },
+  {
+    "id": "09.14",
+    "fakultas_id": "09",
+    "nama": "S3 Biologi"
+  },
+  {
+    "id": "09.15",
+    "fakultas_id": "09",
+    "nama": "S3 Kimia"
+  },
+  {
+    "id": "09.16",
+    "fakultas_id": "09",
+    "nama": "S3 Fisika"
+  },
+  {
+    "id": "09.17",
+    "fakultas_id": "09",
+    "nama": "S3 Matematika"
+  },
+  {
+    "id": "10.01",
+    "fakultas_id": "10",
+    "nama": "S1 Ilmu dan Teknologi Pangan"
+  },
+  {
+    "id": "10.02",
+    "fakultas_id": "10",
+    "nama": "S1 Teknologi Industri Pertanian"
+  },
+  {
+    "id": "10.03",
+    "fakultas_id": "10",
+    "nama": "S1 Teknik Lingkungan"
+  },
+  {
+    "id": "10.04",
+    "fakultas_id": "10",
+    "nama": "S1 Bioteknologi"
+  },
+  {
+    "id": "10.05",
+    "fakultas_id": "10",
+    "nama": "S1 Teknologi Bioproses"
+  },
+  {
+    "id": "10.06",
+    "fakultas_id": "10",
+    "nama": "S1 Teknik Pertanian"
+  },
+  {
+    "id": "10.07",
+    "fakultas_id": "10",
+    "nama": "S2 Teknologi Hasil Pertanian"
+  },
+  {
+    "id": "10.08",
+    "fakultas_id": "10",
+    "nama": "S2 Teknologi Industri Pertanian"
+  },
+  {
+    "id": "10.09",
+    "fakultas_id": "10",
+    "nama": "S2 Teknik Pertanian dan Biosistem"
+  },
+  {
+    "id": "10.10",
+    "fakultas_id": "10",
+    "nama": "S3 Teknologi Industri Pertanian"
+  },
+  {
+    "id": "10.11",
+    "fakultas_id": "10",
+    "nama": "S3 Teknik Biosistem"
+  },
+  {
+    "id": "10.12",
+    "fakultas_id": "10",
+    "nama": "S3 Ilmu Pangan"
+  },
+  {
+    "id": "11.01",
+    "fakultas_id": "11",
+    "nama": "S1 Sastra Inggris"
+  },
+  {
+    "id": "11.02",
+    "fakultas_id": "11",
+    "nama": "S1 Sastra Jepang"
+  },
+  {
+    "id": "11.03",
+    "fakultas_id": "11",
+    "nama": "S1 Sastra Cina"
+  },
+  {
+    "id": "11.04",
+    "fakultas_id": "11",
+    "nama": "S1 Bahasa dan Sastra Perancis"
+  },
+  {
+    "id": "11.05",
+    "fakultas_id": "11",
+    "nama": "S1 Pendidikan Bahasa dan Sastra Indonesia"
+  },
+  {
+    "id": "11.06",
+    "fakultas_id": "11",
+    "nama": "S1 Pendidikan Bahasa Inggris"
+  },
+  {
+    "id": "11.07",
+    "fakultas_id": "11",
+    "nama": "S1 Pendidikan Bahasa Jepang"
+  },
+  {
+    "id": "11.08",
+    "fakultas_id": "11",
+    "nama": "S1 Antropologi (Sosial)"
+  },
+  {
+    "id": "11.09",
+    "fakultas_id": "11",
+    "nama": "S1 Seni Rupa Murni"
+  },
+  {
+    "id": "11.10",
+    "fakultas_id": "11",
+    "nama": "S2 Ilmu Linguistik"
+  },
+  {
+    "id": "12.01",
+    "fakultas_id": "12",
+    "nama": "S1 Hubungan Internasional"
+  },
+  {
+    "id": "12.02",
+    "fakultas_id": "12",
+    "nama": "S1 Ilmu Komunikasi"
+  },
+  {
+    "id": "12.03",
+    "fakultas_id": "12",
+    "nama": "S1 Ilmu Politik"
+  },
+  {
+    "id": "12.04",
+    "fakultas_id": "12",
+    "nama": "S1 Psikologi"
+  },
+  {
+    "id": "12.05",
+    "fakultas_id": "12",
+    "nama": "S1 Sosiologi"
+  },
+  {
+    "id": "12.06",
+    "fakultas_id": "12",
+    "nama": "S1 Ilmu Pemerintahan"
+  },
+  {
+    "id": "12.07",
+    "fakultas_id": "12",
+    "nama": "S2 Ilmu Sosial"
+  },
+  {
+    "id": "12.08",
+    "fakultas_id": "12",
+    "nama": "S2 Ilmu Komunikasi"
+  },
+  {
+    "id": "12.09",
+    "fakultas_id": "12",
+    "nama": "S2 Sains Psikologi"
+  },
+  {
+    "id": "12.10",
+    "fakultas_id": "12",
+    "nama": "S3 Ilmu Sosiologi"
+  },
+  {
+    "id": "13.01",
+    "fakultas_id": "13",
+    "nama": "S1 Pendidikan Dokter Hewan"
+  },
+  {
+    "id": "14.01",
+    "fakultas_id": "14",
+    "nama": "S1 Teknik Informatika"
+  },
+  {
+    "id": "14.02",
+    "fakultas_id": "14",
+    "nama": "S1 Teknik Komputer"
+  },
+  {
+    "id": "14.03",
+    "fakultas_id": "14",
+    "nama": "S1 Sistem Informasi"
+  },
+  {
+    "id": "14.04",
+    "fakultas_id": "14",
+    "nama": "S1 Teknologi Informasi"
+  },
+  {
+    "id": "14.05",
+    "fakultas_id": "14",
+    "nama": "S1 Pendidikan Teknologi Informasi"
+  },
+  {
+    "id": "14.06",
+    "fakultas_id": "14",
+    "nama": "S2 Ilmu Komputer"
+  },
+  {
+    "id": "14.07",
+    "fakultas_id": "14",
+    "nama": "S2 Sistem Informasi"
+  },
+  {
+    "id": "14.08",
+    "fakultas_id": "14",
+    "nama": "S3 Ilmu Komputer"
+  },
+  {
+    "id": "15.01",
+    "fakultas_id": "15",
+    "nama": "S1 Kedokteran Gigi"
+  },
+  {
+    "id": "16.01",
+    "fakultas_id": "16",
+    "nama": "D4 Manajemen Perhotelan"
+  },
+  {
+    "id": "16.02",
+    "fakultas_id": "16",
+    "nama": "D3 Keuangan dan Perbankan"
+  },
+  {
+    "id": "16.03",
+    "fakultas_id": "16",
+    "nama": "D3 Administrasi Bisnis"
+  },
+  {
+    "id": "16.04",
+    "fakultas_id": "16",
+    "nama": "D4 Desain Grafis"
+  },
+  {
+    "id": "16.05",
+    "fakultas_id": "16",
+    "nama": "D3 Teknologi Informasi"
+  },
+  {
+    "id": "17.01",
+    "fakultas_id": "17",
+    "nama": "S1 Keperawatan"
+  },
+  {
+    "id": "17.02",
+    "fakultas_id": "17",
+    "nama": "S1 Ilmu Gizi"
+  },
+  {
+    "id": "17.03",
+    "fakultas_id": "17",
+    "nama": "S2 Keperawatan"
+  },
+  {
+    "id": "17.04",
+    "fakultas_id": "17",
+    "nama": "S2 Gizi"
+  },
+  {
+    "id": "18.01",
+    "fakultas_id": "18",
+    "nama": "S2 Kajian Wanita"
+  },
+  {
+    "id": "18.02",
+    "fakultas_id": "18",
+    "nama": "S2 Pengelolaan Sumberdaya Lingkungan dan Pembangunan"
+  },
+  {
+    "id": "18.03",
+    "fakultas_id": "18",
+    "nama": "S2 Wawasan Pertahanan Nasional"
+  },
+  {
+    "id": "18.04",
+    "fakultas_id": "18",
+    "nama": "S2 Kepemimpinan dan Inovasi Kebijakan"
+  },
+  {
+    "id": "18.05",
+    "fakultas_id": "18",
+    "nama": "S3 Ilmu Lingkungan"
+  },
+  {
+    "id": "18.06",
+    "fakultas_id": "18",
+    "nama": "S3 Ilmu Ketahanan Nasional"
+  },
+  {
+    "id": "18.07",
+    "fakultas_id": "18",
+    "nama": "S3 Kepemimpinan dan Inovasi Kebijakan"
+  }
+]

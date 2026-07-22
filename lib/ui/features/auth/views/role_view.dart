@@ -26,8 +26,8 @@ class _RoleViewState extends State<RoleView> {
       return;
     }
     
-    // Logika setelah role dipilih. Untuk sekarang arahkan ke dashboard
-    context.go('/main');
+    // Logika setelah role dipilih. Arahkan ke wizard registrasi profil
+    context.push('/register', extra: _selectedRole);
   }
 
   Widget _buildRoleCard({

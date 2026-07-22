@@ -1,0 +1,92 @@
+[
+    {
+        "id": "01",
+        "singkatan": "FH",
+        "nama": "Hukum"
+    },
+    {
+        "id": "02",
+        "singkatan": "FEB",
+        "nama": "Ekonomi dan Bisnis"
+    },
+    {
+        "id": "03",
+        "singkatan": "FIA",
+        "nama": "Ilmu Administrasi"
+    },
+    {
+        "id": "04",
+        "singkatan": "FBiPK",
+        "nama": "Bio-Industri Pertanian dan Kehutanan"
+    },
+    {
+        "id": "05",
+        "singkatan": "FAST",
+        "nama": "Sains dan Teknologi Peternakan"
+    },
+    {
+        "id": "06",
+        "singkatan": "FT",
+        "nama": "Teknik"
+    },
+    {
+        "id": "07",
+        "singkatan": "FK",
+        "nama": "Kedokteran"
+    },
+    {
+        "id": "08",
+        "singkatan": "FPIK",
+        "nama": "Perikanan dan Ilmu Kelautan"
+    },
+    {
+        "id": "09",
+        "singkatan": "FSTeM",
+        "nama": "Sains, Teknologi, dan Matematika"
+    },
+    {
+        "id": "10",
+        "singkatan": "FTAB",
+        "nama": "Teknologi Agroindustri dan Biosistem"
+    },
+    {
+        "id": "11",
+        "singkatan": "FIB",
+        "nama": "Ilmu Budaya"
+    },
+    {
+        "id": "12",
+        "singkatan": "FISIP",
+        "nama": "Ilmu Sosial dan Ilmu Politik"
+    },
+    {
+        "id": "13",
+        "singkatan": "FKH",
+        "nama": "Kedokteran Hewan"
+    },
+    {
+        "id": "14",
+        "singkatan": "FILKOM",
+        "nama": "Ilmu Komputer"
+    },
+    {
+        "id": "15",
+        "singkatan": "FKG",
+        "nama": "Kedokteran Gigi"
+    },
+    {
+        "id": "16",
+        "singkatan": "FV",
+        "nama": "Vokasi"
+    },
+    {
+        "id": "17",
+        "singkatan": "FIKES",
+        "nama": "Ilmu Kesehatan"
+    },
+    {
+        "id": "18",
+        "singkatan": "SP",
+        "nama": "Sekolah Pascasarjana"
+    }
+]
