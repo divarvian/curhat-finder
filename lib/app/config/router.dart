@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../ui/features/splash/views/splash_view.dart';
-import '../../ui/features/onboarding/views/onboarding_view.dart';
-import '../../ui/features/auth/views/pre_login_view.dart';
-import '../../ui/features/auth/views/login_view.dart';
-import '../../ui/features/auth/views/role_view.dart';
-import '../../ui/features/auth/views/register_view.dart';
-import '../../ui/features/main_nav/views/main_nav_view.dart';
-import '../../ui/features/chat/views/chat_room_view.dart';
-import '../../ui/features/chat/views/room_detail_view.dart';
-import '../../ui/features/chat/views/chat_anon_matching_view.dart';
-import '../../ui/features/chat/views/chat_anon_room_view.dart';
+import '../../features/splash/presentation/views/splash_view.dart';
+import '../../features/onboarding/presentation/views/onboarding_view.dart';
+import '../../features/auth/presentation/views/pre_login_view.dart';
+import '../../features/auth/presentation/views/login_view.dart';
+import '../../features/auth/presentation/views/role_view.dart';
+import '../../features/auth/presentation/views/register_view.dart';
+import '../../features/main_nav/presentation/views/main_nav_view.dart';
+import '../../features/chat/presentation/views/chat_room_view.dart';
+import '../../features/chat/presentation/views/room_detail_view.dart';
+import '../../features/chat/presentation/views/chat_anon_matching_view.dart';
+import '../../features/chat/presentation/views/chat_anon_room_view.dart';
 
 /// Disini urusan navigation
 final GoRouter router = GoRouter(
