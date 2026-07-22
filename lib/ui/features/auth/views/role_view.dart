@@ -27,7 +27,7 @@ class _RoleViewState extends State<RoleView> {
     }
     
     // Logika setelah role dipilih. Untuk sekarang arahkan ke dashboard
-    context.go('/dashboard');
+    context.go('/main');
   }
 
   Widget _buildRoleCard({

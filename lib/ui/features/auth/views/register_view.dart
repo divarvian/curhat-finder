@@ -38,7 +38,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
           );
 
       if (mounted && success) {
-        context.go('/dashboard');
+        context.go('/main');
       }
     }
   }

@@ -6,7 +6,11 @@ import '../../ui/features/auth/views/pre_login_view.dart';
 import '../../ui/features/auth/views/login_view.dart';
 import '../../ui/features/auth/views/role_view.dart';
 import '../../ui/features/auth/views/register_view.dart';
-import '../../ui/features/dashboard/views/dashboard_view.dart';
+import '../../ui/features/main_nav/views/main_nav_view.dart';
+import '../../ui/features/chat/views/chat_room_view.dart';
+import '../../ui/features/chat/views/room_detail_view.dart';
+import '../../ui/features/chat/views/chat_anon_matching_view.dart';
+import '../../ui/features/chat/views/chat_anon_room_view.dart';
 
 /// Disini urusan navigation
 final GoRouter router = GoRouter(
@@ -37,8 +41,30 @@ final GoRouter router = GoRouter(
       builder: (BuildContext context, GoRouterState state) => const RegisterView(),
     ),
     GoRoute(
-      path: '/dashboard',
-      builder: (BuildContext context, GoRouterState state) => const DashboardView(),
+      path: '/main',
+      builder: (BuildContext context, GoRouterState state) => const MainNavView(),
+    ),
+    GoRoute(
+      path: '/chat_room',
+      builder: (BuildContext context, GoRouterState state) {
+        final Map<String, dynamic> extras = state.extra as Map<String, dynamic>? ?? {};
+        return ChatRoomView(
+          counselorName: extras['name'] as String? ?? 'Konselor',
+          isOnline: extras['isOnline'] as bool? ?? false,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/room_detail',
+      builder: (BuildContext context, GoRouterState state) => const RoomDetailView(),
+    ),
+    GoRoute(
+      path: '/chat_anon_matching',
+      builder: (BuildContext context, GoRouterState state) => const ChatAnonMatchingView(),
+    ),
+    GoRoute(
+      path: '/chat_anon_room',
+      builder: (BuildContext context, GoRouterState state) => const ChatAnonRoomView(),
     ),
   ],
 );

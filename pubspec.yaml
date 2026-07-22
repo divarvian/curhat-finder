@@ -14,6 +14,10 @@ dependencies:
   provider: ^6.1.2
   flutter_riverpod: ^2.5.1
   flutter_bloc: ^8.1.6
+  url_launcher: ^6.3.2
+  image_picker: ^1.2.3
+  cupertino_icons: ^1.0.9
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -26,6 +30,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/images/nav/
     - assets/icons/
   fonts:
     - family: Gilroy-Light
