@@ -255,7 +255,7 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
           Text(
             'Riwayat Jurnal Kamu',
             style: AppTextStyles.heading1.copyWith(
-              color: Colors.white, // In mockup it is white text on blue bg
+              color: AppColors.twilightDarker,
               fontSize: 20,
             ),
           ),
@@ -383,7 +383,7 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
           Text(
             'Riwayat Sambatan Kamu',
             style: AppTextStyles.heading1.copyWith(
-              color: Colors.white,
+              color: AppColors.twilightDarker,
               fontSize: 20,
             ),
           ),

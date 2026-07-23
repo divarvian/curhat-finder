@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -27,7 +28,7 @@ class _RoleViewState extends State<RoleView> {
     }
     
     // Logika setelah role dipilih. Arahkan ke wizard registrasi profil
-    context.push('/register', extra: _selectedRole);
+    RegisterRoute(isKonselor: _selectedRole == 1).push(context);
   }
 
   Widget _buildRoleCard({
@@ -178,7 +179,7 @@ class _RoleViewState extends State<RoleView> {
                             if (context.canPop()) {
                               context.pop();
                             } else {
-                              context.go('/login');
+                              const LoginRoute().go(context);
                             }
                           },
                           child: const Padding(

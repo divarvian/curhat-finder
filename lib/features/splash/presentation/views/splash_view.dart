@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
@@ -68,7 +68,7 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
     // Navigasi otomatis setelah 3.5 detik (menyesuaikan dengan jeda di atas)
     Future.delayed(const Duration(milliseconds: 3500), () {
       if (mounted) {
-        context.go('/onboarding');
+        const OnboardingRoute().go(context);
       }
     });
   }

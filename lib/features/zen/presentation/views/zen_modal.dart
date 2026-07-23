@@ -108,6 +108,12 @@ class _ZenModalState extends State<ZenModal> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Base size is 45% of screen width, but capped between 150 and 220
+    final baseSize = (screenWidth * 0.45).clamp(150.0, 220.0);
+    // Reserve space for the maximum scale (1.35x) plus some extra for the glow shadow
+    final layoutSize = baseSize * 1.45;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
@@ -124,57 +130,69 @@ class _ZenModalState extends State<ZenModal> with SingleTickerProviderStateMixin
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              // Close button
-              Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8.0, top: 8.0),
-                  child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white, size: 32),
-                    onPressed: () {
-                      _timer?.cancel();
-                      Navigator.of(context).pop();
-                    },
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
                   ),
-                ),
-              ),
-              
-              // Mascot & Texts
-              Image.asset(
-                'assets/images/zen.png', // Sementara menggunakan maskot utama
-                height: 110,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Zen Relaksasi',
-                style: AppTextStyles.heading1.copyWith(color: Colors.white, fontSize: 24),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 48.0),
-                child: Text(
-                  _isPlaying 
-                    ? 'Fokus pada lingkaran. Bernapaslah perlahan.' 
-                    : 'Ikuti lingkaran bernapas untuk meredakan ketegangan fisik dan kecemasanmu',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    height: 1.4,
-                  ),
-                ),
-              ),
-              
-              const Spacer(),
-              
-              // Breathing Circle with Animation
-              ScaleTransition(
-                scale: _scaleAnimation,
-                child: Container(
-                  width: 200, // Reduced from 250
-                  height: 200, // Reduced from 250
-                  decoration: BoxDecoration(
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        // Close button
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 8.0, top: 8.0),
+                            child: IconButton(
+                              icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                              onPressed: () {
+                                _timer?.cancel();
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ),
+                        ),
+                        
+                        // Mascot & Texts
+                        Image.asset(
+                          'assets/images/zen.png', // Sementara menggunakan maskot utama
+                          height: 110,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Zen Relaksasi',
+                          style: AppTextStyles.heading1.copyWith(color: Colors.white, fontSize: 24),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 48.0),
+                          child: Text(
+                            _isPlaying 
+                              ? 'Fokus pada lingkaran. Bernapaslah perlahan.' 
+                              : 'Ikuti lingkaran bernapas untuk meredakan ketegangan fisik dan kecemasanmu',
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                        
+                        const Spacer(),
+                        
+                        // Breathing Circle with Animation
+                        SizedBox(
+                          width: layoutSize,
+                          height: layoutSize,
+                          child: Center(
+                            child: ScaleTransition(
+                              scale: _scaleAnimation,
+                              child: Container(
+                                width: baseSize, 
+                                height: baseSize, 
+                                decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: const RadialGradient(
                       colors: [
@@ -217,6 +235,8 @@ class _ZenModalState extends State<ZenModal> with SingleTickerProviderStateMixin
                   ),
                 ),
               ),
+            ),
+          ),
               
               const Spacer(),
               
@@ -302,6 +322,11 @@ class _ZenModalState extends State<ZenModal> with SingleTickerProviderStateMixin
               
               const SizedBox(height: 40),
             ],
+          ),
+          ),
+          ),
+          );
+          },
           ),
         ),
       ),

@@ -13,10 +13,11 @@ class LeaveChatDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
       ),
       backgroundColor: AppColors.platinum, // Sangat light grey/blue
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
           children: [
             // Mascot dengan tanda silang
             Image.asset(
@@ -102,6 +103,7 @@ class LeaveChatDialog extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -40,15 +40,23 @@ class StepFinal extends ConsumerWidget {
           ),
         );
       } else {
+        final options = ['Olahraga', 'Musik', 'Membaca', 'Gaming', 'Traveling', 'Seni', 'Fotografi', 'Menulis', 'Film', 'Kuliner'];
         return RegisterStepTemplate(
           title: 'Apa hal yang bisa bikin kamu happy?',
-          isNextEnabled: state.hobby.trim().isNotEmpty,
+          isNextEnabled: state.hobbies.isNotEmpty,
           buttonText: 'Masuk',
           onNext: onNext,
-          content: RegisterTextField(
-            hint: 'Ex. Main padel',
-            value: state.hobby,
-            onChanged: controller.updateHobby,
+          content: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: options.map((opt) {
+              final isSelected = state.hobbies.contains(opt);
+              return RegisterPillOption(
+                label: opt,
+                isSelected: isSelected,
+                onTap: () => controller.toggleHobby(opt),
+              );
+            }).toList(),
           ),
         );
       }

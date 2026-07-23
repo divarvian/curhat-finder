@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
@@ -321,7 +321,7 @@ class ChatListView extends ConsumerWidget {
           child: ElevatedButton(
             onPressed: state.selectedAnonType != null
                 ? () {
-                    context.push('/chat_anon_matching');
+                    const ChatAnonMatchingRoute().push(context);
                   }
                 : null,
             style: ElevatedButton.styleFrom(
@@ -594,7 +594,7 @@ class ChatListView extends ConsumerWidget {
     required bool isLiked,
   }) {
     return GestureDetector(
-      onTap: () => context.push('/room_detail'),
+      onTap: () => const RoomDetailRoute().push(context),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(

@@ -3,12 +3,12 @@ import 'package:flutter_svg/flutter_svg.dart'; // Tambahan untuk SVG
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'package:flutter_starter_template/features/zen/presentation/views/zen_modal.dart';
-import 'package:flutter_starter_template/features/chat/presentation/views/chat_list_view.dart';
-import 'package:flutter_starter_template/features/jurnal/presentation/views/jurnal_view.dart';
-import 'package:flutter_starter_template/features/beranda/presentation/views/beranda_view.dart';
-import 'package:flutter_starter_template/features/pulse/presentation/views/pulse_view.dart';
-import 'package:flutter_starter_template/features/profile/presentation/views/profile_view.dart';
+import 'package:curhat_finder/features/zen/presentation/views/zen_modal.dart';
+import 'package:curhat_finder/features/chat/presentation/views/chat_list_view.dart';
+import 'package:curhat_finder/features/jurnal/presentation/views/jurnal_view.dart';
+import 'package:curhat_finder/features/beranda/presentation/views/beranda_view.dart';
+import 'package:curhat_finder/features/pulse/presentation/views/pulse_view.dart';
+import 'package:curhat_finder/features/profile/presentation/views/profile_view.dart';
 import '../providers/main_nav_provider.dart';
 
 class MainNavView extends ConsumerWidget {

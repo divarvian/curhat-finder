@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
@@ -24,7 +25,7 @@ class _ChatAnonMatchingViewState extends State<ChatAnonMatchingView> with Single
     // Simulasi delay pencarian 3 detik, lalu masuk ke chat room
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        context.pushReplacement('/chat_anon_room'); // Menggunakan pushReplacement agar tidak bisa kembali ke layar ini
+        const ChatAnonRoomRoute().replace(context); // Menggunakan replace agar tidak bisa kembali ke layar ini
       }
     });
   }

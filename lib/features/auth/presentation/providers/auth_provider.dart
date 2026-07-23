@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_starter_template/features/auth/data/auth_service.dart';
-import 'package:flutter_starter_template/features/auth/data/auth_repository.dart';
+import 'package:curhat_finder/features/auth/data/auth_service.dart';
+import 'package:curhat_finder/features/auth/data/auth_repository.dart';
 import 'auth_state.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());

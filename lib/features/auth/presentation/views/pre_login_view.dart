@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class PreLoginView extends StatefulWidget {
@@ -54,7 +54,7 @@ class _PreLoginViewState extends State<PreLoginView> with SingleTickerProviderSt
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         if (mounted) {
-          context.go('/login');
+          const LoginRoute().go(context);
         }
       }
     });

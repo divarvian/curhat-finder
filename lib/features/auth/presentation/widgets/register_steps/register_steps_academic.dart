@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_starter_template/core/theme/app_colors.dart';
-import 'package:flutter_starter_template/core/theme/app_text_styles.dart';
+import 'package:curhat_finder/core/theme/app_colors.dart';
+import 'package:curhat_finder/core/theme/app_text_styles.dart';
 import '../../controllers/register_controller.dart';
 import '../../providers/faculty_prodi_provider.dart';
 import 'register_step_template.dart';
@@ -70,7 +70,7 @@ class StepProdi extends ConsumerWidget {
                 padding: const EdgeInsets.all(20.0),
                 child: Text(
                   'Pilih fakultas terlebih dahulu',
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.twilightLight),
+                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
                 ),
               ),
             );
@@ -87,7 +87,7 @@ class StepProdi extends ConsumerWidget {
                     child: Text(
                       entry.key,
                       style: AppTextStyles.labelLarge.copyWith(
-                        color: AppColors.twilightLight,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ),

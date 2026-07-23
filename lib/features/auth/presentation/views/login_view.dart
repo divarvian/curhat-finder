@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../../../../app/config/router.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -37,7 +37,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
     // 
     //   if (mounted) {
     //     if (success) {
-    //       context.go('/role'); // Sementara dialihkan ke RoleView untuk melihat alur
+    //       const RoleRoute().go(context); // Sementara dialihkan ke RoleView untuk melihat alur
     //     } else {
     //       final auth = ref.read(authProvider);
     //       ScaffoldMessenger.of(context).showSnackBar(
@@ -51,7 +51,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
     // }
     
     // Langsung pindah ke halaman Role tanpa perlu isi email/password
-    context.go('/role');
+    const RoleRoute().go(context);
   }
 
   // Widget Kustom untuk TextField

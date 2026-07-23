@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_starter_template/core/theme/app_colors.dart';
-import 'package:flutter_starter_template/core/theme/app_text_styles.dart';
+import 'package:curhat_finder/core/theme/app_colors.dart';
+import 'package:curhat_finder/core/theme/app_text_styles.dart';
 
 class RegisterStepTemplate extends StatelessWidget {
   final String title;
@@ -99,7 +99,7 @@ class RegisterTextField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.twilightLight,
+          color: AppColors.textSecondary,
         ),
         counterText: '',
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),

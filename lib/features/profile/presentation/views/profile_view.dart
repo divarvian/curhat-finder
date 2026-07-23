@@ -284,8 +284,9 @@ class ProfileView extends ConsumerWidget {
               topRight: Radius.circular(24),
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -319,6 +320,7 @@ class ProfileView extends ConsumerWidget {
               ),
               const SizedBox(height: 16), // Tambahan spasi agar tidak terlalu mepet bawah
             ],
+          ),
           ),
         );
       },

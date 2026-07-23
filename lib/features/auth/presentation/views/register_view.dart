@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../controllers/register_controller.dart';
@@ -55,11 +56,11 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
     debugPrint("Batch: ${state.batch}");
     debugPrint("Faculty ID: ${state.facultyId}");
     debugPrint("Prodi ID: ${state.prodiId}");
-    debugPrint("Hobby: ${state.hobby}");
+    debugPrint("Hobbies: ${state.hobbies}");
     debugPrint("Topics: ${state.topics}");
     
     // Redirect to main
-    context.go('/main');
+    const MainRoute().go(context);
   }
 
   @override

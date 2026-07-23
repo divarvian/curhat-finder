@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
@@ -195,7 +195,7 @@ class CounselorProfileSheet extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () {
                 Navigator.pop(context); // Tutup modal
-                context.push('/chat_room', extra: {'name': name, 'isOnline': isOnline}); // Navigasi ke chat room
+                ChatRoomRoute(counselorName: name, isOnline: isOnline).push(context); // Navigasi ke chat room
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.twilightDarker,

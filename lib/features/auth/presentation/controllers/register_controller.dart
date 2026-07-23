@@ -1,57 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class RegisterState {
-  final int currentStep;
-  final String fullName;
-  final String nickname;
-  final String gender;
-  final String batch;
-  final String facultyId;
-  final String prodiId;
-  final String hobby;
-  final Set<String> topics;
-
-  RegisterState({
-    this.currentStep = 0,
-    this.fullName = '',
-    this.nickname = '',
-    this.gender = '',
-    this.batch = '',
-    this.facultyId = '',
-    this.prodiId = '',
-    this.hobby = '',
-    this.topics = const {},
-  });
-
-  RegisterState copyWith({
-    int? currentStep,
-    String? fullName,
-    String? nickname,
-    String? gender,
-    String? batch,
-    String? facultyId,
-    String? prodiId,
-    String? hobby,
-    Set<String>? topics,
-  }) {
-    return RegisterState(
-      currentStep: currentStep ?? this.currentStep,
-      fullName: fullName ?? this.fullName,
-      nickname: nickname ?? this.nickname,
-      gender: gender ?? this.gender,
-      batch: batch ?? this.batch,
-      facultyId: facultyId ?? this.facultyId,
-      prodiId: prodiId ?? this.prodiId,
-      hobby: hobby ?? this.hobby,
-      topics: topics ?? this.topics,
-    );
-  }
-}
+import 'register_state.dart';
 
 class RegisterController extends Notifier<RegisterState> {
   @override
   RegisterState build() {
-    return RegisterState();
+    return const RegisterState();
   }
 
   void nextStep(int totalSteps) {
@@ -74,7 +28,15 @@ class RegisterController extends Notifier<RegisterState> {
   void updateNickname(String name) => state = state.copyWith(nickname: name);
   void updateGender(String gender) => state = state.copyWith(gender: gender);
   void updateBatch(String batch) => state = state.copyWith(batch: batch);
-  void updateHobby(String hobby) => state = state.copyWith(hobby: hobby);
+  void toggleHobby(String hobby) {
+    final newHobbies = Set<String>.from(state.hobbies);
+    if (newHobbies.contains(hobby)) {
+      newHobbies.remove(hobby);
+    } else {
+      newHobbies.add(hobby);
+    }
+    state = state.copyWith(hobbies: newHobbies);
+  }
   
   void selectFaculty(String facultyId) {
     state = state.copyWith(
