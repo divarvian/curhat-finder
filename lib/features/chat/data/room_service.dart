@@ -9,12 +9,13 @@ class RoomService {
   RoomService({SupabaseClient? client})
       : _supabase = client ?? SupabaseService.client;
 
-  /// Stream feed ruang curhat (rooms) dari Supabase Realtime
-  Stream<List<RoomModel>> streamRooms({String? category}) {
+  /// Stream feed ruang curhat (rooms) dari Supabase Realtime dengan limit
+  Stream<List<RoomModel>> streamRooms({String? category, int limit = 20}) {
     return _supabase
         .from('rooms')
         .stream(primaryKey: ['id'])
         .order('created_at', ascending: false)
+        .limit(limit)
         .map((rows) {
           final list = rows.map((r) => RoomModel.fromJson(r)).toList();
           list.sort((a, b) {

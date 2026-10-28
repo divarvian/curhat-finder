@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart'; // Tambahkan untuk kIsWeb
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -64,7 +65,7 @@ class ProfileView extends ConsumerWidget {
                             child: InkWell(
                               customBorder: const CircleBorder(),
                               onTap: () {
-                                // TODO: Navigasi ke halaman pengaturan
+                                context.push('/settings');
                               },
                               child: const Center(
                                 child: Icon(

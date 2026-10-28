@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'register_state.dart';
@@ -9,6 +9,7 @@ part of 'register_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -25,16 +26,21 @@ $RegisterStateCopyWith<RegisterState> get copyWith => _$RegisterStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RegisterState&&(identical(other.currentStep, currentStep) || other.currentStep == currentStep)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.batch, batch) || other.batch == batch)&&(identical(other.facultyId, facultyId) || other.facultyId == facultyId)&&(identical(other.prodiId, prodiId) || other.prodiId == prodiId)&&const DeepCollectionEquality().equals(other.hobbies, hobbies)&&const DeepCollectionEquality().equals(other.topics, topics));
+  final _this = this as RegisterState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RegisterState&&(identical(other.currentStep, _this.currentStep) || other.currentStep == _this.currentStep)&&(identical(other.fullName, _this.fullName) || other.fullName == _this.fullName)&&(identical(other.nickname, _this.nickname) || other.nickname == _this.nickname)&&(identical(other.gender, _this.gender) || other.gender == _this.gender)&&(identical(other.batch, _this.batch) || other.batch == _this.batch)&&(identical(other.facultyId, _this.facultyId) || other.facultyId == _this.facultyId)&&(identical(other.prodiId, _this.prodiId) || other.prodiId == _this.prodiId)&&const DeepCollectionEquality().equals(other.hobbies, _this.hobbies)&&const DeepCollectionEquality().equals(other.topics, _this.topics));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,currentStep,fullName,nickname,gender,batch,facultyId,prodiId,const DeepCollectionEquality().hash(hobbies),const DeepCollectionEquality().hash(topics));
+int get hashCode {
+  final _this = this as RegisterState;
+  return Object.hash(runtimeType,_this.currentStep,_this.fullName,_this.nickname,_this.gender,_this.batch,_this.facultyId,_this.prodiId,const DeepCollectionEquality().hash(_this.hobbies),const DeepCollectionEquality().hash(_this.topics));
+}
 
 @override
 String toString() {
-  return 'RegisterState(currentStep: $currentStep, fullName: $fullName, nickname: $nickname, gender: $gender, batch: $batch, facultyId: $facultyId, prodiId: $prodiId, hobbies: $hobbies, topics: $topics)';
+  final _this = this as RegisterState;
+  return 'RegisterState(currentStep: ${_this.currentStep}, fullName: ${_this.fullName}, nickname: ${_this.nickname}, gender: ${_this.gender}, batch: ${_this.batch}, facultyId: ${_this.facultyId}, prodiId: ${_this.prodiId}, hobbies: ${_this.hobbies}, topics: ${_this.topics})';
 }
 
 
@@ -63,7 +69,7 @@ class _$RegisterStateCopyWithImpl<$Res>
 /// Create a copy of RegisterState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? currentStep = null,Object? fullName = null,Object? nickname = null,Object? gender = null,Object? batch = null,Object? facultyId = null,Object? prodiId = null,Object? hobbies = null,Object? topics = null,}) {
-  return _then(_self.copyWith(
+  return _then(RegisterState(
 currentStep: null == currentStep ? _self.currentStep : currentStep // ignore: cast_nullable_to_non_nullable
 as int,fullName: null == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
 as String,nickname: null == nickname ? _self.nickname : nickname // ignore: cast_nullable_to_non_nullable
@@ -214,7 +220,7 @@ return $default(_that.currentStep,_that.fullName,_that.nickname,_that.gender,_th
 
 
 class _RegisterState implements RegisterState {
-  const _RegisterState({this.currentStep = 0, this.fullName = '', this.nickname = '', this.gender = '', this.batch = '', this.facultyId = '', this.prodiId = '', final  Set<String> hobbies = const <String>{}, final  Set<String> topics = const <String>{}}): _hobbies = hobbies,_topics = topics;
+  const _RegisterState({this.currentStep = 0, this.fullName = '', this.nickname = '', this.gender = '', this.batch = '', this.facultyId = '', this.prodiId = '',  Set<String> hobbies = const <String>{},  Set<String> topics = const <String>{}}): _hobbies = hobbies,_topics = topics;
   
 
 @override@JsonKey() final  int currentStep;
@@ -249,16 +255,18 @@ _$RegisterStateCopyWith<_RegisterState> get copyWith => __$RegisterStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RegisterState&&(identical(other.currentStep, currentStep) || other.currentStep == currentStep)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.batch, batch) || other.batch == batch)&&(identical(other.facultyId, facultyId) || other.facultyId == facultyId)&&(identical(other.prodiId, prodiId) || other.prodiId == prodiId)&&const DeepCollectionEquality().equals(other._hobbies, _hobbies)&&const DeepCollectionEquality().equals(other._topics, _topics));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RegisterState&&(identical(other.currentStep, currentStep) || other.currentStep == currentStep)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.batch, batch) || other.batch == batch)&&(identical(other.facultyId, facultyId) || other.facultyId == facultyId)&&(identical(other.prodiId, prodiId) || other.prodiId == prodiId)&&const DeepCollectionEquality().equals(other.hobbies, _hobbies)&&const DeepCollectionEquality().equals(other.topics, _topics));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,currentStep,fullName,nickname,gender,batch,facultyId,prodiId,const DeepCollectionEquality().hash(_hobbies),const DeepCollectionEquality().hash(_topics));
+int get hashCode {
+    return Object.hash(runtimeType,currentStep,fullName,nickname,gender,batch,facultyId,prodiId,const DeepCollectionEquality().hash(_hobbies),const DeepCollectionEquality().hash(_topics));
+}
 
 @override
 String toString() {
-  return 'RegisterState(currentStep: $currentStep, fullName: $fullName, nickname: $nickname, gender: $gender, batch: $batch, facultyId: $facultyId, prodiId: $prodiId, hobbies: $hobbies, topics: $topics)';
+    return 'RegisterState(currentStep: $currentStep, fullName: $fullName, nickname: $nickname, gender: $gender, batch: $batch, facultyId: $facultyId, prodiId: $prodiId, hobbies: $hobbies, topics: $topics)';
 }
 
 

@@ -21,6 +21,7 @@ List<RouteBase> get $appRoutes => [
   $counselorMainRoute,
   $counselorChatRoomRoute,
   $counselorPendingRoute,
+  $settingsRoute,
 ];
 
 RouteBase get $splashRoute => GoRouteData.$route(
@@ -267,7 +268,7 @@ mixin $ChatRoomRoute on GoRouteData {
       if (_self.counselorName != 'Konselor')
         'counselor-name': _self.counselorName,
       if (_self.isOnline != false) 'is-online': _self.isOnline.toString(),
-      if (_self.sessionId.isNotEmpty) 'session-id': _self.sessionId,
+      if (_self.sessionId != '') 'session-id': _self.sessionId,
     },
   );
 
@@ -293,19 +294,15 @@ RouteBase get $roomDetailRoute => GoRouteData.$route(
 
 mixin $RoomDetailRoute on GoRouteData {
   static RoomDetailRoute _fromState(GoRouterState state) =>
-      RoomDetailRoute(
-        roomId: state.uri.queryParameters['room-id'] ?? '',
-      );
+      RoomDetailRoute(roomId: state.uri.queryParameters['room-id'] ?? '');
 
   RoomDetailRoute get _self => this as RoomDetailRoute;
 
   @override
   String get location => GoRouteData.$location(
-        '/room_detail',
-        queryParams: {
-          if (_self.roomId.isNotEmpty) 'room-id': _self.roomId,
-        },
-      );
+    '/room_detail',
+    queryParams: {if (_self.roomId != '') 'room-id': _self.roomId},
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -337,11 +334,9 @@ mixin $ChatAnonMatchingRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location(
-        '/chat_anon_matching',
-        queryParams: {
-          if (_self.mode != 'Cuma mau didengar') 'mode': _self.mode,
-        },
-      );
+    '/chat_anon_matching',
+    queryParams: {if (_self.mode != 'Cuma mau didengar') 'mode': _self.mode},
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -364,22 +359,21 @@ RouteBase get $chatAnonRoomRoute => GoRouteData.$route(
 );
 
 mixin $ChatAnonRoomRoute on GoRouteData {
-  static ChatAnonRoomRoute _fromState(GoRouterState state) =>
-      ChatAnonRoomRoute(
-        sessionId: state.uri.queryParameters['session-id'] ?? '',
-        mode: state.uri.queryParameters['mode'] ?? 'Cuma mau didengar',
-      );
+  static ChatAnonRoomRoute _fromState(GoRouterState state) => ChatAnonRoomRoute(
+    sessionId: state.uri.queryParameters['session-id'] ?? '',
+    mode: state.uri.queryParameters['mode'] ?? 'Cuma mau didengar',
+  );
 
   ChatAnonRoomRoute get _self => this as ChatAnonRoomRoute;
 
   @override
   String get location => GoRouteData.$location(
-        '/chat_anon_room',
-        queryParams: {
-          if (_self.sessionId.isNotEmpty) 'session-id': _self.sessionId,
-          if (_self.mode != 'Cuma mau didengar') 'mode': _self.mode,
-        },
-      );
+    '/chat_anon_room',
+    queryParams: {
+      if (_self.sessionId != '') 'session-id': _self.sessionId,
+      if (_self.mode != 'Cuma mau didengar') 'mode': _self.mode,
+    },
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -442,7 +436,7 @@ mixin $CounselorChatRoomRoute on GoRouteData {
   String get location => GoRouteData.$location(
     '/counselor_chat_room',
     queryParams: {
-      if (_self.sessionId.isNotEmpty) 'session-id': _self.sessionId,
+      if (_self.sessionId != '') 'session-id': _self.sessionId,
       if (_self.studentTitle != 'Anonym - FILKOM')
         'student-title': _self.studentTitle,
     },
@@ -474,6 +468,32 @@ mixin $CounselorPendingRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/counselor_pending');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $settingsRoute => GoRouteData.$route(
+  path: '/settings',
+  hasOverriddenOnExit: false,
+  factory: $SettingsRoute._fromState,
+);
+
+mixin $SettingsRoute on GoRouteData {
+  static SettingsRoute _fromState(GoRouterState state) => const SettingsRoute();
+
+  @override
+  String get location => GoRouteData.$location('/settings');
 
   @override
   void go(BuildContext context) => context.go(location);

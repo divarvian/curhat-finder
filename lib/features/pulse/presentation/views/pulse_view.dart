@@ -139,43 +139,57 @@ class _PulseViewState extends ConsumerState<PulseView> {
 
               // Scrollable Content
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Emergency Contact Card
-                      _buildEmergencyCard(),
-                      const SizedBox(height: 24),
-
-                      // Section Title
-                      Text(
-                        'Kontak per Fakultas',
-                        style: AppTextStyles.heading2.copyWith(
-                          color: AppColors.twilightDarker,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Contact List
-                      if (filteredContacts.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 40),
-                          child: Center(
-                            child: Text(
-                              'Tidak ada kontak yang ditemukan.',
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.twilightNormal.withValues(alpha: 0.8),
-                              ),
+                child: RefreshIndicator(
+                  onRefresh: () => ref.read(pulseProvider.notifier).refreshContacts(),
+                  color: AppColors.wisteriaNormalHover,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (state.isLoading)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 16),
+                            child: LinearProgressIndicator(
+                              color: AppColors.wisteriaNormalHover,
+                              backgroundColor: AppColors.lavenderBlush,
                             ),
                           ),
-                        )
-                      else
-                        ...filteredContacts.map((contact) => _buildContactCard(contact)),
-                        
-                      const SizedBox(height: 100), // Spasi navigasi bawah
-                    ],
+
+                        // Emergency Contact Card
+                        _buildEmergencyCard(),
+                        const SizedBox(height: 24),
+
+                        // Section Title
+                        Text(
+                          'Kontak per Fakultas',
+                          style: AppTextStyles.heading2.copyWith(
+                            color: AppColors.twilightDarker,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Contact List
+                        if (filteredContacts.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40),
+                            child: Center(
+                              child: Text(
+                                'Tidak ada kontak yang ditemukan.',
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.twilightNormal.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          ...filteredContacts.map((contact) => _buildContactCard(contact)),
+                          
+                        const SizedBox(height: 100), // Spasi navigasi bawah
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -366,6 +380,18 @@ class _PulseViewState extends ConsumerState<PulseView> {
                     fontSize: 15,
                   ),
                 ),
+                if (contact.description != null && contact.description!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    contact.description!,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.twilightNormal.withValues(alpha: 0.7),
+                      fontSize: 11,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 const SizedBox(height: 2),
                 Text(
                   contact.phone,
@@ -377,31 +403,62 @@ class _PulseViewState extends ConsumerState<PulseView> {
               ],
             ),
           ),
-          
-          // Hubungi Button
-          ElevatedButton(
-            onPressed: () {
-              // Menghapus semua karakter non-digit dari nomor telepon
-              final cleanPhone = contact.phone.replaceAll(RegExp(r'\D'), '');
-              _launchUrl('tel:$cleanPhone');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.wisteriaNormalHover, // Biru keunguan muda
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-              minimumSize: const Size(0, 36),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(100),
+          const SizedBox(width: 8),
+
+          // Actions
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (contact.whatsappNumber != null && contact.whatsappNumber!.isNotEmpty) ...[
+                Tooltip(
+                  message: 'WhatsApp',
+                  child: InkWell(
+                    onTap: () {
+                      final cleanWa = contact.whatsappNumber!.replaceAll(RegExp(r'\D'), '');
+                      _launchUrl('https://wa.me/$cleanWa');
+                    },
+                    borderRadius: BorderRadius.circular(100),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE8F8EE),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.chat_bubble_rounded,
+                        color: Color(0xFF25D366),
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              ElevatedButton(
+                onPressed: () {
+                  // Menghapus semua karakter non-digit dari nomor telepon
+                  final cleanPhone = contact.phone.replaceAll(RegExp(r'\D'), '');
+                  _launchUrl('tel:$cleanPhone');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.wisteriaNormalHover, // Biru keunguan muda
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+                  minimumSize: const Size(0, 34),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                ),
+                child: Text(
+                  'Telepon',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
-            child: Text(
-              'Hubungi',
-              style: AppTextStyles.labelSmall.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            ],
           ),
         ],
       ),

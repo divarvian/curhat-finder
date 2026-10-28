@@ -13,12 +13,13 @@ class CommunityService {
   // TIPS SECTION
   // ==========================================
 
-  /// Stream tips dari tabel tips dengan filter kategori opsional
-  Stream<List<TipModel>> streamTips({String? category}) {
+  /// Stream tips dari tabel tips dengan filter kategori opsional dan limit batasan
+  Stream<List<TipModel>> streamTips({String? category, int limit = 20}) {
     return _supabase
         .from('tips')
         .stream(primaryKey: ['id'])
         .order('created_at', ascending: false)
+        .limit(limit)
         .map((rows) {
           final list = rows.map((r) => TipModel.fromJson(r)).toList();
           list.sort((a, b) {

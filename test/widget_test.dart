@@ -22,6 +22,8 @@ import 'package:curhat_finder/features/auth/presentation/views/counselor_pending
 import 'package:curhat_finder/features/counselor/presentation/views/counselor_chat_room_view.dart';
 import 'package:curhat_finder/features/counselor/domain/counselor_model.dart';
 import 'package:curhat_finder/features/counselor/presentation/providers/counselor_provider.dart';
+import 'package:curhat_finder/features/pulse/domain/pulse_contact_model.dart';
+import 'package:curhat_finder/features/profile/presentation/views/settings_view.dart';
 
 void main() {
   group('AcademicHelper Unit Tests', () {
@@ -1486,6 +1488,106 @@ void main() {
       expect(sqlContent, contains('CREATE POLICY "Users can only insert their own profile"'));
       expect(sqlContent, contains('FOR INSERT TO authenticated'));
       expect(sqlContent, contains('WITH CHECK (auth.uid() = id)'));
+    });
+  });
+
+  group('Fase P2: Feature Completeness and Scalability Tests', () {
+    test('PulseContact model correctly parses JSON and serializes to Map', () {
+      final json = {
+        'id': 'contact-1',
+        'name': 'Unit Bimbingan Konseling FILKOM',
+        'faculty': 'FILKOM',
+        'phone': '0812-3000-8801',
+        'whatsapp_number': '6281230008801',
+        'description': 'Layanan bimbingan akademik dan konseling sebaya FILKOM UB',
+        'is_emergency': false,
+        'avatar_url': 'assets/images/profile.png',
+        'display_order': 1,
+      };
+
+      final contact = PulseContact.fromJson(json);
+      expect(contact.id, 'contact-1');
+      expect(contact.name, 'Unit Bimbingan Konseling FILKOM');
+      expect(contact.faculty, 'FILKOM');
+      expect(contact.phone, '0812-3000-8801');
+      expect(contact.whatsappNumber, '6281230008801');
+      expect(contact.description, contains('FILKOM UB'));
+      expect(contact.isEmergency, isFalse);
+      expect(contact.displayOrder, 1);
+
+      final outMap = contact.toJson();
+      expect(outMap['whatsapp_number'], '6281230008801');
+      expect(outMap['display_order'], 1);
+    });
+
+    test('CounselorArticle and CounselorForumThread correctly parse JSON', () {
+      final articleJson = {
+        'id': 'art-1',
+        'author_id': 'user-1',
+        'title': 'Cara Mengatasi Burnout',
+        'category': 'Self-care',
+        'content': 'Tips relaksasi dan meditasi',
+        'likes_count': 5,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+      final article = CounselorArticle.fromJson(articleJson);
+      expect(article.id, 'art-1');
+      expect(article.title, 'Cara Mengatasi Burnout');
+      expect(article.category, 'Self-care');
+      expect(article.likesCount, 5);
+
+      final threadJson = {
+        'id': 'thread-1',
+        'author_id': 'counselor-1',
+        'title': 'Studi Kasus Mahasiswa Cemas',
+        'topic': 'Studi Kasus',
+        'content': 'Diskusi penanganan mahasiswa tingkat akhir',
+        'replies_count': 3,
+        'created_at': DateTime.now().toIso8601String(),
+        'profiles': {
+          'nickname': 'Arya',
+          'faculty': 'FILKOM',
+        },
+      };
+      final thread = CounselorForumThread.fromJson(threadJson);
+      expect(thread.id, 'thread-1');
+      expect(thread.authorName, 'Arya');
+      expect(thread.authorFaculty, 'FILKOM');
+      expect(thread.topic, 'Studi Kasus');
+      expect(thread.repliesCount, 3);
+    });
+
+    test('Migration 0008 contains valid pulse_contacts, articles, and forums definitions', () {
+      final migrationFile = File('supabase/migrations/20261028000008_create_pulse_contacts_and_counselor_studio.sql');
+      expect(migrationFile.existsSync(), isTrue);
+      final sqlContent = migrationFile.readAsStringSync();
+
+      expect(sqlContent, contains('CREATE TABLE IF NOT EXISTS public.pulse_contacts'));
+      expect(sqlContent, contains('CREATE TABLE IF NOT EXISTS public.counselor_articles'));
+      expect(sqlContent, contains('CREATE TABLE IF NOT EXISTS public.counselor_forums'));
+      expect(sqlContent, contains('Unit Bimbingan Konseling FILKOM'));
+      expect(sqlContent, contains('Hotline Sejiwa Kemenkes (24 Jam)'));
+      expect(sqlContent, contains('ENABLE ROW LEVEL SECURITY'));
+    });
+
+    testWidgets('SettingsView renders core account, preference, and legal tiles', (tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: SettingsView(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pengaturan Akun'), findsOneWidget);
+      expect(find.text('Ubah Kata Sandi'), findsOneWidget);
+      expect(find.text('Notifikasi Pesan Chat'), findsOneWidget);
+      expect(find.text('Pengingat Sesi Bimbingan'), findsOneWidget);
+      expect(find.text('Syarat & Kode Etik Konseling'), findsOneWidget);
+      expect(find.text('Kebijakan Privasi Data'), findsOneWidget);
+      expect(find.text('Keluar dari Akun'), findsOneWidget);
+      expect(find.text('Hapus Akun & Data Pribadi'), findsOneWidget);
     });
   });
 }

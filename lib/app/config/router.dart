@@ -15,6 +15,7 @@ import '../../features/chat/domain/room_model.dart';
 import '../../features/auth/presentation/views/counselor_pending_view.dart';
 import '../../features/counselor/presentation/views/counselor_main_nav_view.dart';
 import '../../features/counselor/presentation/views/counselor_chat_room_view.dart';
+import '../../features/profile/presentation/views/settings_view.dart';
 import '../../core/services/supabase_service.dart';
 part 'router.g.dart';
 
@@ -174,4 +175,11 @@ class CounselorPendingRoute extends GoRouteData with $CounselorPendingRoute {
   const CounselorPendingRoute();
   @override
   Widget build(BuildContext context, GoRouterState state) => const CounselorPendingView();
+}
+
+@TypedGoRoute<SettingsRoute>(path: '/settings')
+class SettingsRoute extends GoRouteData with $SettingsRoute {
+  const SettingsRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) => const SettingsView();
 }

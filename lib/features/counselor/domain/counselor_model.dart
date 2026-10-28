@@ -147,3 +147,78 @@ class CounselorChatMessage {
     );
   }
 }
+
+class CounselorArticle {
+  final String id;
+  final String authorId;
+  final String title;
+  final String category;
+  final String content;
+  final String? thumbnailUrl;
+  final int likesCount;
+  final DateTime createdAt;
+
+  const CounselorArticle({
+    required this.id,
+    required this.authorId,
+    required this.title,
+    required this.category,
+    required this.content,
+    this.thumbnailUrl,
+    this.likesCount = 0,
+    required this.createdAt,
+  });
+
+  factory CounselorArticle.fromJson(Map<String, dynamic> json) {
+    return CounselorArticle(
+      id: json['id'] as String,
+      authorId: json['author_id'] as String,
+      title: (json['title'] ?? '') as String,
+      category: (json['category'] ?? 'Self-care') as String,
+      content: (json['content'] ?? '') as String,
+      thumbnailUrl: json['thumbnail_url'] as String?,
+      likesCount: (json['likes_count'] ?? 0) as int,
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+    );
+  }
+}
+
+class CounselorForumThread {
+  final String id;
+  final String authorId;
+  final String? authorName;
+  final String? authorFaculty;
+  final String title;
+  final String topic;
+  final String content;
+  final int repliesCount;
+  final DateTime createdAt;
+
+  const CounselorForumThread({
+    required this.id,
+    required this.authorId,
+    this.authorName,
+    this.authorFaculty,
+    required this.title,
+    required this.topic,
+    required this.content,
+    this.repliesCount = 0,
+    required this.createdAt,
+  });
+
+  factory CounselorForumThread.fromJson(Map<String, dynamic> json) {
+    final profile = json['profiles'] as Map<String, dynamic>?;
+    return CounselorForumThread(
+      id: json['id'] as String,
+      authorId: json['author_id'] as String,
+      authorName: profile?['nickname'] ?? profile?['full_name'] ?? 'Konselor Sebaya',
+      authorFaculty: profile?['faculty'] ?? 'UB',
+      title: (json['title'] ?? '') as String,
+      topic: (json['topic'] ?? 'Studi Kasus') as String,
+      content: (json['content'] ?? '') as String,
+      repliesCount: (json['replies_count'] ?? 0) as int,
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+    );
+  }
+}
+
