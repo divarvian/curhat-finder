@@ -326,12 +326,21 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
           const SizedBox(height: 12),
           Text(
             'Keluarkan semua unek unek kamu!!',
-            style: AppTextStyles.bodyMedium.copyWith(
+            style: AppTextStyles.heading2.copyWith(
               color: AppColors.twilightDarker,
-              fontWeight: FontWeight.w500,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 4),
+          Text(
+            'Catatan ini 100% tersimpan privat di ruang jurnal pribadimu dan tidak dibagikan ke feed publik.',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.twilightNormal.withValues(alpha: 0.75),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 20),
           
           // Form Input
           Container(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../app/config/router.dart';
+import '../../../../core/services/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
@@ -65,8 +66,39 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
       }
     });
 
-    // Navigasi otomatis setelah 3.5 detik (menyesuaikan dengan jeda di atas)
-    Future.delayed(const Duration(milliseconds: 3500), () {
+    // Cek status sesi login setelah animasi selesai (2.2 detik)
+    Future.delayed(const Duration(milliseconds: 2200), () async {
+      if (!mounted) return;
+      final session = SupabaseService.client.auth.currentSession;
+      if (session != null) {
+        try {
+          final profile = await SupabaseService.client
+              .from('profiles')
+              .select('role, is_verified, counselor_status')
+              .eq('id', session.user.id)
+              .maybeSingle();
+
+          if (!mounted) return;
+          final role = (profile?['role'] as String?)?.toLowerCase();
+          final isVerified = profile?['is_verified'] as bool? ?? (role != 'konselor');
+          if (role == 'konselor') {
+            if (isVerified) {
+              const CounselorMainRoute().go(context);
+            } else {
+              const CounselorPendingRoute().go(context);
+            }
+            return;
+          } else {
+            const MainRoute().go(context);
+            return;
+          }
+        } catch (_) {
+          if (!mounted) return;
+          const MainRoute().go(context);
+          return;
+        }
+      }
+
       if (mounted) {
         const OnboardingRoute().go(context);
       }

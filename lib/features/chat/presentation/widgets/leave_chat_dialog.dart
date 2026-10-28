@@ -4,7 +4,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
 class LeaveChatDialog extends StatelessWidget {
-  const LeaveChatDialog({super.key});
+  final VoidCallback? onConfirmLeave;
+
+  const LeaveChatDialog({super.key, this.onConfirmLeave});
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +56,9 @@ class LeaveChatDialog extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
+                      if (onConfirmLeave != null) {
+                        onConfirmLeave!();
+                      }
                       context.pop(); // Tutup dialog
                       context.pop(); // Keluar dari chat room
                     },

@@ -3,7 +3,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/config/router.dart';
+import '../controllers/register_controller.dart';
 import '../providers/auth_provider.dart';
+import '../../../counselor/presentation/providers/counselor_provider.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -28,30 +31,65 @@ class _LoginViewState extends ConsumerState<LoginView> {
   }
 
   void _handleLogin() async {
-    // SEMENTARA BYPASS VALIDASI UNTUK TESTING SLICING
-    // if (_formKey.currentState!.validate()) {
-    //   final success = await ref.read(authProvider.notifier).login(
-    //         _emailController.text.trim(),
-    //         _passwordController.text,
-    //       );
-    // 
-    //   if (mounted) {
-    //     if (success) {
-    //       const RoleRoute().go(context); // Sementara dialihkan ke RoleView untuk melihat alur
-    //     } else {
-    //       final auth = ref.read(authProvider);
-    //       ScaffoldMessenger.of(context).showSnackBar(
-    //         SnackBar(
-    //           content: Text(auth.errorMessage ?? 'Email atau password salah. Coba lagi.'),
-    //           backgroundColor: Colors.redAccent,
-    //         ),
-    //       );
-    //     }
-    //   }
-    // }
-    
-    // Langsung pindah ke halaman Role tanpa perlu isi email/password
-    const RoleRoute().go(context);
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final rawInput = _emailController.text.trim();
+    final password = _passwordController.text;
+    final formattedEmail = rawInput.contains('@') ? rawInput : '$rawInput@student.ub.ac.id';
+
+    // 1. Cek apakah akun sudah terdaftar di Supabase
+    final exists = await ref.read(authProvider.notifier).checkUserExists(formattedEmail);
+    if (!mounted) return;
+
+    if (!exists) {
+      // Simpan kredensial ke registerController agar digunakan saat registrasi
+      ref.read(registerControllerProvider.notifier).setCredentials(
+        email: formattedEmail,
+        password: password,
+      );
+
+      // Akun belum terdaftar: Otomatis arahkan ke alur pemilihan peran dan pendaftaran
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Akun belum terdaftar. Silakan pilih peran dan lengkapi profil kamu.'),
+          backgroundColor: AppColors.twilightDarker,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      const RoleRoute().go(context);
+      return;
+    }
+
+    // 2. Jika akun sudah ada, lakukan verifikasi kata sandi (login)
+    final success = await ref.read(authProvider.notifier).login(formattedEmail, password);
+    if (!mounted) return;
+
+    if (success) {
+      // Muat ulang data profil terbaru dari Supabase
+      ref.read(profileProvider.notifier).reloadProfile();
+      ref.read(counselorProvider.notifier).initializeSupabaseSync();
+
+      final auth = ref.read(authProvider);
+      if (auth.role == 'konselor') {
+        if (auth.isVerified) {
+          const CounselorMainRoute().go(context);
+        } else {
+          const CounselorPendingRoute().go(context);
+        }
+      } else {
+        const MainRoute().go(context);
+      }
+    } else {
+      final auth = ref.read(authProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(auth.errorMessage ?? 'Password yang kamu masukkan salah. Silakan coba lagi.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   // Widget Kustom untuk TextField

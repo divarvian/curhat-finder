@@ -6,9 +6,15 @@ import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../controllers/register_controller.dart';
+import '../providers/auth_provider.dart';
+import '../../../counselor/domain/counselor_model.dart';
+import '../../../counselor/presentation/providers/counselor_provider.dart';
+import '../../../profile/domain/user_profile_model.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
 import '../widgets/register_steps/register_steps_basic.dart';
 import '../widgets/register_steps/register_steps_academic.dart';
 import '../widgets/register_steps/register_steps_final.dart';
+import '../../../../core/utils/academic_helper.dart';
 
 class RegisterView extends ConsumerStatefulWidget {
   final bool isKonselor;
@@ -48,19 +54,107 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
     }
   }
 
-  void _submitForm() {
+  void _submitForm() async {
+    final registerCtrl = ref.read(registerControllerProvider.notifier);
     final state = ref.read(registerControllerProvider);
-    debugPrint("Full Name: ${state.fullName}");
-    debugPrint("Nickname: ${state.nickname}");
-    debugPrint("Gender: ${state.gender}");
-    debugPrint("Batch: ${state.batch}");
-    debugPrint("Faculty ID: ${state.facultyId}");
-    debugPrint("Prodi ID: ${state.prodiId}");
-    debugPrint("Hobbies: ${state.hobbies}");
-    debugPrint("Topics: ${state.topics}");
-    
-    // Redirect to main
-    const MainRoute().go(context);
+    final role = widget.isKonselor ? 'konselor' : 'mahasiswa';
+    final cleanName = state.nickname.isNotEmpty ? state.nickname : state.fullName;
+    final fallbackEmail = '${cleanName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '')}@student.ub.ac.id';
+
+    final email = registerCtrl.inputEmail.isNotEmpty ? registerCtrl.inputEmail : fallbackEmail;
+    final password = registerCtrl.inputPassword.isNotEmpty ? registerCtrl.inputPassword : 'password123';
+
+    // Tampilkan loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(
+        child: CircularProgressIndicator(color: AppColors.twilightDarker),
+      ),
+    );
+
+    final facultyName = AcademicHelper.resolveFaculty(state.facultyId);
+    final prodiName = AcademicHelper.resolveProdi(state.prodiId);
+
+    final success = await ref.read(authProvider.notifier).register(
+      email: email,
+      password: password,
+      role: role,
+      fullName: state.fullName.isNotEmpty ? state.fullName : 'Pengguna Baru',
+      nickname: state.nickname.isNotEmpty ? state.nickname : cleanName,
+      gender: state.gender.isNotEmpty ? state.gender : 'Lainnya',
+      batchYear: state.batch.isNotEmpty ? state.batch : '2025',
+      faculty: facultyName,
+      studyProgram: prodiName,
+      hobbies: state.hobbies.toList(),
+      topics: state.topics.toList(),
+    );
+
+    if (mounted) {
+      Navigator.of(context, rootNavigator: true).pop(); // Tutup loading dialog
+    }
+
+    if (!success) {
+      if (mounted) {
+        final err = ref.read(authProvider).errorMessage;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(err ?? 'Pendaftaran gagal. Silakan periksa kembali data Anda.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Perbarui state profil seketika agar Beranda dan Profil langsung menampilkan data yang diinput
+    final hobbiesList = state.hobbies.toList();
+    final topicsList = state.topics.toList();
+
+    if (widget.isKonselor) {
+      ref.read(counselorProvider.notifier).updateProfile(
+        CounselorProfile(
+          name: state.nickname.isNotEmpty ? state.nickname : state.fullName,
+          email: email,
+          faculty: facultyName,
+          studyProgram: prodiName,
+          batchYear: state.batch.isNotEmpty ? state.batch : '2025',
+          gender: state.gender.isNotEmpty ? state.gender : 'Perempuan',
+          role: 'Konselor',
+          avatarPath: 'assets/images/mascot.png',
+          topics: topicsList.isNotEmpty ? topicsList : ['Anxiety', 'Stres', 'Burnout'],
+          isOnline: true,
+          activeSessions: 0,
+          totalHelped: 0,
+          responseTime: '5m',
+        ),
+      );
+      ref.read(counselorProvider.notifier).initializeSupabaseSync();
+    } else {
+      ref.read(profileProvider.notifier).updateProfile(
+        UserProfile(
+          name: state.nickname.isNotEmpty ? state.nickname : state.fullName,
+          role: 'Mahasiswa',
+          email: email,
+          faculty: facultyName,
+          studyProgram: prodiName,
+          batchYear: state.batch.isNotEmpty ? state.batch : '2025',
+          gender: state.gender.isNotEmpty ? state.gender : 'Perempuan',
+          hobby: hobbiesList.isNotEmpty ? hobbiesList.join(', ') : 'Belum diisi',
+          avatarPath: 'assets/images/mascot.png',
+        ),
+      );
+      ref.read(profileProvider.notifier).reloadProfile();
+    }
+
+    if (!mounted) return;
+
+    // Redirect to respective main nav
+    if (widget.isKonselor) {
+      const CounselorPendingRoute().go(context);
+    } else {
+      const MainRoute().go(context);
+    }
   }
 
   @override

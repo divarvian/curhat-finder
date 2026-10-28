@@ -1,163 +1,174 @@
-# Template Starter Flutter Androzon Mobile Engineer 2026
+# Curhat Finder 💬🌱
 
-Proyek ini adalah template dasar Flutter untuk project Androzon Mobile Engineer 2026.
+> **Platform Konseling Sebaya & Ruang Curhat Mahasiswa Berbasis Flutter & Supabase**
+
+Curhat Finder adalah aplikasi mobile kesehatan mental mahasiswa yang dirancang untuk menyediakan ruang aman, inklusif, dan rahasia bagi mahasiswa dalam mencurahkan isi hati, berdiskusi secara anonim, maupun mendapatkan pendampingan dari Konselor Sebaya yang telah terverifikasi.
 
 ---
 
-## Struktur direktori
+## ✨ Fitur Utama
 
-Proyek pada branch ini menggunakan arsitektur MVVM (Model-View-ViewModel) dengan pembagian folder berdasarkan fitur di bawah direktori `ui/`, serta pemisahan logika data ke dalam direktori `data/` (Data Layer).
+### 1. 🤝 Konseling Sebaya (Peer Counseling)
+- **Antrean On-Demand Realtime**: Mahasiswa dapat memilih konselor sebaya yang sedang aktif (*online*) dan mengantre secara otomatis.
+- **Obrolan 1-on-1 Interaktif**:
+  - Tanda status pesan (*Sent*, *Delivered*, *Read*).
+  - Indikator mengetik (*Typing & Choosing Emoji Indicator*).
+  - Pemilih emoji (*In-app Emoji Keyboard*).
+  - Deteksi keaktifan (*Activity-based Presence Heartbeat*).
+- **Kontrol Pesan**:
+  - **Tarik Pesan (*Unsend*)**: Menarik pesan terkirim dalam batas toleransi waktu 30 menit.
+  - **Hapus untuk Saya (*Delete for Me*)**: Menyembunyikan pesan tertentu hanya dari tampilan lokal pengguna.
+- **Akhiri Sesi & Rating**: Mahasiswa dapat mengakhiri sesi dan memberikan ulasan bintang serta masukan untuk konselor.
 
-Berikut adalah pemetaan folder pada branch `feature/riverpod`:
+### 2. 🎭 Obrolan Anonim (Anonymous Matchmaking)
+- **Pencocokan Acak Berdasarkan Kebutuhan**: Pilihan mode *"Cuma mau didengar"*, *"Butuh saran"*, atau *"Obrolan santai"*.
+- **3-Layer Deduplication Engine**: Mencegah duplikasi pesan saat jaringan tidak stabil atau saat terjadi *auto-retry*.
+- **Auto-Reconnection & AI Bot Companion**: Rekoneksi otomatis saat koneksi pulih, serta pendampingan AI Bot saat antrean sedang sepi.
+- **Pelaporan & Moderasi (*Report Engine*)**: Mekanisme pelaporan obrolan yang melanggar aturan komunitas demi menjaga ruang yang sehat.
+
+### 3. 🔒 Jurnal & Mood Tracker Privat
+- **Daily Mood Check-In**: Pencatatan emosi harian (*Senang, Biasa saja, Lelah, Sedih, Marah*) beserta catatan refleksi.
+- **Ruang Sambat Privat**: Catatan curhat pribadi yang **100% terisolasi** menggunakan tabel khusus `user_private_sambats` dengan kebijakan keamanan PostgreSQL *Row Level Security (RLS)* — hanya dapat diakses oleh pemilik akun (`auth.uid() = user_id`).
+
+### 4. 💡 Beranda & Tips Komunitas
+- **Feed Tips Self-Care**: Kumpulan kiat praktis kesehatan mental, manajemen stres, dan produktivitas mahasiswa yang dapat difilter berdasarkan kategori.
+- **Interaksi Komunitas**: Mahasiswa dapat membagikan tip positif dan menyukai tip bermanfaat.
+
+### 5. 🛡️ Gerbang Verifikasi Konselor (*Approval Gate*)
+- Pendaftaran konselor sebaya melalui proses verifikasi berkas/status (`pending`, `approved`, `rejected`).
+- Konselor yang belum disetujui dialihkan ke layar antarmuka khusus pemantauan status dan dibatasi dari akses sesi konseling mahasiswa.
+
+### 6. 🚨 Pulse & Hotline Darurat
+- Direktori kontak darurat dan hotline bantuan krisis kesehatan mental universitas yang dapat dihubungi secara cepat saat situasi genting.
+
+### 7. 🔔 Push Notification Realtime
+- Didukung oleh integrasi **Firebase Cloud Messaging (FCM HTTP v1)** dan database triggers Supabase untuk memberikan pemberitahuan instan saat ada pesan masuk atau antrean baru.
+
+---
+
+## 🛠️ Tech Stack & Arsitektur
+
+- **Framework**: [Flutter](https://flutter.dev/) (Channel Stable, Dart 3.x)
+- **State Management**: [Flutter Riverpod](https://riverpod.dev/) (`NotifierProvider`, immutable state pattern)
+- **Navigasi & Routing**: [GoRouter](https://pub.dev/packages/go_router) (Declarative routing, guarded redirects)
+- **Backend & Database**: [Supabase](https://supabase.com/)
+  - PostgreSQL 17 dengan RLS (*Row Level Security*) ketat di semua tabel
+  - Supabase Realtime (Broadcast, Presence, Postgres Changes)
+  - Supabase Edge Functions (Deno Runtime)
+  - Stored Procedures & Atomic RPCs
+- **Push Notification**: Firebase Core, Firebase Messaging (FCM v1), `flutter_local_notifications`
+- **Konfigurasi Environment**: `flutter_dotenv` (Isolasi kredensial via `.env` dan `.env.example`)
+- **Code Generation**: Freezed, JSON Serializable, GoRouter Builder, Build Runner
+
+---
+
+## 📂 Struktur Direktori
 
 ```
 lib/
-├── main.dart                          # Entry point aplikasi (Inisialisasi ProviderScope)
 ├── app/
 │   └── config/
-│       └── router.dart                # Pengaturan rute menggunakan GoRouter
+│       ├── router.dart              # Konfigurasi GoRouter dan Route Guards
+│       └── router.g.dart            # Generated routes
 ├── core/
-│   └── theme/
-│       ├── app_colors.dart            # Token warna aplikasi
-│       ├── app_text_styles.dart       # Gaya tipografi aplikasi
-│       └── app_theme.dart             # Tema utama Material 3
-├── data/                              # Lapisan Data (Data Layer)
-│   ├── models/
-│   │   └── user.dart                  # Model data pengguna
 │   ├── services/
-│   │   └── auth_service.dart          # Layanan simulasi API autentikasi
-│   └── repositories/
-│       └── auth_repository.dart       # Repositori untuk konversi data ke model
-└── ui/
-    └── features/                      # Lapisan Tampilan (UI & State)
-        ├── onboarding/
-        │   └── views/
-        │       └── onboarding_view.dart
-        ├── auth/
-        │   ├── providers/
-        │   │   ├── auth_provider.dart # NotifierProvider untuk mengelola status auth
-        │   │   └── auth_state.dart    # Status state dari auth
-        │   └── views/
-        │       ├── login_view.dart
-        │       └── register_view.dart
-        └── dashboard/
-            └── views/
-                └── dashboard_view.dart
-```
-
-### Rincian folder utama
-
-- **`lib/main.dart`**: Titik masuk utama aplikasi. Bagian ini membungkus aplikasi dengan widget `ProviderScope` dari Riverpod untuk mengelola daur hidup status (states) di seluruh aplikasi.
-- **`lib/data/`**: Berisi model data (`User`), layanan API (`AuthService`), dan repositori (`AuthRepository`). Semua logika pengambilan data dari server berada di lapisan ini.
-- **`lib/ui/features/`**: Berisi halaman visual (views) dan pengelola status berupa Notifier. Logika tampilan dipisahkan dari detail cara data diambil dari server.
-
----
-
-## Pembagian Branch Git
-
-Untuk mempermudah pembandingan, repositori ini memisahkan fitur autentikasi (*auth*) ke dalam beberapa branch terpisah sesuai pustaka pengelola status yang digunakan:
-
-1. **`main`**: Berisi demo penghitung (*Counter*) sederhana yang menggunakan ketiga pengelola status secara bersamaan di satu halaman dashboard utama. Branch ini juga berisi struktur dasar tema, splash screen, dan halaman onboarding.
-2. **`feature/provider`**: Contoh implementasi fitur login dan pendaftaran pengguna menggunakan Provider.
-3. **`feature/riverpod`**: Contoh implementasi fitur login dan pendaftaran pengguna menggunakan Riverpod.
-4. **`feature/bloc`**: Contoh implementasi fitur login dan pendaftaran pengguna menggunakan BLoC (Cubit).
-
-Kredensial percobaan (dummy) untuk halaman login:
-- **Email**: `admin@example.com`
-- **Password**: `password123`
-
----
-
-## Perbandingan State Management
-
-Berikut perbandingan objektif dari ketiga pustaka pengelola status yang diimplementasikan dalam proyek ini:
-
-| Kriteria | Provider | Riverpod | BLoC / Cubit |
-| :--- | :--- | :--- | :--- |
-| **Tingkat Kesulitan** | Mudah dipelajari karena mirip dengan arsitektur bawaan Flutter. | Sedang, memerlukan pemahaman tentang konsep provider global di luar widget. | Tinggi, membutuhkan pemahaman tentang aliran data asinkron (*streams*) dan event. |
-| **Kode Boilerplate** | Sangat sedikit. | Sedikit hingga sedang. | Cukup banyak karena harus mendefinisikan event, state, dan kelas BLoC. |
-| **Ketergantungan Context** | Ya, membutuhkan `BuildContext` untuk membaca status. | Tidak, menggunakan objek `WidgetRef` untuk membaca status di luar *context*. | Ya, membutuhkan `BuildContext` untuk mencari provider BLoC yang sesuai. |
-| **Skalabilitas** | Cocok untuk proyek kecil hingga menengah. | Sangat baik untuk proyek skala kecil hingga besar. | Sangat baik untuk proyek skala besar dengan tim yang banyak. |
-
----
-
-## Panduan Penggunaan Google Fonts
-
-Proyek ini menggunakan pustaka `google_fonts` untuk mengatur tipografi global secara dinamis.
-
-### Penggunaan Standar (Memerlukan Koneksi Internet)
-Font akan diunduh secara otomatis dari server Google saat aplikasi pertama kali dijalankan dan disimpan di dalam penyimpanan lokal perangkat:
-```dart
-import 'package:google_fonts/google_fonts.dart';
-
-final TextStyle gayaTeks = GoogleFonts.inter(
-  fontSize: 16,
-  fontWeight: FontWeight.normal,
-);
-```
-
-### Alternatif Penggunaan Font File Langsung (Secara Offline/Luring)
-
-Jika Anda ingin menghindari penggunaan paket `google_fonts` dan menggunakan berkas font lokal secara langsung (cara bawaan Flutter), ikuti langkah-langkah berikut:
-
-#### Langkah 1: Siapkan Berkas Font
-1. Unduh berkas font pilihan Anda (format `.ttf` atau `.otf`) dari penyedia font (misalnya Google Fonts atau lainnya).
-2. Buat direktori bernama `assets/fonts/` di dalam proyek Anda.
-3. Simpan berkas font tersebut di dalam direktori tersebut (misalnya `Inter-Regular.ttf` dan `Inter-Bold.ttf`).
-
-#### Langkah 2: Daftarkan Font di `pubspec.yaml`
-Konfigurasikan keluarga font tersebut di bagian `flutter:` pada berkas `pubspec.yaml`:
-```yaml
-flutter:
-  fonts:
-    - family: Inter  # Nama keluarga font yang akan dipanggil di kode Dart
-      fonts:
-        - asset: assets/fonts/Inter-Regular.ttf
-        - asset: assets/fonts/Inter-Bold.ttf
-          weight: 700  # Menentukan ketebalan font untuk versi Bold
-```
-
-#### Langkah 3: Gunakan di Kode Dart
-Anda dapat menerapkan font tersebut langsung menggunakan parameter `fontFamily` pada `TextStyle`:
-```dart
-const TextStyle gayaTeks = TextStyle(
-  fontFamily: 'Inter',
-  fontSize: 16,
-  fontWeight: FontWeight.bold, // Ini akan menggunakan berkas Inter-Bold.ttf secara otomatis
-);
+│   │   ├── notification_service.dart # Inisialisasi FCM & Notifikasi Lokal
+│   │   ├── storage_service.dart     # Manajemen upload avatar Supabase Storage
+│   │   └── supabase_service.dart    # Client Supabase & pembaca konfigurasi .env
+│   ├── theme/
+│   │   ├── app_colors.dart          # Palet warna aplikasi
+│   │   ├── app_text_styles.dart     # Skala tipografi
+│   │   └── app_theme.dart           # Tema Material Design 3
+│   └── utils/
+│       └── academic_helper.dart     # Resolver kode fakultas & prodi universitas
+├── features/
+│   ├── auth/                        # Registrasi wizard, login, approval gate konselor
+│   ├── beranda/                     # Feed tips self-care & community service
+│   ├── chat/                        # Obrolan konseling, anon chat, matchmaking, rating
+│   ├── counselor/                   # Dashboard & navigasi khusus konselor sebaya
+│   ├── jurnal/                      # Mood check-in & catatan sambat privat
+│   ├── profile/                     # Profil pengguna, avatar, status
+│   ├── pulse/                       # Hotline darurat & kontak krisis
+│   └── splash/                      # Splash screen & routing otomatis berbasis role
+└── main.dart                        # Entry point aplikasi
 ```
 
 ---
 
-## Panduan Pembuatan Ikon Peluncur dan Splash Screen
+## 🚀 Panduan Memulai (Quick Start)
 
-### Ikon Peluncur (App Icon)
-Proyek ini menggunakan paket `icons_launcher` untuk memperbarui ikon aplikasi secara otomatis. 
-- **Persyaratan Aset**: Gunakan gambar persegi berformat PNG dengan resolusi minimal 512x512 piksel. Pastikan tidak ada area transparan pada pinggiran gambar agar ikon tampil maksimal pada perangkat Android.
-- **Cara Membuat**:
-  1. Siapkan ikon Anda dan simpan di `assets/icons/icon_launcher.png`.
-  2. Jalankan perintah berikut di terminal:
-     ```bash
-     dart run icons_launcher:create
-     ```
+### 1. Prasyarat
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (versi 3.12 atau lebih baru)
+- Android Studio / VS Code dengan ekstensi Flutter & Dart
+- Perangkat Android fisik atau Emulator
 
-### Splash Screen
-Proyek ini menggunakan paket `flutter_native_splash` untuk memodifikasi splash screen bawaan perangkat.
-- **Persyaratan Aset**: Siapkan logo berformat PNG dengan resolusi minimal 1024x1024 piksel untuk diletakkan di bagian tengah layar.
-- **Cara Membuat**:
-  1. Siapkan gambar splash screen Anda dan simpan di `assets/images/splash_screen.png`.
-  2. Sesuaikan konfigurasi warna latar belakang dan letak gambar pada bagian `flutter_native_splash` di dalam berkas `pubspec.yaml`.
-  3. Jalankan perintah berikut di terminal:
-     ```bash
-     flutter pub run flutter_native_splash:create
-     ```
+### 2. Kloning Repositori
+```bash
+git clone https://github.com/divarvian/curhat-finder.git
+cd curhat-finder
+```
+
+### 3. Konfigurasi Environment (`.env`)
+Salin file template `.env.example` menjadi `.env`:
+```bash
+cp .env.example .env
+```
+Buka file `.env` dan sesuaikan URL dan Publishable Anon Key proyek Supabase Anda:
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-publishable-key
+```
+
+> **Catatan Keamanan**: File `.env` lokal telah dimasukkan ke dalam `.gitignore` dan tidak akan pernah terdorong ke repositori Git publik.
+
+### 4. Konfigurasi Firebase Android (Client Config)
+Salin file template `google-services.json.example` menjadi `google-services.json` di folder `android/app/`:
+```bash
+cp android/app/google-services.json.example android/app/google-services.json
+```
+Isi konfigurasi client dari Firebase Console proyek Anda.
+
+### 5. Unduh Dependensi
+```bash
+flutter pub get
+```
+
+### 6. Jalankan Aplikasi
+```bash
+flutter run
+```
 
 ---
 
-## Tautan Dokumentasi Resmi
+## 🧪 Pengujian & Kualitas Kode
 
-Gunakan tautan di bawah ini untuk mempelajari dasar teori dari masing-masing pustaka pengelola status secara mendalam:
-- [Dokumentasi Resmi Provider](https://pub.dev/packages/provider)
-- [Dokumentasi Resmi Riverpod](https://riverpod.dev)
-- [Dokumentasi Resmi BLoC](https://bloclibrary.dev)
+Aplikasi ini dilengkapi dengan pengujian unit dan pengujian widget komprehensif:
 
+```bash
+# Jalankan analisis statis kode
+flutter analyze
+
+# Jalankan seluruh rangkaian test suite
+flutter test test/widget_test.dart
+```
+
+Cakupan pengujian mencakup:
+- Pemetaan akademik fakultas & program studi
+- Antrean, deduplikasi pesan chat 3-layer, dan rekoneksi anon chat
+- Kebijakan unsend pesan (toleransi 30 menit) dan delete for me
+- Approval gate konselor sebaya & `CounselorPendingView`
+- Keamanan pembacaan environment variables tanpa kebocoran kredensial
+
+---
+
+## 🔒 Kebijakan Keamanan & Privasi
+
+1. **Prinsip Least Privilege**: Seluruh tabel Supabase dilindungi oleh *Row Level Security (RLS)*. Mahasiswa tidak dapat membaca data curhat atau sesi konseling milik pengguna lain.
+2. **Kredensial Aman**: Tidak ada kredensial sensitif, service account private key, atau secret token yang di-hardcode di dalam source code.
+3. **Isolasi Curhat**: Catatan sambat disimpan di tabel terpisah khusus pengguna terotentikasi, terpisah dari konten publik beranda.
+
+---
+
+## 📄 Lisensi
+
+Hak Cipta © 2026 Tim Pengembang Curhat Finder. Seluruh hak cipta dilindungi undang-undang.

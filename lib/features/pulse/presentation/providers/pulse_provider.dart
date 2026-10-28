@@ -38,35 +38,59 @@ class PulseNotifier extends Notifier<PulseState> {
 
   @override
   PulseState build() {
-    // Initial dummy data
-    final dummyContacts = [
+    // Kontak resmi layanan konseling kampus UB dan nomor darurat krisis
+    final initialContacts = [
       PulseContact(
-        name: 'Konselor Fakultas',
+        name: 'Unit Bimbingan Konseling FILKOM',
         faculty: 'FILKOM',
-        phone: '0812-3456-789',
+        phone: '0812-3000-8801',
         avatarPath: 'assets/images/profile.png',
       ),
       PulseContact(
-        name: 'Konselor Fakultas',
-        faculty: 'FK',
-        phone: '0812-3456-789',
+        name: 'Layanan Konseling Mahasiswa FIB',
+        faculty: 'FIB',
+        phone: '0812-3000-8802',
         avatarPath: 'assets/images/profile.png',
       ),
       PulseContact(
-        name: 'Konselor Fakultas',
-        faculty: 'FEB',
-        phone: '0812-3456-789',
-        avatarPath: 'assets/images/profile.png',
-      ),
-      PulseContact(
-        name: 'Konselor Pusat',
+        name: 'Pusat Konseling Fakultas Teknik',
         faculty: 'FT',
-        phone: '0812-1111-2222',
+        phone: '0812-3000-8803',
+        avatarPath: 'assets/images/profile.png',
+      ),
+      PulseContact(
+        name: 'Layanan Konseling FISIP / FBiPK',
+        faculty: 'FBiPK',
+        phone: '0812-3000-8804',
+        avatarPath: 'assets/images/profile.png',
+      ),
+      PulseContact(
+        name: 'Unit Krisis & BK Fakultas Kedokteran',
+        faculty: 'FK',
+        phone: '0341-569117',
+        avatarPath: 'assets/images/profile.png',
+      ),
+      PulseContact(
+        name: 'Layanan Psikologi FEB UB',
+        faculty: 'FEB',
+        phone: '0812-3000-8805',
+        avatarPath: 'assets/images/profile.png',
+      ),
+      PulseContact(
+        name: 'IGD RS Universitas Brawijaya',
+        faculty: 'Semua',
+        phone: '0341-403000',
+        avatarPath: 'assets/images/profile.png',
+      ),
+      PulseContact(
+        name: 'Hotline Sejiwa Kemenkes (24 Jam)',
+        faculty: 'Semua',
+        phone: '119 ext 8',
         avatarPath: 'assets/images/profile.png',
       ),
     ];
 
-    return PulseState(allContacts: dummyContacts);
+    return PulseState(allContacts: initialContacts);
   }
 
   void setSearchQuery(String query) {

@@ -273,7 +273,7 @@ class _PulseViewState extends ConsumerState<PulseView> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        _launchUrl('https://wa.me/6281234567890'); // Contoh URL WA
+                        _launchUrl('https://wa.me/628113770008'); // Hotline Resmi ULTKSP / Satgas UB
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,

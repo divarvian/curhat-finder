@@ -11,12 +11,37 @@ import '../../features/chat/presentation/views/chat_room_view.dart';
 import '../../features/chat/presentation/views/room_detail_view.dart';
 import '../../features/chat/presentation/views/chat_anon_matching_view.dart';
 import '../../features/chat/presentation/views/chat_anon_room_view.dart';
+import '../../features/chat/domain/room_model.dart';
+import '../../features/auth/presentation/views/counselor_pending_view.dart';
+import '../../features/counselor/presentation/views/counselor_main_nav_view.dart';
+import '../../features/counselor/presentation/views/counselor_chat_room_view.dart';
+import '../../core/services/supabase_service.dart';
 part 'router.g.dart';
 
 /// Disini urusan navigation
 final GoRouter router = GoRouter(
   initialLocation: '/splash',
   routes: $appRoutes,
+  redirect: (BuildContext context, GoRouterState state) {
+    final publicRoutes = [
+      '/splash',
+      '/onboarding',
+      '/pre_login',
+      '/login',
+      '/role',
+      '/register',
+      '/counselor_pending',
+    ];
+
+    final isPublic = publicRoutes.contains(state.matchedLocation);
+    final hasSession = SupabaseService.client.auth.currentSession != null;
+
+    if (!hasSession && !isPublic) {
+      return '/login';
+    }
+
+    return null;
+  },
 );
 
 @TypedGoRoute<SplashRoute>(path: '/splash')
@@ -74,36 +99,79 @@ class MainRoute extends GoRouteData with $MainRoute {
 
 @TypedGoRoute<ChatRoomRoute>(path: '/chat_room')
 class ChatRoomRoute extends GoRouteData with $ChatRoomRoute {
-  const ChatRoomRoute({this.counselorName = 'Konselor', this.isOnline = false});
+  const ChatRoomRoute({
+    this.counselorName = 'Konselor',
+    this.isOnline = false,
+    this.sessionId = '',
+  });
   final String counselorName;
   final bool isOnline;
+  final String sessionId;
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return ChatRoomView(
       counselorName: counselorName,
       isOnline: isOnline,
+      sessionId: sessionId,
     );
   }
 }
 
 @TypedGoRoute<RoomDetailRoute>(path: '/room_detail')
 class RoomDetailRoute extends GoRouteData with $RoomDetailRoute {
-  const RoomDetailRoute();
+  const RoomDetailRoute({this.roomId = ''});
+  final String roomId;
   @override
-  Widget build(BuildContext context, GoRouterState state) => const RoomDetailView();
+  Widget build(BuildContext context, GoRouterState state) => RoomDetailView(
+        roomId: roomId,
+        room: state.extra as RoomModel?,
+      );
 }
 
 @TypedGoRoute<ChatAnonMatchingRoute>(path: '/chat_anon_matching')
 class ChatAnonMatchingRoute extends GoRouteData with $ChatAnonMatchingRoute {
-  const ChatAnonMatchingRoute();
+  const ChatAnonMatchingRoute({this.mode = 'Cuma mau didengar'});
+  final String mode;
   @override
-  Widget build(BuildContext context, GoRouterState state) => const ChatAnonMatchingView();
+  Widget build(BuildContext context, GoRouterState state) => ChatAnonMatchingView(mode: mode);
 }
 
 @TypedGoRoute<ChatAnonRoomRoute>(path: '/chat_anon_room')
 class ChatAnonRoomRoute extends GoRouteData with $ChatAnonRoomRoute {
-  const ChatAnonRoomRoute();
+  const ChatAnonRoomRoute({this.sessionId = '', this.mode = 'Cuma mau didengar'});
+  final String sessionId;
+  final String mode;
   @override
-  Widget build(BuildContext context, GoRouterState state) => const ChatAnonRoomView();
+  Widget build(BuildContext context, GoRouterState state) => ChatAnonRoomView(sessionId: sessionId, mode: mode);
+}
+
+@TypedGoRoute<CounselorMainRoute>(path: '/counselor_main')
+class CounselorMainRoute extends GoRouteData with $CounselorMainRoute {
+  const CounselorMainRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) => const CounselorMainNavView();
+}
+
+@TypedGoRoute<CounselorChatRoomRoute>(path: '/counselor_chat_room')
+class CounselorChatRoomRoute extends GoRouteData with $CounselorChatRoomRoute {
+  const CounselorChatRoomRoute({
+    this.sessionId = '',
+    this.studentTitle = 'Anonym - FILKOM',
+  });
+  final String sessionId;
+  final String studentTitle;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) => CounselorChatRoomView(
+        sessionId: sessionId,
+        studentTitle: studentTitle,
+      );
+}
+
+@TypedGoRoute<CounselorPendingRoute>(path: '/counselor_pending')
+class CounselorPendingRoute extends GoRouteData with $CounselorPendingRoute {
+  const CounselorPendingRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) => const CounselorPendingView();
 }

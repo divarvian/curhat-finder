@@ -47,3 +47,22 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Security & Private Credentials
+*-firebase-adminsdk-*.json
+*firebase-adminsdk*.json
+*.private.json
+*.key
+*.pem
+*.p8
+*.p12
+service-account*.json
+.env*
+!.env.example
+android/app/google-services.json
+google-services.json
+!android/app/google-services.json.example
+
+# Internal Documentation & Audits
+/docs/
+docs/

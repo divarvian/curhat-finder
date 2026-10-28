@@ -3,6 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'register_state.dart';
 
 class RegisterController extends Notifier<RegisterState> {
+  String inputEmail = '';
+  String inputPassword = '';
+
+  void setCredentials({required String email, required String password}) {
+    inputEmail = email;
+    inputPassword = password;
+  }
+
   @override
   RegisterState build() {
     return const RegisterState();

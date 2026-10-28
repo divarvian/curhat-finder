@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../beranda/data/community_service.dart';
 
 class JurnalHistoryItem {
   final String title;
@@ -44,9 +45,53 @@ class JurnalState {
 }
 
 class JurnalNotifier extends Notifier<JurnalState> {
+  late final CommunityService _communityService;
+
   @override
   JurnalState build() {
+    _communityService = ref.watch(communityServiceProvider);
+    Future.microtask(() => _loadInitialJournals());
     return JurnalState();
+  }
+
+  void _loadInitialJournals() async {
+    try {
+      final rows = await _communityService.fetchUserJournals();
+      if (rows.isNotEmpty) {
+        final items = rows.map((r) {
+          final mood = r['mood_index'] as int? ?? 0;
+          final dateStr = (r['entry_date'] ?? r['created_at'] ?? '').toString();
+          final formattedDate = dateStr.length >= 10 ? dateStr.substring(0, 10) : 'Hari ini';
+
+          return JurnalHistoryItem(
+            title: _getMoodTitle(mood),
+            text: r['mood_note'] ?? 'Tidak ada cerita.',
+            date: formattedDate,
+            imagePath: _getMoodImagePath(mood),
+          );
+        }).toList();
+
+        state = state.copyWith(checkInHistory: items);
+      }
+    } catch (_) {}
+
+    try {
+      final privateSambats = await _communityService.fetchUserPrivateSambats();
+      if (privateSambats.isNotEmpty) {
+        final items = privateSambats.map((s) {
+          final dateStr = (s['created_at'] ?? '').toString();
+          final formattedDate = dateStr.length >= 10 ? dateStr.substring(0, 10) : 'Hari ini';
+          return JurnalHistoryItem(
+            title: (s['mood_tag'] as String?) ?? 'Sambat',
+            text: (s['content'] as String?) ?? '',
+            date: formattedDate,
+            imagePath: 'assets/images/angry.png',
+          );
+        }).toList();
+
+        state = state.copyWith(sambatHistory: items);
+      }
+    } catch (_) {}
   }
 
   void setTab(int index) {
@@ -57,35 +102,56 @@ class JurnalNotifier extends Notifier<JurnalState> {
     state = state.copyWith(selectedMood: mood);
   }
 
-  void saveCheckIn(String note) {
+  void saveCheckIn(String note) async {
     if (state.selectedMood == null) return;
 
+    final mood = state.selectedMood!;
+    final now = DateTime.now();
+    final dateStr = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+
     final newItem = JurnalHistoryItem(
-      title: _getMoodTitle(state.selectedMood!),
+      title: _getMoodTitle(mood),
       text: note.isNotEmpty ? note : 'Tidak ada cerita.',
-      date: '07/09/2026',
-      imagePath: _getMoodImagePath(state.selectedMood!),
+      date: dateStr,
+      imagePath: _getMoodImagePath(mood),
     );
 
     state = state.copyWith(
       checkInHistory: [newItem, ...state.checkInHistory],
       clearMood: true,
     );
+
+    try {
+      await _communityService.createJournal(
+        moodIndex: mood,
+        moodNote: note.isNotEmpty ? note : null,
+      );
+    } catch (_) {}
   }
 
-  void saveSambat(String note) {
+  void saveSambat(String note) async {
     if (note.trim().isEmpty) return;
+
+    final now = DateTime.now();
+    final dateStr = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
 
     final newItem = JurnalHistoryItem(
       title: 'Sambat',
-      text: note,
-      date: '07/09/2026',
+      text: note.trim(),
+      date: dateStr,
       imagePath: 'assets/images/angry.png',
     );
 
     state = state.copyWith(
       sambatHistory: [newItem, ...state.sambatHistory],
     );
+
+    try {
+      await _communityService.createPrivateSambat(
+        content: note.trim(),
+        moodTag: 'Sambat',
+      );
+    } catch (_) {}
   }
 
   String _getMoodTitle(int moodIndex) {

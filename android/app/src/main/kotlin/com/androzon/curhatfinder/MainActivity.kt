@@ -1,4 +1,4 @@
-package com.example.flutter_starter_template
+package com.androzon.curhatfinder
 
 import io.flutter.embedding.android.FlutterActivity
 

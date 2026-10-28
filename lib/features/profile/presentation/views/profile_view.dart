@@ -3,8 +3,11 @@ import 'package:flutter/foundation.dart'; // Tambahkan untuk kIsWeb
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../core/utils/academic_helper.dart';
 import '../providers/profile_provider.dart';
 
 class ProfileView extends ConsumerWidget {
@@ -27,6 +30,7 @@ class ProfileView extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 24, bottom: 24),
                 child: SizedBox(
+                  height: 48,
                   width: double.infinity,
                   child: Stack(
                     clipBehavior: Clip.none,
@@ -39,34 +43,42 @@ class ProfileView extends ConsumerWidget {
                           fontSize: 24,
                         ),
                       ),
-                    Positioned(
-                      right: 0,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+                      Positioned(
+                        right: 0,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.06),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () {
+                                // TODO: Navigasi ke halaman pengaturan
+                              },
+                              child: const Center(
+                                child: Icon(
+                                  Icons.settings_rounded,
+                                  color: AppColors.twilightNormal,
+                                  size: 22,
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
-                        child: IconButton(
-                          onPressed: () {
-                            // TODO: Navigasi ke halaman pengaturan
-                          },
-                          icon: const Icon(
-                            Icons.settings_rounded,
-                            color: AppColors.twilightNormal,
-                            size: 24,
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -90,7 +102,7 @@ class ProfileView extends ConsumerWidget {
                       ),
                       child: ClipOval(
                         child: user.localAvatarPath != null
-                            ? (kIsWeb
+                            ? (kIsWeb || user.localAvatarPath!.startsWith('http')
                                 ? Image.network(
                                     user.localAvatarPath!,
                                     fit: BoxFit.cover,
@@ -99,7 +111,7 @@ class ProfileView extends ConsumerWidget {
                                   )
                                 : Image.file(
                                     File(user.localAvatarPath!),
-                                    fit: BoxFit.cover, // Cover supaya gambar dari hp bisa menuhin lingkaran
+                                    fit: BoxFit.cover,
                                     width: 120,
                                     height: 120,
                                   ))
@@ -211,9 +223,9 @@ class ProfileView extends ConsumerWidget {
                 ),
                 child: Column(
                   children: [
-                    _buildInfoRow('Fakultas', user.faculty),
+                    _buildInfoRow('Fakultas', AcademicHelper.resolveFaculty(user.faculty)),
                     _buildDivider(),
-                    _buildInfoRow('Prodi', user.studyProgram),
+                    _buildInfoRow('Prodi', AcademicHelper.resolveProdi(user.studyProgram)),
                     _buildDivider(),
                     _buildInfoRow('Angkatan', user.batchYear),
                     _buildDivider(),
@@ -221,6 +233,102 @@ class ProfileView extends ConsumerWidget {
                     _buildDivider(),
                     _buildInfoRow('Hobi', user.hobby, isLast: true),
                   ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Tombol Keluar Akun
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 15,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          title: Text(
+                            'Keluar Akun',
+                            style: AppTextStyles.heading2.copyWith(fontSize: 18),
+                          ),
+                          content: Text(
+                            'Apakah kamu yakin ingin keluar dari akun ini?',
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: Text(
+                                'Batal',
+                                style: AppTextStyles.labelMedium.copyWith(
+                                  color: AppColors.twilightLightActive,
+                                ),
+                              ),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: Text(
+                                'Keluar',
+                                style: AppTextStyles.labelMedium.copyWith(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmed == true && context.mounted) {
+                        await ref.read(authProvider.notifier).logout();
+                        if (context.mounted) {
+                          const LoginRoute().go(context);
+                        }
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.logout_rounded,
+                            color: Colors.redAccent,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Keluar Akun',
+                            style: AppTextStyles.labelMedium.copyWith(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
               
@@ -372,7 +480,7 @@ class ProfileView extends ConsumerWidget {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
     if (pickedFile != null) {
-      ref.read(profileProvider.notifier).updateAvatar(pickedFile.path);
+      await ref.read(profileProvider.notifier).uploadAvatar(pickedFile);
     }
   }
 }
