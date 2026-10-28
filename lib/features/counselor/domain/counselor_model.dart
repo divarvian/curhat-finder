@@ -29,6 +29,22 @@ class CounselorProfile {
     required this.responseTime,
   });
 
+  static const empty = CounselorProfile(
+    name: 'Konselor',
+    email: '',
+    faculty: '',
+    studyProgram: '',
+    batchYear: '',
+    gender: '',
+    role: 'Konselor',
+    avatarPath: 'assets/images/mascot.png',
+    topics: [],
+    isOnline: false,
+    activeSessions: 0,
+    totalHelped: 0,
+    responseTime: '-',
+  );
+
   CounselorProfile copyWith({
     String? name,
     String? email,
@@ -90,6 +106,10 @@ class CounselorChatMessage {
   final bool isMe;
   final String timestamp;
   final bool isTyping;
+  final bool isDeletedForEveryone;
+  final List<String> deletedForUsers;
+  final bool isRead;
+  final DateTime? createdAt;
 
   const CounselorChatMessage({
     required this.id,
@@ -97,5 +117,33 @@ class CounselorChatMessage {
     required this.isMe,
     required this.timestamp,
     this.isTyping = false,
+    this.isDeletedForEveryone = false,
+    this.deletedForUsers = const [],
+    this.isRead = false,
+    this.createdAt,
   });
+
+  CounselorChatMessage copyWith({
+    String? id,
+    String? text,
+    bool? isMe,
+    String? timestamp,
+    bool? isTyping,
+    bool? isDeletedForEveryone,
+    List<String>? deletedForUsers,
+    bool? isRead,
+    DateTime? createdAt,
+  }) {
+    return CounselorChatMessage(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      isMe: isMe ?? this.isMe,
+      timestamp: timestamp ?? this.timestamp,
+      isTyping: isTyping ?? this.isTyping,
+      isDeletedForEveryone: isDeletedForEveryone ?? this.isDeletedForEveryone,
+      deletedForUsers: deletedForUsers ?? this.deletedForUsers,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }

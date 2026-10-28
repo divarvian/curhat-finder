@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,9 @@ import 'package:curhat_finder/features/auth/presentation/providers/auth_provider
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:curhat_finder/core/services/supabase_service.dart';
 import 'package:curhat_finder/features/auth/presentation/views/counselor_pending_view.dart';
+import 'package:curhat_finder/features/counselor/presentation/views/counselor_chat_room_view.dart';
+import 'package:curhat_finder/features/counselor/domain/counselor_model.dart';
+import 'package:curhat_finder/features/counselor/presentation/providers/counselor_provider.dart';
 
 void main() {
   group('AcademicHelper Unit Tests', () {
@@ -1295,6 +1299,195 @@ void main() {
       expect(() => SupabaseService.initialize(), throwsA(isA<StateError>()));
     });
   });
+
+  group('CounselorChatRoomView Parity Widget Tests', () {
+    testWidgets('CounselorChatRoomView displays messages and retract indicator for retracted messages', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            counselorProvider.overrideWith(() => _FakeCounselorNotifier(
+                  CounselorState(
+                    profile: const CounselorProfile(
+                      name: 'Konselor Test',
+                      email: 'test@ub.ac.id',
+                      faculty: 'FILKOM',
+                      studyProgram: 'TIF',
+                      batchYear: '2022',
+                      gender: 'Laki-laki',
+                      role: 'Konselor',
+                      avatarPath: 'assets/images/mascot.png',
+                      topics: ['Stres'],
+                      isOnline: true,
+                      activeSessions: 1,
+                      totalHelped: 10,
+                      responseTime: '1m',
+                    ),
+                    sessions: const [],
+                    messages: {
+                      'session-1': [
+                        const CounselorChatMessage(
+                          id: 'msg-1',
+                          text: 'Pesan normal dari konselor',
+                          isMe: true,
+                          timestamp: '10:00',
+                        ),
+                        const CounselorChatMessage(
+                          id: 'msg-2',
+                          text: 'Curhatan mahasiswa',
+                          isMe: false,
+                          timestamp: '10:01',
+                          isDeletedForEveryone: true,
+                        ),
+                      ],
+                    },
+                  ),
+                )),
+          ],
+          child: const MaterialApp(
+            home: CounselorChatRoomView(
+              sessionId: 'session-1',
+              studentTitle: 'Anonym - FILKOM',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('Pesan normal dari konselor'), findsOneWidget);
+      expect(find.text('Pesan ini telah ditarik'), findsOneWidget);
+      expect(find.byIcon(Icons.block_rounded), findsOneWidget);
+    });
+
+    testWidgets('CounselorChatRoomView long-press enters selection mode and allows copy & delete modal', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            counselorProvider.overrideWith(() => _FakeCounselorNotifier(
+                  CounselorState(
+                    profile: const CounselorProfile(
+                      name: 'Konselor Test',
+                      email: 'test@ub.ac.id',
+                      faculty: 'FILKOM',
+                      studyProgram: 'TIF',
+                      batchYear: '2022',
+                      gender: 'Laki-laki',
+                      role: 'Konselor',
+                      avatarPath: 'assets/images/mascot.png',
+                      topics: ['Stres'],
+                      isOnline: true,
+                      activeSessions: 1,
+                      totalHelped: 10,
+                      responseTime: '1m',
+                    ),
+                    sessions: const [],
+                    messages: {
+                      'session-1': [
+                        CounselorChatMessage(
+                          id: 'msg-1',
+                          text: 'Halo ini pesan saya',
+                          isMe: true,
+                          timestamp: '10:00',
+                          createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
+                        ),
+                      ],
+                    },
+                  ),
+                )),
+          ],
+          child: const MaterialApp(
+            home: CounselorChatRoomView(
+              sessionId: 'session-1',
+              studentTitle: 'Anonym - FILKOM',
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Initially regular AppBar is shown
+      expect(find.text('Anonym - FILKOM'), findsOneWidget);
+      expect(find.byIcon(Icons.copy_rounded), findsNothing);
+
+      // Long press on message to enter selection mode
+      await tester.longPress(find.text('Halo ini pesan saya'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Contextual Action Bar should now be displayed
+      expect(find.text('1 dipilih'), findsOneWidget);
+      expect(find.byIcon(Icons.copy_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget);
+
+      // Test copy action
+      await tester.tap(find.byIcon(Icons.copy_rounded));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // SnackBar shows copy feedback and selection is cleared
+      expect(find.text('Teks pesan disalin ke papan klip'), findsOneWidget);
+      expect(find.text('1 dipilih'), findsNothing);
+
+      // Long press again to test delete modal
+      await tester.longPress(find.text('Halo ini pesan saya'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('1 dipilih'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.delete_outline_rounded));
+      await tester.pumpAndSettle();
+
+      // Modal bottom sheet appears with both delete options (<30m)
+      expect(find.text('Hapus Pesan (1)'), findsOneWidget);
+      expect(find.text('Tarik untuk Semua Orang'), findsOneWidget);
+      expect(find.text('Hapus untuk Saya'), findsOneWidget);
+
+      // Tap 'Hapus untuk Saya'
+      await tester.tap(find.text('Hapus untuk Saya'));
+      await tester.pump();
+      expect(find.text('Halo ini pesan saya'), findsNothing);
+
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Pesan berhasil dihapus untuk Anda'), findsOneWidget);
+      await tester.pumpAndSettle();
+    });
+  });
+
+  group('Counselor State Clean Initialization and Storage RLS Safety Tests', () {
+    test('CounselorState starts clean without hardcoded Carmen or demo sessions', () {
+      const state = CounselorState();
+      expect(state.isLoading, isTrue);
+      expect(state.profile.name, 'Konselor');
+      expect(state.profile.name, isNot(contains('Carmen')));
+      expect(state.profile.email, isEmpty);
+      expect(state.sessions, isEmpty);
+      expect(state.messages, isEmpty);
+      expect(state.queues, isEmpty);
+      expect(state.activeSessions, isEmpty);
+    });
+
+    test('Storage and profile RLS migration 0007 contains valid SQL policies', () {
+      final migrationFile = File('supabase/migrations/20261028000007_fix_avatar_storage_and_profiles_rls.sql');
+      expect(migrationFile.existsSync(), isTrue);
+      final sqlContent = migrationFile.readAsStringSync();
+
+      // STO-001: Storage Avatar UPDATE and DELETE policies
+      expect(sqlContent, contains('CREATE POLICY "Users can update own avatar"'));
+      expect(sqlContent, contains('FOR UPDATE TO authenticated'));
+      expect(sqlContent, contains("bucket_id = 'avatars'"));
+      expect(sqlContent, contains('CREATE POLICY "Users can delete own avatar"'));
+      expect(sqlContent, contains('FOR DELETE TO authenticated'));
+
+      // SEC-005: Profiles INSERT tightened policy
+      expect(sqlContent, contains('DROP POLICY IF EXISTS "Enable insert on profiles"'));
+      expect(sqlContent, contains('CREATE POLICY "Users can only insert their own profile"'));
+      expect(sqlContent, contains('FOR INSERT TO authenticated'));
+      expect(sqlContent, contains('WITH CHECK (auth.uid() = id)'));
+    });
+  });
 }
 
 class _FakeAuthNotifier extends Notifier<AuthState> implements AuthNotifier {
@@ -1330,5 +1523,13 @@ class _FakeAuthNotifier extends Notifier<AuthState> implements AuthNotifier {
 
   @override
   Future<void> logout() async {}
+}
+
+class _FakeCounselorNotifier extends CounselorNotifier {
+  final CounselorState _initial;
+  _FakeCounselorNotifier(this._initial);
+
+  @override
+  CounselorState build() => _initial;
 }
 

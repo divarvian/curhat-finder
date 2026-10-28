@@ -13,14 +13,16 @@ class CounselorState {
   final List<CounselingSessionModel> activeSessions;
   final Map<String, List<CounselorChatMessage>> messages;
   final int currentNavIndex;
+  final bool isLoading;
 
   const CounselorState({
-    required this.profile,
-    required this.sessions,
+    this.profile = CounselorProfile.empty,
+    this.sessions = const [],
     this.queues = const [],
     this.activeSessions = const [],
-    required this.messages,
+    this.messages = const {},
     this.currentNavIndex = 0,
+    this.isLoading = true,
   });
 
   CounselorState copyWith({
@@ -30,6 +32,7 @@ class CounselorState {
     List<CounselingSessionModel>? activeSessions,
     Map<String, List<CounselorChatMessage>>? messages,
     int? currentNavIndex,
+    bool? isLoading,
   }) {
     return CounselorState(
       profile: profile ?? this.profile,
@@ -38,6 +41,7 @@ class CounselorState {
       activeSessions: activeSessions ?? this.activeSessions,
       messages: messages ?? this.messages,
       currentNavIndex: currentNavIndex ?? this.currentNavIndex,
+      isLoading: isLoading ?? this.isLoading,
     );
   }
 }
@@ -57,66 +61,24 @@ class CounselorNotifier extends Notifier<CounselorState> {
       _counselingService.leaveCounselorPresence();
     });
 
-    final initialProfile = const CounselorProfile(
-      name: 'Carmen💖',
-      email: 'carmenca@student.ub.ac.id',
-      faculty: 'FILKOM',
-      studyProgram: 'S1 Teknik Informatika',
-      batchYear: '2025',
-      gender: 'Perempuan',
-      role: 'Konselor',
-      avatarPath: 'assets/images/mascot.png',
-      topics: ['Anxiety', 'Stres', 'Depresi', 'Burnout'],
-      isOnline: true,
-      activeSessions: 1,
-      totalHelped: 12,
-      responseTime: '2m',
-    );
-
-    final initialSessions = [
-      const CounselorChatSession(
-        id: 'session-demo',
-        studentName: 'Anonym',
-        studentGender: 'Perempuan',
-        studentFaculty: 'Fakultas Ilmu Komputer (FILKOM)',
-        statusDescription: 'Sesi Bimbingan Aktif Berjalan..',
-        isOnline: true,
-        lastMessage: 'Halo, aku lagi bingung mau curhat ke mana...',
-        lastMessageTime: '09:41',
-      ),
-    ];
-
-    final initialMessages = {
-      'session-demo': [
-        const CounselorChatMessage(
-          id: '1',
-          text: 'Halo, terima kasih sudah menghubungi SupportBuddy.',
-          isMe: true,
-          timestamp: '09:40',
-        ),
-        const CounselorChatMessage(
-          id: '2',
-          text: 'Halo kak, aku lagi ngerasa overwhelmed banget sama kuliah.',
-          isMe: false,
-          timestamp: '09:41',
-        ),
-      ],
-    };
-
     // Jalankan sinkronisasi Supabase setelah inisialisasi state awal
     Future.microtask(() => initializeSupabaseSync());
 
-    return CounselorState(
-      profile: initialProfile,
-      sessions: initialSessions,
-      messages: initialMessages,
+    return const CounselorState(
+      profile: CounselorProfile.empty,
+      sessions: [],
+      messages: {},
       currentNavIndex: 0,
+      isLoading: true,
     );
   }
 
   void initializeSupabaseSync() async {
     final userId = SupabaseService.currentUserId;
-    if (userId == null) return;
+    if (userId == null) {
+      state = state.copyWith(isLoading: false);
+      return;
+    }
 
     try {
       // 1. Muat profil konselor dari tabel profiles
@@ -134,7 +96,7 @@ class CounselorNotifier extends Notifier<CounselorState> {
 
         final topicsList = (data['topics'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? state.profile.topics;
         final updatedProfile = state.profile.copyWith(
-          name: data['nickname'] ?? data['full_name'] ?? state.profile.name,
+          name: data['nickname'] ?? data['full_name'] ?? (SupabaseService.currentUser?.userMetadata?['full_name'] ?? state.profile.name),
           email: SupabaseService.currentUser?.email ?? state.profile.email,
           faculty: resolvedFaculty,
           studyProgram: resolvedProdi,
@@ -146,7 +108,7 @@ class CounselorNotifier extends Notifier<CounselorState> {
           responseTime: data['avg_response_time'] as String? ?? state.profile.responseTime,
           topics: topicsList,
         );
-        state = state.copyWith(profile: updatedProfile);
+        state = state.copyWith(profile: updatedProfile, isLoading: false);
 
         if (updatedProfile.isOnline) {
           _counselingService.joinCounselorPresence(userId);
@@ -159,6 +121,8 @@ class CounselorNotifier extends Notifier<CounselorState> {
             'study_program': resolvedProdi,
           }).eq('id', userId);
         }
+      } else {
+        state = state.copyWith(isLoading: false);
       }
 
       // 2. Stream antrean masuk mahasiswa (counseling_queues)
@@ -198,7 +162,9 @@ class CounselorNotifier extends Notifier<CounselorState> {
           profile: state.profile.copyWith(activeSessions: sessions.length),
         );
       });
-    } catch (_) {}
+    } catch (_) {
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   void toggleOnlineStatus() async {
