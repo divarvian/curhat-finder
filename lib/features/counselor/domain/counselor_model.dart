@@ -7,6 +7,8 @@ class CounselorProfile {
   final String gender;
   final String role;
   final String avatarPath;
+  final String? avatarUrl;
+  final String? localAvatarPath;
   final List<String> topics;
   final bool isOnline;
   final int activeSessions;
@@ -22,6 +24,8 @@ class CounselorProfile {
     required this.gender,
     required this.role,
     required this.avatarPath,
+    this.avatarUrl,
+    this.localAvatarPath,
     required this.topics,
     required this.isOnline,
     required this.activeSessions,
@@ -38,6 +42,8 @@ class CounselorProfile {
     gender: '',
     role: 'Konselor',
     avatarPath: 'assets/images/mascot.png',
+    avatarUrl: null,
+    localAvatarPath: null,
     topics: [],
     isOnline: false,
     activeSessions: 0,
@@ -54,6 +60,8 @@ class CounselorProfile {
     String? gender,
     String? role,
     String? avatarPath,
+    String? avatarUrl,
+    String? localAvatarPath,
     List<String>? topics,
     bool? isOnline,
     int? activeSessions,
@@ -69,6 +77,8 @@ class CounselorProfile {
       gender: gender ?? this.gender,
       role: role ?? this.role,
       avatarPath: avatarPath ?? this.avatarPath,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      localAvatarPath: localAvatarPath ?? this.localAvatarPath,
       topics: topics ?? this.topics,
       isOnline: isOnline ?? this.isOnline,
       activeSessions: activeSessions ?? this.activeSessions,

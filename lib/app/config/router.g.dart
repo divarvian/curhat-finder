@@ -22,6 +22,8 @@ List<RouteBase> get $appRoutes => [
   $counselorChatRoomRoute,
   $counselorPendingRoute,
   $settingsRoute,
+  $tipsRoute,
+  $tipDetailRoute,
 ];
 
 RouteBase get $splashRoute => GoRouteData.$route(
@@ -494,6 +496,58 @@ mixin $SettingsRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/settings');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $tipsRoute => GoRouteData.$route(
+  path: '/tips',
+  hasOverriddenOnExit: false,
+  factory: $TipsRoute._fromState,
+);
+
+mixin $TipsRoute on GoRouteData {
+  static TipsRoute _fromState(GoRouterState state) => const TipsRoute();
+
+  @override
+  String get location => GoRouteData.$location('/tips');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+RouteBase get $tipDetailRoute => GoRouteData.$route(
+  path: '/tip_detail',
+  hasOverriddenOnExit: false,
+  factory: $TipDetailRoute._fromState,
+);
+
+mixin $TipDetailRoute on GoRouteData {
+  static TipDetailRoute _fromState(GoRouterState state) => const TipDetailRoute();
+
+  @override
+  String get location => GoRouteData.$location('/tip_detail');
 
   @override
   void go(BuildContext context) => context.go(location);

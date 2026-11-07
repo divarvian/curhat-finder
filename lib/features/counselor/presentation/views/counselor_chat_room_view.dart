@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/expandable_message_text.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../chat/data/counseling_service.dart';
 import '../../../chat/domain/counseling_models.dart';
 import '../../domain/counselor_model.dart';
@@ -44,7 +48,11 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
 
   Stream<List<ChatMessageModel>>? _messagesStream;
   List<ChatMessageModel> _cachedDbMessages = [];
+  final List<ChatMessageModel> _optimisticMessages = [];
   bool _isStreamConnected = true;
+  bool _isRealtimeConnecting = false;
+  bool _isAutoRetrying = false;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   StreamSubscription<CounselingSessionModel?>? _sessionSubscription;
   bool _isSessionCompleted = false;
@@ -67,6 +75,7 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
     _initStatusChannel();
     _initSessionListener();
     _markIncomingAsRead();
+    _initConnectivityListener();
 
     _focusNode.addListener(() {
       if (_focusNode.hasFocus) {
@@ -77,6 +86,20 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
           _broadcastStatus('idle');
         }
         _scrollToBottom(animated: true);
+      }
+    });
+  }
+
+  void _initConnectivityListener() {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      final isOnline = results.any((r) => r != ConnectivityResult.none);
+      if (mounted) {
+        setState(() {
+          _isStreamConnected = isOnline;
+        });
+      }
+      if (isOnline) {
+        _autoRetryFailedMessages();
       }
     });
   }
@@ -162,6 +185,9 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
     }
 
     if (widget.sessionId.isNotEmpty && widget.sessionId != 'session-1') {
+      setState(() {
+        _isRealtimeConnecting = true;
+      });
       _statusChannel = ref.read(counselingServiceProvider).createChatStatusChannel(widget.sessionId);
       _statusChannel?.onBroadcast(event: 'user_status', callback: (payload) {
         final senderId = payload['sender_id'] as String?;
@@ -184,7 +210,16 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
             });
           }
         }
-      }).subscribe();
+      }).subscribe((status, [error]) {
+        if (mounted) {
+          setState(() {
+            _isRealtimeConnecting = (status != RealtimeSubscribeStatus.subscribed);
+          });
+        }
+        if (status == RealtimeSubscribeStatus.subscribed) {
+          _autoRetryFailedMessages();
+        }
+      });
     }
   }
 
@@ -221,6 +256,7 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
 
   @override
   void dispose() {
+    _connectivitySubscription?.cancel();
     _peerTypingTimer?.cancel();
     _debounceTypingTimer?.cancel();
     _sessionSubscription?.cancel();
@@ -273,11 +309,130 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
 
-    ref.read(counselorProvider.notifier).sendMessage(widget.sessionId, text);
     _textController.clear();
     _broadcastStatus('idle');
 
-    _scrollToBottom(animated: true);
+    final currentUserId = SupabaseService.currentUserId;
+    if (widget.sessionId.isNotEmpty && widget.sessionId != 'session-1' && currentUserId != null) {
+      final messageId = const Uuid().v4();
+      final now = DateTime.now();
+
+      final optMsg = ChatMessageModel(
+        id: messageId,
+        sessionId: widget.sessionId,
+        senderId: currentUserId,
+        senderRole: 'counselor',
+        messageText: text,
+        isRead: false,
+        createdAt: now,
+        deliveryStatus: MessageDeliveryStatus.sending,
+      );
+
+      setState(() {
+        _optimisticMessages.add(optMsg);
+      });
+      _scrollToBottom(animated: true);
+
+      _sendCounselorMessage(messageId: messageId, text: text, retryTime: now);
+    } else {
+      ref.read(counselorProvider.notifier).sendMessage(widget.sessionId, text);
+      _scrollToBottom(animated: true);
+    }
+  }
+
+  Future<void> _sendCounselorMessage({
+    required String messageId,
+    required String text,
+    required DateTime retryTime,
+  }) async {
+    final currentUserId = SupabaseService.currentUserId;
+    if (currentUserId == null) return;
+
+    try {
+      final savedMsg = await ref.read(counselingServiceProvider).sendMessage(
+        sessionId: widget.sessionId,
+        senderId: currentUserId,
+        senderRole: 'counselor',
+        messageText: text,
+        messageId: messageId,
+      );
+      if (mounted) {
+        setState(() {
+          final reIdx = _optimisticMessages.indexWhere((m) => m.id == messageId);
+          if (reIdx != -1) {
+            _optimisticMessages[reIdx] = savedMsg.copyWith(
+              createdAt: retryTime,
+              deliveryStatus: MessageDeliveryStatus.sent,
+            );
+          }
+        });
+      }
+    } catch (e) {
+      final isDuplicateKey = (e is PostgrestException && e.code == '23505') ||
+          e.toString().contains('23505') ||
+          e.toString().toLowerCase().contains('duplicate key');
+      if (mounted) {
+        setState(() {
+          final reIdx = _optimisticMessages.indexWhere((m) => m.id == messageId);
+          if (reIdx != -1) {
+            _optimisticMessages[reIdx] = _optimisticMessages[reIdx].copyWith(
+              createdAt: retryTime,
+              deliveryStatus: isDuplicateKey
+                  ? MessageDeliveryStatus.sent
+                  : MessageDeliveryStatus.failed,
+            );
+          }
+        });
+      }
+    }
+  }
+
+  Future<void> _retrySendMessage(String messageId) async {
+    final idx = _optimisticMessages.indexWhere((m) => m.id == messageId);
+    if (idx == -1) return;
+    final msg = _optimisticMessages[idx];
+    if (msg.deliveryStatus == MessageDeliveryStatus.sending) return;
+
+    final retryTime = DateTime.now();
+    setState(() {
+      _optimisticMessages[idx] = msg.copyWith(
+        createdAt: retryTime,
+        deliveryStatus: MessageDeliveryStatus.sending,
+      );
+    });
+
+    await _sendCounselorMessage(
+      messageId: messageId,
+      text: msg.messageText,
+      retryTime: retryTime,
+    );
+  }
+
+  Future<void> _autoRetryFailedMessages() async {
+    if (_isAutoRetrying || !mounted) return;
+
+    final failedList = _optimisticMessages
+        .where((m) => m.deliveryStatus == MessageDeliveryStatus.failed)
+        .toList();
+    if (failedList.isEmpty) return;
+
+    _isAutoRetrying = true;
+    try {
+      for (final msg in failedList) {
+        if (!mounted) break;
+        final stillFailed = _optimisticMessages.any(
+          (m) => m.id == msg.id && m.deliveryStatus == MessageDeliveryStatus.failed,
+        );
+        if (stillFailed) {
+          await _retrySendMessage(msg.id);
+          await Future.delayed(const Duration(milliseconds: 250));
+        }
+      }
+    } finally {
+      if (mounted) {
+        _isAutoRetrying = false;
+      }
+    }
   }
 
   void _showEndSessionDialog(BuildContext context) {
@@ -606,6 +761,19 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
                     )))
         .toList();
 
+    for (final opt in _optimisticMessages) {
+      if (!currentDisplayMessages.any((m) => m.id == opt.id)) {
+        currentDisplayMessages.add(_CounselorViewMessage(
+          id: opt.id,
+          text: opt.messageText,
+          isMe: true,
+          time: opt.createdAt.toLocal(),
+          deliveryStatus: opt.deliveryStatus,
+          isDeletedForEveryone: false,
+        ));
+      }
+    }
+
     return PopScope(
       canPop: !_showEmoji && _selectedMessageIds.isEmpty,
       onPopInvokedWithResult: (didPop, _) {
@@ -663,6 +831,36 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
                     ),
                   ),
 
+                // Realtime Connecting Status Banner
+                if (_isRealtimeConnecting && _isStreamConnected)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                    color: const Color(0xFFF88A8A).withValues(alpha: 0.15),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 10,
+                          height: 10,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Color(0xFFF88A8A),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Menghubungkan ke layanan realtime...',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            fontSize: 10,
+                            color: AppColors.twilightDarker,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // 2. Daftar Pesan Percakapan (Realtime stream with fallback)
                 Expanded(
                   child: GestureDetector(
@@ -679,6 +877,10 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
                         ? StreamBuilder<List<ChatMessageModel>>(
                             stream: _messagesStream,
                             builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting && _cachedDbMessages.isEmpty) {
+                                return const ChatBubbleSkeleton();
+                              }
+
                               if (snapshot.hasData && snapshot.data != null) {
                                 _cachedDbMessages = snapshot.data!;
                                 _isStreamConnected = true;
@@ -695,28 +897,48 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
                                   .where((m) => !m.deletedForUsers.contains(currentUserId) && !_deletedForMeLocalIds.contains(m.id))
                                   .toList();
 
-                              if (visibleMessages.isEmpty) {
-                                return _buildMessageListView(localMessages);
-                              }
+                              final List<_CounselorViewMessage> items = [];
 
-                              final mapped = visibleMessages.map((m) {
-                                return _CounselorViewMessage(
+                              for (final m in visibleMessages) {
+                                items.add(_CounselorViewMessage(
                                   id: m.id,
                                   text: m.messageText,
                                   isMe: m.senderId == currentUserId || m.senderRole == 'counselor',
                                   time: m.createdAt.toLocal(),
                                   deliveryStatus: m.isRead ? MessageDeliveryStatus.read : MessageDeliveryStatus.sent,
                                   isDeletedForEveryone: m.isDeletedForEveryone || _unsentLocalIds.contains(m.id),
-                                );
-                              }).toList();
+                                ));
+                              }
 
-                              if (mapped.length != _lastMessageCount) {
-                                _lastMessageCount = mapped.length;
+                              _optimisticMessages.removeWhere((opt) {
+                                return visibleMessages.any((s) => s.id == opt.id);
+                              });
+
+                              for (final opt in _optimisticMessages) {
+                                final alreadyExists = items.any((m) => m.id == opt.id);
+                                if (!alreadyExists) {
+                                  items.add(_CounselorViewMessage(
+                                    id: opt.id,
+                                    text: opt.messageText,
+                                    isMe: true,
+                                    time: opt.createdAt.toLocal(),
+                                    deliveryStatus: opt.deliveryStatus,
+                                    isDeletedForEveryone: false,
+                                  ));
+                                }
+                              }
+
+                              if (items.isEmpty) {
+                                return _buildMessageListView(localMessages);
+                              }
+
+                              if (items.length != _lastMessageCount) {
+                                _lastMessageCount = items.length;
                                 _scrollToBottom(animated: true);
                                 _markIncomingAsRead();
                               }
 
-                              return _buildMappedMessageList(mapped);
+                              return _buildMappedMessageList(items);
                             },
                           )
                         : _buildMessageListView(localMessages),
@@ -1013,6 +1235,7 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
     final timeStr =
         '${localTime.hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')}';
     final isSelected = _selectedMessageIds.contains(message.id);
+    final isFailed = message.deliveryStatus == MessageDeliveryStatus.failed;
 
     return GestureDetector(
       onLongPress: () => _toggleSelectMessage(message.id),
@@ -1029,6 +1252,16 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
           mainAxisAlignment: message.isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            if (message.isMe && isFailed) ...[
+              IconButton(
+                tooltip: 'Kirim ulang',
+                padding: const EdgeInsets.all(12),
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                icon: const Icon(Icons.refresh_rounded, color: AppColors.redNormal, size: 22),
+                onPressed: () => _retrySendMessage(message.id),
+              ),
+              const SizedBox(width: 4),
+            ],
             if (!message.isMe) ...[
               if (_selectedMessageIds.isNotEmpty)
                 Padding(
@@ -1055,12 +1288,16 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
                 decoration: BoxDecoration(
                   color: message.isDeletedForEveryone
                       ? Colors.grey.shade200
-                      : (message.isMe ? const Color(0xFFF88A8A) : Colors.white),
+                      : (isFailed
+                          ? const Color(0xFF6B2D2D)
+                          : (message.isMe ? const Color(0xFFF88A8A) : Colors.white)),
                   border: isSelected
                       ? Border.all(color: const Color(0xFFF88A8A), width: 1.5)
-                      : (message.isDeletedForEveryone
-                          ? Border.all(color: Colors.grey.shade300)
-                          : null),
+                      : (isFailed
+                          ? Border.all(color: Colors.redAccent.shade100, width: 1.2)
+                          : (message.isDeletedForEveryone
+                              ? Border.all(color: Colors.grey.shade300)
+                              : null)),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(20),
                     topRight: const Radius.circular(20),
@@ -1105,13 +1342,14 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
                         ],
                       )
                     else
-                      Text(
-                        message.text,
+                      ExpandableMessageText(
+                        text: message.text,
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: message.isMe ? Colors.white : AppColors.twilightDarker,
                           fontSize: 14,
                           height: 1.35,
                         ),
+                        isMe: message.isMe,
                       ),
                     const SizedBox(height: 4),
                     Row(
@@ -1132,6 +1370,17 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
                         ],
                       ],
                     ),
+                    if (isFailed) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Gagal terkirim. Ketuk ikon untuk kirim ulang',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: Colors.red.shade200,
+                          fontSize: 9,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1166,7 +1415,7 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
         return const Icon(
           Icons.error_outline_rounded,
           size: 13,
-          color: Colors.white,
+          color: Colors.redAccent,
         );
       case MessageDeliveryStatus.read:
         return const Icon(

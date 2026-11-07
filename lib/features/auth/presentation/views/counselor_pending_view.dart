@@ -15,6 +15,26 @@ class CounselorPendingView extends ConsumerStatefulWidget {
 class _CounselorPendingViewState extends ConsumerState<CounselorPendingView> {
   bool _isChecking = false;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkVerificationStatusSilently();
+    });
+  }
+
+  Future<void> _checkVerificationStatusSilently() async {
+    try {
+      await ref.read(authProvider.notifier).refreshProfile();
+      if (!mounted) return;
+
+      final auth = ref.read(authProvider);
+      if (auth.isVerified && auth.counselorStatus == 'approved') {
+        const CounselorMainRoute().go(context);
+      }
+    } catch (_) {}
+  }
+
   Future<void> _checkVerificationStatus() async {
     setState(() => _isChecking = true);
 

@@ -20,9 +20,11 @@ class StepFinal extends ConsumerWidget {
     final controller = ref.read(registerControllerProvider.notifier);
 
     if (isKonselor) {
-      final options = ['Overhelmed', 'Hilang arah', 'Keuangan', 'Burnout', 'Hubungan', 'Keluarga', 'Anxiety'];
+      final options = ['Overwhelmed', 'Hilang arah', 'Keuangan', 'Burnout', 'Hubungan', 'Keluarga', 'Anxiety'];
       return RegisterStepTemplate(
+        isKonselor: true,
         title: 'Topik yang kamu kuasai',
+        subtitle: 'Pilih satu atau lebih topik yang sesuai dengan keahlian konselingmu',
         isNextEnabled: state.topics.isNotEmpty,
         buttonText: 'Masuk',
         onNext: onNext,
@@ -31,34 +33,37 @@ class StepFinal extends ConsumerWidget {
           runSpacing: 12,
           children: options.map((opt) {
             final isSelected = state.topics.contains(opt);
-              return RegisterPillOption(
-                label: opt,
-                isSelected: isSelected,
-                onTap: () => controller.toggleTopic(opt),
-              );
-            }).toList(),
-          ),
-        );
-      } else {
-        final options = ['Olahraga', 'Musik', 'Membaca', 'Gaming', 'Traveling', 'Seni', 'Fotografi', 'Menulis', 'Film', 'Kuliner'];
-        return RegisterStepTemplate(
-          title: 'Apa hal yang bisa bikin kamu happy?',
-          isNextEnabled: state.hobbies.isNotEmpty,
-          buttonText: 'Masuk',
-          onNext: onNext,
-          content: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: options.map((opt) {
-              final isSelected = state.hobbies.contains(opt);
-              return RegisterPillOption(
-                label: opt,
-                isSelected: isSelected,
-                onTap: () => controller.toggleHobby(opt),
-              );
-            }).toList(),
-          ),
-        );
-      }
+            return RegisterPillOption(
+              label: opt,
+              isSelected: isSelected,
+              isKonselor: true,
+              onTap: () => controller.toggleTopic(opt),
+            );
+          }).toList(),
+        ),
+      );
+    } else {
+      final options = ['Olahraga', 'Musik', 'Membaca', 'Gaming', 'Traveling', 'Seni', 'Fotografi', 'Menulis', 'Film', 'Kuliner'];
+      return RegisterStepTemplate(
+        isKonselor: false,
+        title: 'Apa hal yang bisa bikin kamu happy?',
+        isNextEnabled: state.hobbies.isNotEmpty,
+        buttonText: 'Masuk',
+        onNext: onNext,
+        content: Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: options.map((opt) {
+            final isSelected = state.hobbies.contains(opt);
+            return RegisterPillOption(
+              label: opt,
+              isSelected: isSelected,
+              isKonselor: false,
+              onTap: () => controller.toggleHobby(opt),
+            );
+          }).toList(),
+        ),
+      );
+    }
     }
 }

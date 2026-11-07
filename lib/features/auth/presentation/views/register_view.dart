@@ -14,6 +14,7 @@ import '../../../profile/presentation/providers/profile_provider.dart';
 import '../widgets/register_steps/register_steps_basic.dart';
 import '../widgets/register_steps/register_steps_academic.dart';
 import '../widgets/register_steps/register_steps_final.dart';
+import '../widgets/register_steps/register_step_template.dart';
 import '../../../../core/utils/academic_helper.dart';
 
 class RegisterView extends ConsumerStatefulWidget {
@@ -159,82 +160,88 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Latar Belakang Glowing
-        Positioned.fill(
-          child: Scaffold(
-            resizeToAvoidBottomInset: false,
-            backgroundColor: AppColors.background,
-            body: Stack(
-              children: [
-                Positioned(
-                  top: -150,
-                  left: -50,
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-                    child: Container(
-                      width: 350,
-                      height: 350,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFFFB6C1), // Soft Pink Glow
-                      ),
+    return RegisterThemeScope(
+      isKonselor: widget.isKonselor,
+      child: Stack(
+        children: [
+          // Latar Belakang (Diferensiasi Konselor vs Mahasiswa)
+          Positioned.fill(
+            child: Scaffold(
+              resizeToAvoidBottomInset: false,
+              backgroundColor: widget.isKonselor ? AppColors.counselorRegisterBg : AppColors.background,
+              body: widget.isKonselor
+                  ? const SizedBox.shrink()
+                  : Stack(
+                      children: [
+                        Positioned(
+                          top: -150,
+                          left: -50,
+                          child: ImageFiltered(
+                            imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+                            child: Container(
+                              width: 350,
+                              height: 350,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFFFFB6C1), // Soft Pink Glow
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: -100,
+                          left: -100,
+                          child: ImageFiltered(
+                            imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+                            child: Container(
+                              width: 300,
+                              height: 300,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.wisteriaNormal, // Periwinkle Blue Glow
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -100,
-                  left: -100,
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-                    child: Container(
-                      width: 300,
-                      height: 300,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.wisteriaNormal, // Periwinkle Blue Glow
-                      ),
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
-        ),
 
-        // Konten Utama
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          body: SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(),
-                _buildProgressBar(),
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      StepFullName(onNext: _nextStep),
-                      StepNickname(onNext: _nextStep),
-                      StepGender(onNext: _nextStep),
-                      StepBatch(onNext: _nextStep),
-                      StepFaculty(onNext: _nextStep),
-                      StepProdi(onNext: _nextStep),
-                      StepFinal(isKonselor: widget.isKonselor, onNext: _nextStep),
-                    ],
+          // Konten Utama
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  _buildProgressBar(),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        StepFullName(onNext: _nextStep),
+                        StepNickname(onNext: _nextStep),
+                        StepGender(onNext: _nextStep),
+                        StepBatch(onNext: _nextStep),
+                        StepFaculty(onNext: _nextStep),
+                        StepProdi(onNext: _nextStep),
+                        StepFinal(isKonselor: widget.isKonselor, onNext: _nextStep),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildHeader() {
+    final headerColor = widget.isKonselor ? AppColors.twilightNormal : AppColors.twilightDarker;
     return Padding(
       padding: const EdgeInsets.only(left: 24.0, right: 32.0, top: 16.0, bottom: 8.0),
       child: Row(
@@ -244,9 +251,9 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
             child: InkWell(
               customBorder: const CircleBorder(),
               onTap: _prevStep,
-              child: const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Icon(Icons.arrow_back_ios_new, color: AppColors.twilightDarker, size: 22),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Icon(Icons.arrow_back_ios_new, color: headerColor, size: 22),
               ),
             ),
           ),
@@ -255,8 +262,8 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
               'Register',
               textAlign: TextAlign.center,
               style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.twilightDarker,
-                fontWeight: FontWeight.w500,
+                color: headerColor,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -268,6 +275,10 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
 
   Widget _buildProgressBar() {
     final state = ref.watch(registerControllerProvider);
+    final activeColor = widget.isKonselor ? AppColors.twilightNormal : const Color(0xFF4A6B9C);
+    final inactiveColor = widget.isKonselor ? Colors.white.withValues(alpha: 0.4) : const Color(0xFFD9D9D9);
+    final stepTextColor = widget.isKonselor ? AppColors.twilightNormal : AppColors.wisteriaNormal;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -280,7 +291,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                   margin: EdgeInsets.only(right: index == _totalSteps - 1 ? 0 : 8.0),
                   height: 4,
                   decoration: BoxDecoration(
-                    color: index <= state.currentStep ? const Color(0xFF4A6B9C) : const Color(0xFFD9D9D9),
+                    color: index <= state.currentStep ? activeColor : inactiveColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -292,7 +303,8 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
             'Langkah - ${state.currentStep + 1}',
             style: AppTextStyles.labelSmall.copyWith(
               fontSize: 10,
-              color: AppColors.wisteriaNormal,
+              fontWeight: widget.isKonselor ? FontWeight.w600 : FontWeight.normal,
+              color: stepTextColor,
             ),
           ),
         ],

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -60,8 +61,12 @@ class SupabaseService {
       return null;
     }
   }
-  static String? get currentUserId => currentUser?.id;
-  static bool get isAuthenticated => currentUser != null;
+  static String? _mockUserId;
+  @visibleForTesting
+  static set mockUserId(String? id) => _mockUserId = id;
+
+  static String? get currentUserId => _mockUserId ?? currentUser?.id;
+  static bool get isAuthenticated => currentUserId != null;
 }
 
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {

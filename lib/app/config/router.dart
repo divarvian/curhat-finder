@@ -16,6 +16,11 @@ import '../../features/auth/presentation/views/counselor_pending_view.dart';
 import '../../features/counselor/presentation/views/counselor_main_nav_view.dart';
 import '../../features/counselor/presentation/views/counselor_chat_room_view.dart';
 import '../../features/profile/presentation/views/settings_view.dart';
+import '../../features/beranda/presentation/views/tips_view.dart';
+import '../../features/beranda/presentation/views/tip_detail_view.dart';
+import '../../features/beranda/domain/tip_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../core/services/supabase_service.dart';
 part 'router.g.dart';
 
@@ -35,10 +40,68 @@ final GoRouter router = GoRouter(
     ];
 
     final isPublic = publicRoutes.contains(state.matchedLocation);
-    final hasSession = SupabaseService.client.auth.currentSession != null;
+    final session = SupabaseService.client.auth.currentSession;
+    final hasSession = session != null;
 
     if (!hasSession && !isPublic) {
       return '/login';
+    }
+
+    if (hasSession) {
+      if (state.matchedLocation == '/splash' || state.matchedLocation == '/onboarding') {
+        return null;
+      }
+
+      String? role;
+      bool? isVerified;
+
+      // Prioritas 1: Ambil dari state in-memory AuthProvider jika tersedia di context
+      try {
+        final container = ProviderScope.containerOf(context, listen: false);
+        final authState = container.read(authProvider);
+        if (authState.isLoggedIn && authState.role != null) {
+          role = authState.role?.toLowerCase();
+          isVerified = authState.isVerified;
+        }
+      } catch (_) {
+        // Fallback jika context belum terikat ProviderScope
+      }
+
+      // Prioritas 2: Ambil dari cache static AuthNotifier
+      role ??= AuthNotifier.lastKnownRole?.toLowerCase();
+      isVerified ??= AuthNotifier.lastKnownIsVerified;
+
+      // Prioritas 3: Fallback ke metadata sesi Supabase jika data belum termuat
+      if (role == null) {
+        final userMetadata = session.user.userMetadata ?? {};
+        role = (userMetadata['role'] as String?)?.toLowerCase() ?? 'mahasiswa';
+        isVerified ??= (userMetadata['is_verified'] as bool?) ?? (role != 'konselor');
+      }
+
+      final currentLocation = state.matchedLocation;
+
+      // 1. Konselor Pending dialihkan ke layar pending
+      if (role == 'konselor' && isVerified == false) {
+        if (currentLocation != '/counselor_pending') {
+          return '/counselor_pending';
+        }
+        return null;
+      }
+
+      // 2. Mahasiswa dicegah mengakses dashboard & chat konselor
+      if (role == 'mahasiswa' && currentLocation.startsWith('/counselor_')) {
+        return '/main';
+      }
+
+      // 3. Konselor terverifikasi yang mengakses root /main diarahkan ke /counselor_main
+      if (role == 'konselor' && isVerified == true && currentLocation == '/main') {
+        return '/counselor_main';
+      }
+
+      // 4. Konselor terverifikasi yang berada di /counselor_pending diarahkan ke /counselor_main
+      if (role == 'konselor' && isVerified == true && currentLocation == '/counselor_pending') {
+        return '/counselor_main';
+      }
     }
 
     return null;
@@ -182,4 +245,20 @@ class SettingsRoute extends GoRouteData with $SettingsRoute {
   const SettingsRoute();
   @override
   Widget build(BuildContext context, GoRouterState state) => const SettingsView();
+}
+
+@TypedGoRoute<TipsRoute>(path: '/tips')
+class TipsRoute extends GoRouteData with $TipsRoute {
+  const TipsRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) => const TipsView();
+}
+
+@TypedGoRoute<TipDetailRoute>(path: '/tip_detail')
+class TipDetailRoute extends GoRouteData with $TipDetailRoute {
+  const TipDetailRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) => TipDetailView(
+        tip: state.extra as TipModel?,
+      );
 }

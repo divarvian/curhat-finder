@@ -101,9 +101,10 @@ class _ReportChatDialogState extends ConsumerState<ReportChatDialog> {
                 children: [
                   // Icon Mascot
                   Image.asset(
-                    'assets/images/profile.png',
-                    width: 72,
-                    height: 72,
+                    'assets/images/mascot_report.png',
+                    width: 90,
+                    height: 80,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 16),
                   
@@ -176,7 +177,7 @@ class _ReportChatDialogState extends ConsumerState<ReportChatDialog> {
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _selectedReason != null
-                            ? AppColors.redNormal
+                            ? AppColors.twilightDarker
                             : Colors.grey[400],
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),

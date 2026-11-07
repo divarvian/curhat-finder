@@ -1,7 +1,9 @@
 class RoomModel {
   final String id;
   final String? userId;
-  final String authorTag;
+  final String authorName;
+  final String authorFaculty;
+  final String authorGender;
   final String category;
   final String title;
   final String content;
@@ -15,7 +17,9 @@ class RoomModel {
   const RoomModel({
     required this.id,
     this.userId,
-    required this.authorTag,
+    this.authorName = 'Anonim',
+    this.authorFaculty = 'FILKOM',
+    this.authorGender = 'Laki-laki',
     required this.category,
     required this.title,
     required this.content,
@@ -27,11 +31,23 @@ class RoomModel {
     this.isBookmarked = false,
   });
 
+  /// Getter untuk kompatibilitas tampilan UI
+  String get authorTag => '$authorName • $authorFaculty';
+
   factory RoomModel.fromJson(Map<String, dynamic> json, {bool isLiked = false, bool isBookmarked = false}) {
+    final rawTag = json['author_tag'] as String?;
+    final parsedName = json['author_name'] as String? ??
+        (rawTag != null ? (rawTag.contains(' • ') ? rawTag.split(' • ').first : rawTag) : 'Anonim');
+    final parsedFaculty = json['author_faculty'] as String? ??
+        (rawTag != null && rawTag.contains(' • ') ? rawTag.split(' • ').last : 'FILKOM');
+    final parsedGender = json['author_gender'] as String? ?? 'Laki-laki';
+
     return RoomModel(
       id: json['id'] as String? ?? '',
       userId: json['user_id'] as String?,
-      authorTag: json['author_tag'] as String? ?? 'Anonim • UB',
+      authorName: parsedName,
+      authorFaculty: parsedFaculty,
+      authorGender: parsedGender,
       category: json['category'] as String? ?? 'Umum',
       title: json['title'] as String? ?? '',
       content: json['content'] as String? ?? '',
@@ -49,7 +65,9 @@ class RoomModel {
   RoomModel copyWith({
     String? id,
     String? userId,
-    String? authorTag,
+    String? authorName,
+    String? authorFaculty,
+    String? authorGender,
     String? category,
     String? title,
     String? content,
@@ -63,7 +81,9 @@ class RoomModel {
     return RoomModel(
       id: id ?? this.id,
       userId: userId ?? this.userId,
-      authorTag: authorTag ?? this.authorTag,
+      authorName: authorName ?? this.authorName,
+      authorFaculty: authorFaculty ?? this.authorFaculty,
+      authorGender: authorGender ?? this.authorGender,
       category: category ?? this.category,
       title: title ?? this.title,
       content: content ?? this.content,
@@ -81,7 +101,9 @@ class RoomCommentModel {
   final String id;
   final String roomId;
   final String? userId;
-  final String authorTag;
+  final String authorName;
+  final String authorFaculty;
+  final String authorRole;
   final String content;
   final int likesCount;
   final DateTime createdAt;
@@ -90,18 +112,36 @@ class RoomCommentModel {
     required this.id,
     required this.roomId,
     this.userId,
-    required this.authorTag,
+    this.authorName = 'Teman Kampus',
+    this.authorFaculty = 'FILKOM',
+    this.authorRole = 'mahasiswa',
     required this.content,
     this.likesCount = 0,
     required this.createdAt,
   });
 
+  /// Apakah penulis komentar adalah konselor sebaya terverifikasi
+  bool get isCounselor => authorRole.toLowerCase() == 'konselor';
+
+  /// Format badge tag untuk tampilan UI
+  String get authorTag => isCounselor ? '$authorName (Konselor Sebaya)' : '$authorName • $authorFaculty';
+
   factory RoomCommentModel.fromJson(Map<String, dynamic> json) {
+    final rawTag = json['author_tag'] as String?;
+    final parsedName = json['author_name'] as String? ??
+        (rawTag != null ? (rawTag.contains(' • ') ? rawTag.split(' • ').first : rawTag) : 'Teman Kampus');
+    final parsedFaculty = json['author_faculty'] as String? ??
+        (rawTag != null && rawTag.contains(' • ') ? rawTag.split(' • ').last : 'FILKOM');
+    final parsedRole = json['author_role'] as String? ??
+        (rawTag != null && rawTag.toLowerCase().contains('konselor') ? 'konselor' : 'mahasiswa');
+
     return RoomCommentModel(
       id: json['id'] as String? ?? '',
       roomId: json['room_id'] as String? ?? '',
       userId: json['user_id'] as String?,
-      authorTag: json['author_tag'] as String? ?? 'Teman Kampus',
+      authorName: parsedName,
+      authorFaculty: parsedFaculty,
+      authorRole: parsedRole,
       content: json['content'] as String? ?? '',
       likesCount: json['likes_count'] as int? ?? 0,
       createdAt: json['created_at'] != null

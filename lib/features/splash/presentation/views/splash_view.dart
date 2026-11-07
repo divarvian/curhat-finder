@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/config/router.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../counselor/presentation/providers/counselor_provider.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
 
-class SplashView extends StatefulWidget {
+class SplashView extends ConsumerStatefulWidget {
   const SplashView({super.key});
 
   @override
-  State<SplashView> createState() => _SplashViewState();
+  ConsumerState<SplashView> createState() => _SplashViewState();
 }
 
-class _SplashViewState extends State<SplashView> with SingleTickerProviderStateMixin {
+class _SplashViewState extends ConsumerState<SplashView> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _logoRotateAnimation;
@@ -72,23 +76,50 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
       final session = SupabaseService.client.auth.currentSession;
       if (session != null) {
         try {
-          final profile = await SupabaseService.client
-              .from('profiles')
-              .select('role, is_verified, counselor_status')
-              .eq('id', session.user.id)
-              .maybeSingle();
-
+          // Sinkronkan state auth dan static cache AuthNotifier sebelum navigasi
+          await ref.read(authProvider.notifier).refreshProfile();
           if (!mounted) return;
-          final role = (profile?['role'] as String?)?.toLowerCase();
-          final isVerified = profile?['is_verified'] as bool? ?? (role != 'konselor');
+
+          final auth = ref.read(authProvider);
+          final role = auth.role?.toLowerCase();
+          final isVerified = auth.isVerified;
+          final isApproved = auth.counselorStatus == 'approved';
+
+          AuthNotifier.lastKnownRole = role;
+          AuthNotifier.lastKnownIsVerified = isVerified;
+
           if (role == 'konselor') {
-            if (isVerified) {
+            final counselorNotifier = ref.read(counselorProvider.notifier);
+            await counselorNotifier.initializeSupabaseSync();
+            if (!mounted) return;
+
+            final avatarUrl = ref.read(counselorProvider).profile.avatarUrl;
+            if (avatarUrl != null && avatarUrl.isNotEmpty && mounted) {
+              try {
+                precacheImage(NetworkImage(avatarUrl), context);
+              } catch (_) {}
+            }
+
+            if (!mounted) return;
+            if (isVerified && isApproved) {
               const CounselorMainRoute().go(context);
             } else {
               const CounselorPendingRoute().go(context);
             }
             return;
           } else {
+            final profileNotifier = ref.read(profileProvider.notifier);
+            await profileNotifier.reloadProfile();
+            if (!mounted) return;
+
+            final avatarUrl = ref.read(profileProvider).avatarUrl;
+            if (avatarUrl != null && avatarUrl.isNotEmpty && mounted) {
+              try {
+                precacheImage(NetworkImage(avatarUrl), context);
+              } catch (_) {}
+            }
+
+            if (!mounted) return;
             const MainRoute().go(context);
             return;
           }
@@ -103,6 +134,26 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
         const OnboardingRoute().go(context);
       }
     });
+  }
+
+  bool _hasPrecached = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasPrecached) {
+      _hasPrecached = true;
+      _precacheCoreAssets();
+    }
+  }
+
+  void _precacheCoreAssets() {
+    try {
+      precacheImage(const AssetImage('assets/images/mascot.png'), context);
+      precacheImage(const AssetImage('assets/images/pattern.png'), context);
+      precacheImage(const AssetImage('assets/images/profile.png'), context);
+      precacheImage(const AssetImage('assets/images/mascot_leave.png'), context);
+    } catch (_) {}
   }
 
   @override

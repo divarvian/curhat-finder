@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/supabase_service.dart';
+import '../../../../core/utils/academic_helper.dart';
 import '../../domain/pulse_contact_model.dart';
 
 class PulseState {
@@ -31,15 +32,7 @@ class PulseState {
 }
 
 class PulseNotifier extends Notifier<PulseState> {
-  static const List<String> categories = [
-    'Semua',
-    'FILKOM',
-    'FIB',
-    'FT',
-    'FBiPK',
-    'FK',
-    'FEB'
-  ];
+  static List<String> get categories => ['Semua', ...AcademicHelper.facultyShortNames];
 
   static const List<PulseContact> defaultContacts = [
     PulseContact(
@@ -120,11 +113,8 @@ class PulseNotifier extends Notifier<PulseState> {
 
   @override
   PulseState build() {
-    // Initial state with default contacts
-    final state = const PulseState(allContacts: defaultContacts);
-    // Load dynamic contacts from Supabase asynchronously
-    loadContactsFromSupabase();
-    return state;
+    Future.microtask(() => loadContactsFromSupabase());
+    return const PulseState(allContacts: defaultContacts);
   }
 
   Future<void> loadContactsFromSupabase() async {
@@ -169,7 +159,7 @@ class PulseNotifier extends Notifier<PulseState> {
 
     return state.allContacts.where((contact) {
       // Filter by category
-      final matchesCategory = selectedCategory == 'Semua' || contact.faculty == selectedCategory;
+      final matchesCategory = AcademicHelper.matchesFacultyFilter(contact.faculty, selectedCategory);
       
       // Filter by search query
       final matchesQuery = query.isEmpty ||

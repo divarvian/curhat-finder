@@ -18,24 +18,40 @@ class MainNavView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(mainNavProvider);
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        extendBody: true, // Agar background halaman (seperti Jurnal) tembus ke sudut lengkung navbar
-        backgroundColor: AppColors.platinum,
-        body: IndexedStack(
-          index: currentIndex,
-          children: [
-            const BerandaView(),
-            const ChatListView(),
-            const JurnalView(),
-            const PulseView(),
-            const ProfileView(),
-          ],
+    return PopScope(
+      canPop: currentIndex == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.read(mainNavProvider.notifier).setIndex(0);
+        }
+      },
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          extendBody: true, // Agar background halaman (seperti Jurnal) tembus ke sudut lengkung navbar
+          backgroundColor: AppColors.platinum,
+          body: IndexedStack(
+            index: currentIndex,
+            children: [
+              const BerandaView(),
+              const ChatListView(),
+              const JurnalView(),
+              const PulseView(),
+              const ProfileView(),
+            ],
+          ),
+        
+        floatingActionButton: AnimatedScale(
+          scale: currentIndex == 0 ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOutCubic,
+          child: IgnorePointer(
+            ignoring: currentIndex != 0,
+            child: _buildCustomFAB(context),
+          ),
         ),
-      
-      floatingActionButton: currentIndex == 0 ? _buildCustomFAB(context) : null,
-      bottomNavigationBar: _buildBottomNavigationBar(ref, currentIndex),
+        bottomNavigationBar: _buildBottomNavigationBar(ref, currentIndex),
+        ),
       ),
     );
   }

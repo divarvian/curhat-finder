@@ -20,12 +20,16 @@ class JurnalState {
   final int? selectedMood; // 0: Senang, 1: Biasa saja, 2: Lelah, 3: Sedih, 4: Marah
   final List<JurnalHistoryItem> checkInHistory;
   final List<JurnalHistoryItem> sambatHistory;
+  final bool isLoading;
+  final bool isSaving;
 
   JurnalState({
     this.selectedTab = 0,
     this.selectedMood,
     this.checkInHistory = const [],
     this.sambatHistory = const [],
+    this.isLoading = false,
+    this.isSaving = false,
   });
 
   JurnalState copyWith({
@@ -33,6 +37,8 @@ class JurnalState {
     int? selectedMood,
     List<JurnalHistoryItem>? checkInHistory,
     List<JurnalHistoryItem>? sambatHistory,
+    bool? isLoading,
+    bool? isSaving,
     bool clearMood = false,
   }) {
     return JurnalState(
@@ -40,6 +46,8 @@ class JurnalState {
       selectedMood: clearMood ? null : (selectedMood ?? this.selectedMood),
       checkInHistory: checkInHistory ?? this.checkInHistory,
       sambatHistory: sambatHistory ?? this.sambatHistory,
+      isLoading: isLoading ?? this.isLoading,
+      isSaving: isSaving ?? this.isSaving,
     );
   }
 }
@@ -51,7 +59,7 @@ class JurnalNotifier extends Notifier<JurnalState> {
   JurnalState build() {
     _communityService = ref.watch(communityServiceProvider);
     Future.microtask(() => _loadInitialJournals());
-    return JurnalState();
+    return JurnalState(isLoading: true);
   }
 
   void _loadInitialJournals() async {
@@ -92,6 +100,8 @@ class JurnalNotifier extends Notifier<JurnalState> {
         state = state.copyWith(sambatHistory: items);
       }
     } catch (_) {}
+
+    state = state.copyWith(isLoading: false);
   }
 
   void setTab(int index) {
@@ -102,12 +112,13 @@ class JurnalNotifier extends Notifier<JurnalState> {
     state = state.copyWith(selectedMood: mood);
   }
 
-  void saveCheckIn(String note) async {
-    if (state.selectedMood == null) return;
+  Future<bool> saveCheckIn(String note) async {
+    if (state.selectedMood == null || state.isSaving) return false;
 
     final mood = state.selectedMood!;
     final now = DateTime.now();
-    final dateStr = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+    final dateStr =
+        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
 
     final newItem = JurnalHistoryItem(
       title: _getMoodTitle(mood),
@@ -116,8 +127,11 @@ class JurnalNotifier extends Notifier<JurnalState> {
       imagePath: _getMoodImagePath(mood),
     );
 
+    final previousHistory = state.checkInHistory;
+
     state = state.copyWith(
       checkInHistory: [newItem, ...state.checkInHistory],
+      isSaving: true,
       clearMood: true,
     );
 
@@ -126,32 +140,54 @@ class JurnalNotifier extends Notifier<JurnalState> {
         moodIndex: mood,
         moodNote: note.isNotEmpty ? note : null,
       );
-    } catch (_) {}
+      state = state.copyWith(isSaving: false);
+      return true;
+    } catch (_) {
+      state = state.copyWith(
+        checkInHistory: previousHistory,
+        selectedMood: mood,
+        isSaving: false,
+      );
+      return false;
+    }
   }
 
-  void saveSambat(String note) async {
-    if (note.trim().isEmpty) return;
+  Future<bool> saveSambat(String note) async {
+    final trimmed = note.trim();
+    if (trimmed.isEmpty || state.isSaving) return false;
 
     final now = DateTime.now();
-    final dateStr = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+    final dateStr =
+        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
 
     final newItem = JurnalHistoryItem(
       title: 'Sambat',
-      text: note.trim(),
+      text: trimmed,
       date: dateStr,
       imagePath: 'assets/images/angry.png',
     );
 
+    final previousHistory = state.sambatHistory;
+
     state = state.copyWith(
       sambatHistory: [newItem, ...state.sambatHistory],
+      isSaving: true,
     );
 
     try {
       await _communityService.createPrivateSambat(
-        content: note.trim(),
+        content: trimmed,
         moodTag: 'Sambat',
       );
-    } catch (_) {}
+      state = state.copyWith(isSaving: false);
+      return true;
+    } catch (_) {
+      state = state.copyWith(
+        sambatHistory: previousHistory,
+        isSaving: false,
+      );
+      return false;
+    }
   }
 
   String _getMoodTitle(int moodIndex) {

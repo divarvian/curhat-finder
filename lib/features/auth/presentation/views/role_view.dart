@@ -214,7 +214,6 @@ class _RoleViewState extends State<RoleView> {
                           style: AppTextStyles.heading2.copyWith(
                             color: AppColors.twilightDarker,
                             fontWeight: FontWeight.w400,
-                            letterSpacing: -1,
                           ),
                         ),
                   const SizedBox(height: 8),

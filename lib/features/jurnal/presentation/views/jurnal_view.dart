@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/jurnal_provider.dart';
@@ -16,8 +17,9 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
   final TextEditingController _checkInController = TextEditingController();
   final TextEditingController _sambatController = TextEditingController();
 
-  void _saveCheckIn() {
+  void _saveCheckIn() async {
     final state = ref.read(jurnalProvider);
+    if (state.isSaving) return;
     if (state.selectedMood == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pilih perasaanmu hari ini dulu ya!')),
@@ -25,26 +27,50 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
       return;
     }
 
-    ref.read(jurnalProvider.notifier).saveCheckIn(_checkInController.text);
+    final text = _checkInController.text;
     _checkInController.clear();
-    
+
     // Hide keyboard
     FocusScope.of(context).unfocus();
+
+    final success = await ref.read(jurnalProvider.notifier).saveCheckIn(text);
+    if (!success && mounted) {
+      _checkInController.text = text;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal menyimpan jurnal ke cloud. Draf teks Anda telah dikembalikan.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
-  void _saveSambat() {
-    if (_sambatController.text.trim().isEmpty) {
+  void _saveSambat() async {
+    final state = ref.read(jurnalProvider);
+    if (state.isSaving) return;
+    final text = _sambatController.text.trim();
+    if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tulis keluhanmu terlebih dahulu!')),
       );
       return;
     }
 
-    ref.read(jurnalProvider.notifier).saveSambat(_sambatController.text);
     _sambatController.clear();
-    
+
     // Hide keyboard
     FocusScope.of(context).unfocus();
+
+    final success = await ref.read(jurnalProvider.notifier).saveSambat(text);
+    if (!success && mounted) {
+      _sambatController.text = text;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal menyimpan sambat ke cloud. Draf teks Anda telah dikembalikan.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   String _getMoodImagePath(int moodIndex) {
@@ -71,9 +97,21 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: AppColors.wisteriaLight, // Light blue-ish background
-        body: SafeArea(
-          child: Column(
+        backgroundColor: Colors.transparent,
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.jurnalGradientTop,
+                AppColors.jurnalGradientBottom,
+              ],
+            ),
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header
@@ -161,6 +199,7 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -220,7 +259,7 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _saveCheckIn,
+              onPressed: state.isSaving ? null : _saveCheckIn,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.twilightDarker,
                 foregroundColor: Colors.white,
@@ -230,13 +269,22 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
                 ),
                 elevation: 0,
               ),
-              child: Text(
-                'Simpan Jurnal',
-                style: AppTextStyles.labelLarge.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: state.isSaving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      'Simpan Jurnal',
+                      style: AppTextStyles.labelLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 32),
@@ -260,8 +308,9 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
             ),
           ),
           const SizedBox(height: 16),
-          
-          if (state.checkInHistory.isEmpty)
+          if (state.isLoading)
+            ...List.generate(2, (_) => const JurnalHistorySkeleton())
+          else if (state.checkInHistory.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 40),
               child: Center(
@@ -367,7 +416,7 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _saveSambat,
+              onPressed: state.isSaving ? null : _saveSambat,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.twilightDarker,
                 foregroundColor: Colors.white,
@@ -377,13 +426,22 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
                 ),
                 elevation: 0,
               ),
-              child: Text(
-                'Simpan Sambat',
-                style: AppTextStyles.labelLarge.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: state.isSaving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      'Simpan Sambat',
+                      style: AppTextStyles.labelLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 40),
@@ -398,7 +456,9 @@ class _JurnalViewState extends ConsumerState<JurnalView> {
           ),
           const SizedBox(height: 16),
           
-          if (state.sambatHistory.isEmpty)
+          if (state.isLoading)
+            ...List.generate(2, (_) => const JurnalHistorySkeleton())
+          else if (state.sambatHistory.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 40),
               child: Center(

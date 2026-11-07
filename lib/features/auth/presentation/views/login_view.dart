@@ -21,12 +21,14 @@ class _LoginViewState extends ConsumerState<LoginView> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -67,18 +69,18 @@ class _LoginViewState extends ConsumerState<LoginView> {
     if (!mounted) return;
 
     if (success) {
-      // Muat ulang data profil terbaru dari Supabase
-      ref.read(profileProvider.notifier).reloadProfile();
-      ref.read(counselorProvider.notifier).initializeSupabaseSync();
-
       final auth = ref.read(authProvider);
       if (auth.role == 'konselor') {
+        await ref.read(counselorProvider.notifier).initializeSupabaseSync();
+        if (!mounted) return;
         if (auth.isVerified) {
           const CounselorMainRoute().go(context);
         } else {
           const CounselorPendingRoute().go(context);
         }
       } else {
+        await ref.read(profileProvider.notifier).reloadProfile();
+        if (!mounted) return;
         const MainRoute().go(context);
       }
     } else {
@@ -96,6 +98,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
   Widget _buildCustomTextField({
     required TextEditingController controller,
     required String hintText,
+    FocusNode? focusNode,
+    void Function(String)? onFieldSubmitted,
     bool obscureText = false,
     TextInputType keyboardType = TextInputType.text,
     TextInputAction textInputAction = TextInputAction.next,
@@ -117,6 +121,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
       ),
       child: TextFormField(
         controller: controller,
+        focusNode: focusNode,
+        onFieldSubmitted: onFieldSubmitted,
         obscureText: obscureText,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
@@ -211,7 +217,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
                             style: AppTextStyles.displaySmall.copyWith(
                               color: AppColors.twilightDarker,
                               height: 1.2,
-                              letterSpacing: -1,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -227,6 +232,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
                             controller: _emailController,
                             hintText: 'Email/Username',
                             keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Email/Username wajib diisi';
@@ -238,9 +245,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
                           _buildCustomTextField(
                             controller: _passwordController,
+                            focusNode: _passwordFocusNode,
                             hintText: 'Password',
                             obscureText: _obscurePassword,
                             textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _handleLogin(),
                             suffixIcon: Padding(
                               padding: const EdgeInsets.only(right: 12.0),
                               child: IconButton(

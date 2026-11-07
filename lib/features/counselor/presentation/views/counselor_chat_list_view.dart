@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../providers/counselor_provider.dart';
 import '../widgets/anonymous_avatar.dart';
 
@@ -36,23 +37,29 @@ class CounselorChatListView extends ConsumerWidget {
 
             // Daftar Sesi Chat Mahasiswa
             Expanded(
-              child: sessions.isEmpty
-                  ? Center(
-                      child: Text(
-                        'Belum ada sesi chat aktif',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.wisteriaNormal,
-                        ),
-                      ),
+              child: counselorState.isLoading
+                  ? ListView.builder(
+                      padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 108),
+                      itemCount: 4,
+                      itemBuilder: (context, index) => const CounselorChatSessionSkeleton(),
                     )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                      itemCount: sessions.length,
-                      itemBuilder: (context, index) {
-                        final session = sessions[index];
-                        return _buildSessionCard(context, session);
-                      },
-                    ),
+                  : sessions.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Belum ada sesi chat aktif',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.wisteriaNormal,
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(left: 24, right: 24, top: 8, bottom: 108),
+                          itemCount: sessions.length,
+                          itemBuilder: (context, index) {
+                            final session = sessions[index];
+                            return _buildSessionCard(context, session);
+                          },
+                        ),
             ),
           ],
         ),

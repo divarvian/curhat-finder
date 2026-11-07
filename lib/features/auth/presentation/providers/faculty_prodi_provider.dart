@@ -9,7 +9,9 @@ class FacultyProdiData {
 }
 
 final facultyProdiProvider = FutureProvider<FacultyProdiData>((ref) async {
-  await AcademicHelper.initialize();
+  try {
+    await AcademicHelper.initialize();
+  } catch (_) {}
   return FacultyProdiData(
     fakultas: AcademicHelper.faculties,
     prodi: AcademicHelper.prodis,

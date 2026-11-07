@@ -45,22 +45,47 @@ class RoomService {
     required String title,
     required String content,
     required String category,
-    required String authorTag,
+    String? authorName,
+    String? authorFaculty,
+    String? authorGender,
+    String? authorTag,
   }) async {
     final userId = _supabase.auth.currentUser?.id;
 
-    final response = await _supabase.from('rooms').insert({
-      'user_id': ?userId,
+    final name = authorName ?? (authorTag != null ? (authorTag.contains(' • ') ? authorTag.split(' • ').first : authorTag) : 'Anonim');
+    final faculty = authorFaculty ?? (authorTag != null && authorTag.contains(' • ') ? authorTag.split(' • ').last : 'FILKOM');
+    final gender = authorGender ?? 'Laki-laki';
+
+    final payload = <String, dynamic>{
       'title': title,
       'content': content,
       'category': category,
-      'author_tag': authorTag,
+      'author_name': name,
+      'author_faculty': faculty,
+      'author_gender': gender,
       'likes_count': 0,
       'comments_count': 0,
       'bookmarks_count': 0,
-    }).select().single();
+    };
+    if (userId != null) {
+      payload['user_id'] = userId;
+    }
 
+    final response = await _supabase.from('rooms').insert(payload).select().single();
     return RoomModel.fromJson(response);
+  }
+
+  /// Menghapus postingan room curhat milik pengguna aktif
+  Future<bool> deleteRoom(String roomId) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return false;
+
+    try {
+      await _supabase.from('rooms').delete().eq('id', roomId).eq('user_id', userId);
+      return true;
+    } catch (_) {
+      rethrow;
+    }
   }
 
   /// Mengambil set ID room yang disukai pengguna saat ini
@@ -163,17 +188,30 @@ class RoomService {
   Future<void> addComment({
     required String roomId,
     required String content,
-    required String authorTag,
+    String? authorName,
+    String? authorFaculty,
+    String? authorRole,
+    String? authorTag,
   }) async {
     final userId = _supabase.auth.currentUser?.id;
 
-    await _supabase.from('room_comments').insert({
+    final name = authorName ?? (authorTag != null ? (authorTag.contains(' • ') ? authorTag.split(' • ').first : authorTag) : 'Teman Kampus');
+    final faculty = authorFaculty ?? (authorTag != null && authorTag.contains(' • ') ? authorTag.split(' • ').last : 'FILKOM');
+    final role = authorRole ?? (authorTag != null && authorTag.toLowerCase().contains('konselor') ? 'konselor' : 'mahasiswa');
+
+    final payload = <String, dynamic>{
       'room_id': roomId,
-      'user_id': ?userId,
-      'author_tag': authorTag,
       'content': content,
+      'author_name': name,
+      'author_faculty': faculty,
+      'author_role': role,
       'likes_count': 0,
-    });
+    };
+    if (userId != null) {
+      payload['user_id'] = userId;
+    }
+
+    await _supabase.from('room_comments').insert(payload);
   }
 }
 

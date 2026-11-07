@@ -1,13 +1,20 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../chat/presentation/widgets/active_session_banner.dart';
 import '../../../main_nav/presentation/providers/main_nav_provider.dart';
+import '../../../profile/domain/user_profile_model.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 import '../../data/community_service.dart';
 import '../../domain/tip_model.dart';
+import '../providers/tips_interaction_provider.dart';
+import '../widgets/dialogs/create_tip_sheet.dart';
 
 class BerandaView extends ConsumerStatefulWidget {
   const BerandaView({super.key});
@@ -17,92 +24,27 @@ class BerandaView extends ConsumerStatefulWidget {
 }
 
 class _BerandaViewState extends ConsumerState<BerandaView> {
-  final TextEditingController _tipsController = TextEditingController();
-  final List<String> _filters = const ['Semua', 'Self-care', 'Productivity', 'Afirmasi', 'Musik', 'Curhat'];
-  int _selectedFilterIndex = 0;
-  Set<String> _likedTipIds = {};
-  Set<String> _bookmarkedTipIds = {};
   Stream<List<TipModel>>? _tipsStream;
 
   @override
   void initState() {
     super.initState();
-    _loadUserInteractions();
-    _updateStream();
-  }
-
-  void _updateStream() {
-    final category = _filters[_selectedFilterIndex];
-    _tipsStream = ref.read(communityServiceProvider).streamTips(
-          category: category == 'Semua' ? null : category,
-        );
-  }
-
-  void _loadUserInteractions() async {
-    try {
-      final likes = await ref.read(communityServiceProvider).fetchUserLikedTips();
-      final bookmarks = await ref.read(communityServiceProvider).fetchUserBookmarkedTips();
-      if (mounted) {
-        setState(() {
-          _likedTipIds = likes;
-          _bookmarkedTipIds = bookmarks;
-        });
-      }
-    } catch (_) {}
-  }
-
-  @override
-  void dispose() {
-    _tipsController.dispose();
-    super.dispose();
-  }
-
-  void _onFilterTap(int index) {
-    if (_selectedFilterIndex == index) return;
-    setState(() {
-      _selectedFilterIndex = index;
-      _updateStream();
-    });
-  }
-
-  void _submitTip() async {
-    final text = _tipsController.text.trim();
-    if (text.isEmpty) return;
-
-    _tipsController.clear();
-    final category = _filters[_selectedFilterIndex] == 'Semua' ? 'Self-care' : _filters[_selectedFilterIndex];
-    final profile = ref.read(profileProvider);
-
-    try {
-      await ref.read(communityServiceProvider).createTip(
-            content: text,
-            category: category,
-            authorFaculty: profile.faculty.isNotEmpty ? profile.faculty : 'FILKOM',
-            authorGender: profile.gender.isNotEmpty ? profile.gender : 'Laki-laki',
-          );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Tips "$category" berhasil dibagikan! Terima kasih sudah saling menyemangati ✨'),
-            backgroundColor: AppColors.twilightDarker,
-          ),
-        );
-      }
-    } catch (_) {}
+    _tipsStream = ref.read(communityServiceProvider).streamTips();
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final displayName = authState.username ?? 'Whisky';
-    final currentCategory = _filters[_selectedFilterIndex];
+    final profileUser = ref.watch(profileProvider);
+    final isProfileLoading = profileUser.isLoading || (authState.isLoggedIn && authState.username == null);
+    final displayName = authState.username ?? (profileUser.name.isNotEmpty ? profileUser.name : 'Teman');
 
     return CustomScrollView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
         // Top Section (Header Background + Header Content + Floating Banner)
         SliverToBoxAdapter(
-          child: _buildTopSection(displayName),
+          child: _buildTopSection(displayName, profileUser, isProfileLoading),
         ),
 
         // Active Counseling Session Banner (Floating jika ada sesi aktif)
@@ -121,91 +63,20 @@ class _BerandaViewState extends ConsumerState<BerandaView> {
           child: SizedBox(height: 24),
         ),
 
-        // Filter Section
+        // Seksi Tips Hari Ini (Sesuai Homepage FIX.png)
         SliverToBoxAdapter(
-          child: _buildFilterSection(),
-        ),
-
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 16),
-        ),
-
-        // Feed list (Stream from Supabase tips, cached reference)
-        StreamBuilder<List<TipModel>>(
-          stream: _tipsStream,
-          builder: (context, snapshot) {
-            final tips = snapshot.data ?? [];
-
-            if (snapshot.connectionState == ConnectionState.waiting && tips.isEmpty) {
-              return const SliverToBoxAdapter(
-                child: Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: CircularProgressIndicator(color: AppColors.twilightDarker),
-                  ),
-                ),
-              );
-            }
-
-            if (tips.isEmpty) {
-              return SliverToBoxAdapter(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        const Icon(Icons.lightbulb_outline, size: 48, color: AppColors.wisteriaNormal),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Belum ada tips di kategori "$currentCategory"',
-                          style: AppTextStyles.heading3.copyWith(color: AppColors.twilightDarker, fontSize: 16),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Jadilah yang pertama membagikan tips untuk teman-temanmu di atas!',
-                          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            return SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final item = tips[index];
-                  return _InteractiveTipCard(
-                    key: ValueKey(item.id),
-                    item: item,
-                    initialIsLiked: _likedTipIds.contains(item.id),
-                    initialIsBookmarked: _bookmarkedTipIds.contains(item.id),
-                    onToggleLike: (tipId) => ref.read(communityServiceProvider).toggleLikeTip(tipId),
-                    onToggleBookmark: (tipId) => ref.read(communityServiceProvider).toggleBookmarkTip(tipId),
-                  );
-                },
-                childCount: tips.length,
-              ),
-            );
-          },
+          child: _buildTipsHariIniSection(),
         ),
 
         // Spasi bawah agar tidak tertutup FAB / Nav Bar
         const SliverToBoxAdapter(
-          child: SizedBox(height: 100),
+          child: SizedBox(height: 120),
         ),
       ],
     );
   }
 
-  Widget _buildTopSection(String displayName) {
+  Widget _buildTopSection(String displayName, UserProfile user, bool isLoading) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -262,43 +133,41 @@ class _BerandaViewState extends ConsumerState<BerandaView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.twilightNormal, width: 2),
+                      child: isLoading
+                          ? const HeaderGreetingSkeleton(avatarSize: 52)
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 52,
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: AppColors.twilightNormal, width: 2),
+                                  ),
+                                  child: ClipOval(
+                                    child: _buildAvatarImage(user),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Halo $displayName,\nada apa hari ini?',
+                                  style: AppTextStyles.heading1.copyWith(
+                                    color: AppColors.twilightDarker,
+                                    fontSize: 22,
+                                    height: 1.25,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Yuk, luangin waktu buat dirimu sendiri.',
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppColors.wisteriaDark,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: ClipOval(
-                              child: Image.asset(
-                                'assets/images/profile.png',
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Halo $displayName,\nada apa hari ini?',
-                            style: AppTextStyles.heading1.copyWith(
-                              color: AppColors.twilightDarker,
-                              fontSize: 22,
-                              height: 1.25,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Yuk, luangin waktu buat dirimu sendiri.',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.wisteriaDark,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                     const SizedBox(width: 130),
                   ],
@@ -421,43 +290,49 @@ class _BerandaViewState extends ConsumerState<BerandaView> {
             ),
           ),
           const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(100),
+            elevation: 0,
+            child: InkWell(
+              onTap: () => CreateTipSheet.show(context),
               borderRadius: BorderRadius.circular(100),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(100),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: TextField(
-              controller: _tipsController,
-              onSubmitted: (_) => _submitTip(),
-              decoration: InputDecoration(
-                hintText: 'Berikan tips dan saranmu untuk teman teman...',
-                hintStyle: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.wisteriaDark.withValues(alpha: 0.6),
-                  fontSize: 12,
-                ),
-                prefixIcon: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: InkWell(
-                    onTap: _submitTip,
-                    customBorder: const CircleBorder(),
-                    child: Container(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.twilightDarker,
                       ),
                       child: const Icon(Icons.add, color: Colors.white, size: 20),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Berikan tips dan saranmu untuk teman teman...',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.twilightNormal.withValues(alpha: 0.75),
+                          fontSize: 12.5,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
               ),
             ),
           ),
@@ -466,271 +341,300 @@ class _BerandaViewState extends ConsumerState<BerandaView> {
     );
   }
 
-  Widget _buildFilterSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Tips dari teman-teman kamu',
-                style: AppTextStyles.heading2.copyWith(
-                  color: AppColors.twilightDarker,
-                  fontSize: 16,
-                ),
-              ),
-              Text(
-                'Lihat Semua',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.twilightDarker,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 36,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: _filters.length,
-            itemBuilder: (context, index) {
-              final isSelected = _selectedFilterIndex == index;
-              return GestureDetector(
-                onTap: () => _onFilterTap(index),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFF9DADA) : Colors.white,
-                    borderRadius: BorderRadius.circular(100),
-                    border: Border.all(
-                      color: isSelected ? AppColors.redNormalHover : AppColors.twilightLight,
-                      width: 1,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _filters[index],
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: isSelected ? AppColors.twilightDarker : AppColors.twilightDark,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Widget Card Mandiri dengan Optimistic UI dan Spring Bounce Animation
-class _InteractiveTipCard extends StatefulWidget {
-  final TipModel item;
-  final bool initialIsLiked;
-  final bool initialIsBookmarked;
-  final Future<bool> Function(String tipId) onToggleLike;
-  final Future<bool> Function(String tipId) onToggleBookmark;
-
-  const _InteractiveTipCard({
-    super.key,
-    required this.item,
-    required this.initialIsLiked,
-    required this.initialIsBookmarked,
-    required this.onToggleLike,
-    required this.onToggleBookmark,
-  });
-
-  @override
-  State<_InteractiveTipCard> createState() => _InteractiveTipCardState();
-}
-
-class _InteractiveTipCardState extends State<_InteractiveTipCard> with SingleTickerProviderStateMixin {
-  late int _likesCount;
-  late bool _isLiked;
-  late bool _isBookmarked;
-
-  late AnimationController _likeAnimController;
-  late Animation<double> _likeScaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _likesCount = widget.item.likesCount;
-    _isLiked = widget.initialIsLiked;
-    _isBookmarked = widget.initialIsBookmarked;
-
-    _likeAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 180),
-    );
-    _likeScaleAnim = Tween<double>(begin: 1.0, end: 1.35).animate(
-      CurvedAnimation(parent: _likeAnimController, curve: Curves.easeOutBack),
-    );
-  }
-
-  @override
-  void didUpdateWidget(covariant _InteractiveTipCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.item.id != oldWidget.item.id) {
-      _likesCount = widget.item.likesCount;
-      _isLiked = widget.initialIsLiked;
-      _isBookmarked = widget.initialIsBookmarked;
-    }
-  }
-
-  @override
-  void dispose() {
-    _likeAnimController.dispose();
-    super.dispose();
-  }
-
-  void _handleLikeTap() {
-    setState(() {
-      _isLiked = !_isLiked;
-      _likesCount += _isLiked ? 1 : -1;
-      if (_likesCount < 0) _likesCount = 0;
-    });
-
-    _likeAnimController.forward().then((_) => _likeAnimController.reverse());
-    widget.onToggleLike(widget.item.id);
-  }
-
-  void _handleBookmarkTap() {
-    setState(() {
-      _isBookmarked = !_isBookmarked;
-    });
-
-    widget.onToggleBookmark(widget.item.id);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final item = widget.item;
-
-    return Container(
-      margin: const EdgeInsets.only(left: 24, right: 24, bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.lavenderBlush,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Text(
-                  '${item.authorName} • ${item.authorFaculty} • ${item.category}',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.twilightDarker,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const Icon(Icons.more_horiz, color: AppColors.wisteriaNormal, size: 20),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            item.content,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.twilightDarker,
-              height: 1.5,
-              fontSize: 14,
+  Widget _buildTipsHariIniSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Container(
+        padding: const EdgeInsets.all(20.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
             ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Tombol Suka / Like dengan animasi pegas
-              InkWell(
-                onTap: _handleLikeTap,
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: Row(
-                    children: [
-                      ScaleTransition(
-                        scale: _likeScaleAnim,
-                        child: Icon(
-                          _isLiked ? Icons.favorite : Icons.favorite_border,
-                          color: _isLiked ? Colors.redAccent : AppColors.wisteriaNormal,
-                          size: 19,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tips Hari Ini',
+              style: AppTextStyles.heading2.copyWith(
+                color: AppColors.twilightDarker,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Baca tips yang kami rekomendasikan hari ini',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.twilightNormal.withValues(alpha: 0.8),
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Featured Card Rekomendasi Hari Ini (Sesuai Homepage FIX.png)
+            StreamBuilder<List<TipModel>>(
+              stream: _tipsStream,
+              builder: (context, snapshot) {
+                // Tampilkan Skeleton jika data masih dimuat dari server
+                if (snapshot.connectionState == ConnectionState.waiting && (!snapshot.hasData || (snapshot.data ?? []).isEmpty)) {
+                  return const TipCardSkeleton(margin: EdgeInsets.zero);
+                }
+
+                final tips = snapshot.data ?? [];
+                final featuredTip = tips.isNotEmpty ? tips.first : null;
+
+                if (featuredTip == null) {
+                  return const TipCardSkeleton(margin: EdgeInsets.zero);
+                }
+
+                final interactionState = ref.watch(tipsInteractionProvider);
+                final interactionNotifier = ref.read(tipsInteractionProvider.notifier);
+
+                final isLiked = interactionState.likedTipIds.contains(featuredTip.id);
+                final isBookmarked = interactionState.bookmarkedTipIds.contains(featuredTip.id);
+                final likes = interactionNotifier.getEffectiveLikesCount(featuredTip.id, featuredTip.likesCount);
+
+                final authorTag = '${featuredTip.authorName} • ${featuredTip.category}';
+                final title = featuredTip.displayTitle;
+                final body = featuredTip.displayDescription;
+
+                return Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  child: InkWell(
+                    onTap: () {
+                      context.push('/tip_detail', extra: featuredTip);
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFBF9F8),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.twilightLight.withValues(alpha: 0.6),
+                          width: 1,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 150),
-                        transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-                        child: Text(
-                          '$_likesCount',
-                          key: ValueKey<int>(_likesCount),
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: _isLiked ? Colors.redAccent : AppColors.wisteriaNormal,
-                            fontSize: 12,
-                            fontWeight: _isLiked ? FontWeight.bold : FontWeight.normal,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppColors.lavenderBlush,
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            child: Text(
+                              authorTag,
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.twilightDarker,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                          const SizedBox(height: 12),
+                          Text(
+                            title,
+                            style: AppTextStyles.heading3.copyWith(
+                              color: AppColors.twilightDarker,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            body,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.twilightDarker.withValues(alpha: 0.85),
+                              height: 1.45,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // Tombol Like Interaktif Langsung di Beranda
+                              InkWell(
+                                onTap: () {
+                                  ref.read(tipsInteractionProvider.notifier).toggleLike(featuredTip.id);
+                                },
+                                borderRadius: BorderRadius.circular(20),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                        color: isLiked ? Colors.redAccent : AppColors.wisteriaDarkHover,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '$likes',
+                                        style: AppTextStyles.labelSmall.copyWith(
+                                          color: isLiked ? Colors.redAccent : AppColors.wisteriaDarkHover,
+                                          fontSize: 12,
+                                          fontWeight: isLiked ? FontWeight.bold : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
 
-              // Tombol Simpan / Bookmark
-              InkWell(
-                onTap: _handleBookmarkTap,
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                        color: _isBookmarked ? AppColors.sunshineYellow : AppColors.wisteriaNormal,
-                        size: 19,
+                              // Tombol Bookmark Interaktif Langsung di Beranda
+                              InkWell(
+                                onTap: () {
+                                  ref.read(tipsInteractionProvider.notifier).toggleBookmark(featuredTip.id);
+                                },
+                                borderRadius: BorderRadius.circular(20),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                                        color: isBookmarked ? AppColors.sunshineYellow : AppColors.wisteriaDarkHover,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        isBookmarked ? 'Tersimpan' : 'Simpan',
+                                        style: AppTextStyles.labelSmall.copyWith(
+                                          color: isBookmarked ? AppColors.sunshineYellow : AppColors.wisteriaDarkHover,
+                                          fontSize: 12,
+                                          fontWeight: isBookmarked ? FontWeight.bold : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _isBookmarked ? 'Tersimpan' : 'Simpan',
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: _isBookmarked ? AppColors.sunshineYellow : AppColors.wisteriaNormal,
-                          fontSize: 12,
-                          fontWeight: _isBookmarked ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                    ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+
+            // Tombol "Jelajahi Lebih Banyak Tips ->"
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () {
+                  context.push('/tips');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.twilightDarker,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Jelajahi Lebih Banyak Tips',
+                      style: AppTextStyles.labelLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  Widget _buildAvatarImage(UserProfile user) {
+    if (user.localAvatarPath != null && !kIsWeb && File(user.localAvatarPath!).existsSync()) {
+      return Image.file(
+        File(user.localAvatarPath!),
+        fit: BoxFit.cover,
+        width: 52,
+        height: 52,
+      );
+    }
+    if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty) {
+      return Image.network(
+        user.avatarUrl!,
+        fit: BoxFit.cover,
+        width: 52,
+        height: 52,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded || frame != null) {
+            return child;
+          }
+          return const AppShimmer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (_, _, _) => Image.asset(
+          user.avatarPath,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    if (user.localAvatarPath != null && user.localAvatarPath!.startsWith('http')) {
+      return Image.network(
+        user.localAvatarPath!,
+        fit: BoxFit.cover,
+        width: 52,
+        height: 52,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded || frame != null) {
+            return child;
+          }
+          return const AppShimmer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (_, _, _) => Image.asset(
+          user.avatarPath,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    return Image.asset(
+      user.avatarPath.isNotEmpty ? user.avatarPath : 'assets/images/profile.png',
+      fit: BoxFit.cover,
+    );
+  }
 }
+

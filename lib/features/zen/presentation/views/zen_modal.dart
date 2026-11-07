@@ -15,6 +15,7 @@ class _ZenModalState extends State<ZenModal> with SingleTickerProviderStateMixin
   
   // State for animation and timer
   bool _isPlaying = false;
+  bool _isCompleted = false;
   String _breathingText = 'Siap?';
   int _remainingSeconds = 0;
   Timer? _timer;
@@ -89,6 +90,7 @@ class _ZenModalState extends State<ZenModal> with SingleTickerProviderStateMixin
     // mengabaikan perubahan status apa pun yang terjadi saat controller di-reset.
     setState(() {
       _isPlaying = false;
+      _isCompleted = completed;
       _breathingText = completed ? 'Selesai! 🎉\nMau coba lagi?' : 'Siap?';
     });
 
@@ -108,6 +110,10 @@ class _ZenModalState extends State<ZenModal> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    if (_isCompleted) {
+      return _buildCompletedView(context);
+    }
+
     final screenWidth = MediaQuery.of(context).size.width;
     // Base size is 45% of screen width, but capped between 150 and 220
     final baseSize = (screenWidth * 0.45).clamp(150.0, 220.0);
@@ -362,6 +368,97 @@ class _ZenModalState extends State<ZenModal> with SingleTickerProviderStateMixin
           style: AppTextStyles.bodyLarge.copyWith(
             color: isSelected ? Colors.white : AppColors.twilightDarker,
             fontWeight: isSelected ? FontWeight.normal : FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompletedView(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.twilightDarker,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Image.asset(
+                'assets/images/mascot_drink.png',
+                height: 180,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'Psst... mau ingetin sesuatu!',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.heading1.copyWith(
+                  color: Colors.white,
+                  fontSize: 22,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Jangan lupa minum air putih, ya.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyLarge.copyWith(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 16,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                width: double.infinity,
+                height: 52,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(26),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.lavenderBlush,
+                      AppColors.redNormal,
+                    ],
+                  ),
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _isCompleted = false;
+                      _isPlaying = false;
+                      _breathingText = 'Siap?';
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(26),
+                    ),
+                  ),
+                  child: Text(
+                    'Kembali ke tab latihan',
+                    style: AppTextStyles.labelLarge.copyWith(
+                      color: AppColors.twilightDarker,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
           ),
         ),
       ),

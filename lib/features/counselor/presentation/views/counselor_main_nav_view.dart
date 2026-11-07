@@ -17,22 +17,30 @@ class CounselorMainNavView extends ConsumerWidget {
     final counselorState = ref.watch(counselorProvider);
     final currentIndex = counselorState.currentNavIndex;
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        extendBody: true,
-        backgroundColor: AppColors.platinum,
-        body: IndexedStack(
-          index: currentIndex,
-          children: const [
-            CounselorBerandaView(),
-            CounselorChatListView(),
-            CounselorForumView(),
-            CounselorCreatorView(),
-            CounselorProfileView(),
-          ],
+    return PopScope(
+      canPop: currentIndex == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          ref.read(counselorProvider.notifier).setNavIndex(0);
+        }
+      },
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          extendBody: true,
+          backgroundColor: AppColors.platinum,
+          body: IndexedStack(
+            index: currentIndex,
+            children: const [
+              CounselorBerandaView(),
+              CounselorChatListView(),
+              CounselorForumView(),
+              CounselorCreatorView(),
+              CounselorProfileView(),
+            ],
+          ),
+          bottomNavigationBar: _buildBottomNavigationBar(ref, currentIndex),
         ),
-        bottomNavigationBar: _buildBottomNavigationBar(ref, currentIndex),
       ),
     );
   }

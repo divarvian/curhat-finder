@@ -141,7 +141,6 @@ class _OnboardingViewState extends State<OnboardingView> {
                       style: AppTextStyles.heading1.copyWith(
                         color: AppColors.twilightDarker,
                         height: 1.2,
-                        letterSpacing: -1, 
                       ),
                     ),
                     const SizedBox(height: 16),

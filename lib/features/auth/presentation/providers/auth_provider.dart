@@ -1,7 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'package:curhat_finder/features/auth/data/auth_service.dart';
 import 'package:curhat_finder/features/auth/data/auth_repository.dart';
 import 'package:curhat_finder/core/services/notification_service.dart';
+import 'package:curhat_finder/core/services/supabase_service.dart';
+import 'package:curhat_finder/core/utils/app_error_translator.dart';
+import 'package:curhat_finder/features/counselor/presentation/providers/counselor_provider.dart';
+import 'package:curhat_finder/features/profile/presentation/providers/profile_provider.dart';
 import 'auth_state.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
@@ -12,6 +17,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 class AuthNotifier extends Notifier<AuthState> {
+  static bool? lastKnownIsVerified;
+  static String? lastKnownRole;
+
   late final AuthRepository _authRepository;
 
   @override
@@ -28,6 +36,17 @@ class AuthNotifier extends Notifier<AuthState> {
       final role = profile?['role'] ?? 'mahasiswa';
       final isVerified = profile?['is_verified'] as bool? ?? (role != 'konselor');
       final counselorStatus = profile?['counselor_status'] as String? ?? (role == 'konselor' ? 'pending' : 'approved');
+
+      lastKnownRole = role;
+      lastKnownIsVerified = isVerified;
+
+      if (role == 'konselor' && isVerified == true) {
+        try {
+          SupabaseService.client.auth.updateUser(
+            UserAttributes(data: {'is_verified': true, 'role': 'konselor'}),
+          );
+        } catch (_) {}
+      }
 
       state = state.copyWith(
         isLoggedIn: true,
@@ -49,6 +68,17 @@ class AuthNotifier extends Notifier<AuthState> {
       final role = profile?['role'] ?? 'mahasiswa';
       final isVerified = profile?['is_verified'] as bool? ?? (role != 'konselor');
       final counselorStatus = profile?['counselor_status'] as String? ?? (role == 'konselor' ? 'pending' : 'approved');
+
+      lastKnownRole = role;
+      lastKnownIsVerified = isVerified;
+
+      if (role == 'konselor' && isVerified == true) {
+        try {
+          SupabaseService.client.auth.updateUser(
+            UserAttributes(data: {'is_verified': true, 'role': 'konselor'}),
+          );
+        } catch (_) {}
+      }
 
       state = state.copyWith(
         isLoggedIn: true,
@@ -77,6 +107,17 @@ class AuthNotifier extends Notifier<AuthState> {
       final isVerified = profile?['is_verified'] as bool? ?? (role != 'konselor');
       final counselorStatus = profile?['counselor_status'] as String? ?? (role == 'konselor' ? 'pending' : 'approved');
 
+      lastKnownRole = role;
+      lastKnownIsVerified = isVerified;
+
+      if (role == 'konselor' && isVerified == true) {
+        try {
+          SupabaseService.client.auth.updateUser(
+            UserAttributes(data: {'is_verified': true, 'role': 'konselor'}),
+          );
+        } catch (_) {}
+      }
+
       state = state.copyWith(
         isLoading: false,
         isLoggedIn: true,
@@ -93,7 +134,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString().replaceAll('Exception: ', ''),
+        errorMessage: AppErrorTranslator.translateAuthError(e),
       );
       return false;
     }
@@ -130,6 +171,10 @@ class AuthNotifier extends Notifier<AuthState> {
       );
 
       final user = response.user;
+      final isVerified = role != 'konselor';
+
+      lastKnownRole = role;
+      lastKnownIsVerified = isVerified;
 
       state = state.copyWith(
         isLoading: false,
@@ -138,7 +183,7 @@ class AuthNotifier extends Notifier<AuthState> {
         email: user?.email ?? email,
         username: nickname ?? fullName,
         role: role,
-        isVerified: role != 'konselor',
+        isVerified: isVerified,
         counselorStatus: role == 'konselor' ? 'pending' : 'approved',
       );
 
@@ -150,16 +195,20 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString().replaceAll('Exception: ', ''),
+        errorMessage: AppErrorTranslator.translateAuthError(e),
       );
       return false;
     }
   }
 
   Future<void> logout() async {
+    lastKnownRole = null;
+    lastKnownIsVerified = null;
     await NotificationService.clearToken();
     await _authRepository.logout();
     state = const AuthState();
+    ref.read(counselorProvider.notifier).reset();
+    ref.read(profileProvider.notifier).reloadProfile();
   }
 }
 

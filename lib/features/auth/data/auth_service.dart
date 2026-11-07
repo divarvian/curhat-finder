@@ -16,15 +16,10 @@ class AuthService {
   }
 
   Future<AuthResponse> login(String email, String password) async {
-    try {
-      final response = await _client.auth.signInWithPassword(
-        email: email.trim(),
-        password: password,
-      );
-      return response;
-    } catch (e) {
-      throw Exception(e.toString().replaceAll('AuthException(message: ', '').replaceAll(')', ''));
-    }
+    return await _client.auth.signInWithPassword(
+      email: email.trim(),
+      password: password,
+    );
   }
 
   Future<AuthResponse> register({
@@ -40,26 +35,21 @@ class AuthService {
     List<String>? hobbies,
     List<String>? topics,
   }) async {
-    try {
-      final response = await _client.auth.signUp(
-        email: email.trim(),
-        password: password,
-        data: {
-          'role': role,
-          'full_name': fullName,
-          'nickname': nickname,
-          'gender': gender,
-          'batch_year': batchYear,
-          'faculty': faculty,
-          'study_program': studyProgram,
-          'hobbies': hobbies ?? [],
-          'topics': topics ?? [],
-        },
-      );
-      return response;
-    } catch (e) {
-      throw Exception(e.toString().replaceAll('AuthException(message: ', '').replaceAll(')', ''));
-    }
+    return await _client.auth.signUp(
+      email: email.trim(),
+      password: password,
+      data: {
+        'role': role,
+        'full_name': fullName,
+        'nickname': nickname,
+        'gender': gender,
+        'batch_year': batchYear,
+        'faculty': faculty,
+        'study_program': studyProgram,
+        'hobbies': hobbies ?? [],
+        'topics': topics ?? [],
+      },
+    );
   }
 
   Future<Map<String, dynamic>?> getProfile(String userId) async {

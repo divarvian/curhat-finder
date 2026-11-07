@@ -9,16 +9,17 @@ Curhat Finder adalah aplikasi mobile kesehatan mental mahasiswa yang dirancang u
 ## ✨ Fitur Utama
 
 ### 1. 🤝 Konseling Sebaya (Peer Counseling)
-- **Antrean On-Demand Realtime**: Mahasiswa dapat memilih konselor sebaya yang sedang aktif (*online*) dan mengantre secara otomatis.
+- **Antrean On-Demand Realtime**: Mahasiswa dapat memilih konselor sebaya yang sedang aktif (*online*) dan mengantre secara otomatis (`counseling_queues`).
 - **Obrolan 1-on-1 Interaktif**:
   - Tanda status pesan (*Sent*, *Delivered*, *Read*).
   - Indikator mengetik (*Typing & Choosing Emoji Indicator*).
-  - Pemilih emoji (*In-app Emoji Keyboard*).
+  - Pemilih emoji terintegrasi (*In-app Emoji Keyboard*).
   - Deteksi keaktifan (*Activity-based Presence Heartbeat*).
 - **Kontrol Pesan**:
   - **Tarik Pesan (*Unsend*)**: Menarik pesan terkirim dalam batas toleransi waktu 30 menit.
-  - **Hapus untuk Saya (*Delete for Me*)**: Menyembunyikan pesan tertentu hanya dari tampilan lokal pengguna.
+  - **Hapus untuk Saya (*Delete for Me*)**: Menyembunyikan pesan tertentu dari tampilan lokal pengguna.
 - **Akhiri Sesi & Rating**: Mahasiswa dapat mengakhiri sesi dan memberikan ulasan bintang serta masukan untuk konselor.
+- **Otomasi Metrik Konselor**: Penghitungan atomik sesi aktif, total mahasiswa terbantu, dan rata-rata waktu respon konselor melalui trigger database PostgreSQL Supabase.
 
 ### 2. 🎭 Obrolan Anonim (Anonymous Matchmaking)
 - **Pencocokan Acak Berdasarkan Kebutuhan**: Pilihan mode *"Cuma mau didengar"*, *"Butuh saran"*, atau *"Obrolan santai"*.
@@ -26,23 +27,39 @@ Curhat Finder adalah aplikasi mobile kesehatan mental mahasiswa yang dirancang u
 - **Auto-Reconnection & AI Bot Companion**: Rekoneksi otomatis saat koneksi pulih, serta pendampingan AI Bot saat antrean sedang sepi.
 - **Pelaporan & Moderasi (*Report Engine*)**: Mekanisme pelaporan obrolan yang melanggar aturan komunitas demi menjaga ruang yang sehat.
 
-### 3. 🔒 Jurnal & Mood Tracker Privat
+### 3. 🏢 Ruang Curhat (Campus Rooms Feed)
+- **Feed Curhat Per Kategori & Fakultas**: Ruang diskusi terbuka/anonim mahasiswa untuk saling menyemangati berdasarkan topik (*Akademik*, *Burnout*, *Keuangan*, *Keluarga*, dll).
+- **Interaksi Optimistik Zero-Delay**: Sistem suka (*like*) dan simpan (*bookmark*) instan 0ms dengan algoritma **Echo Cancellation** untuk mencegah anomali lonjakan double-counting (+2/0) saat sinkronisasi realtime.
+- **Komentar Bimbingan Terverifikasi**: Komentar dari konselor sebaya otomatis mendapatkan lencana resmi verified *Konselor Sebaya*.
+- **Manajemen Konten Pemilik (Menu Titik 3)**: Penulis postingan/tips dapat menghapus konten buatannya secara aman dengan dialog konfirmasi kanonikal Milo, terhapus secara *cascade* di database.
+
+### 4. 🔒 Jurnal & Mood Tracker Privat
 - **Daily Mood Check-In**: Pencatatan emosi harian (*Senang, Biasa saja, Lelah, Sedih, Marah*) beserta catatan refleksi.
 - **Ruang Sambat Privat**: Catatan curhat pribadi yang **100% terisolasi** menggunakan tabel khusus `user_private_sambats` dengan kebijakan keamanan PostgreSQL *Row Level Security (RLS)* — hanya dapat diakses oleh pemilik akun (`auth.uid() = user_id`).
 
-### 4. 💡 Beranda & Tips Komunitas
-- **Feed Tips Self-Care**: Kumpulan kiat praktis kesehatan mental, manajemen stres, dan produktivitas mahasiswa yang dapat difilter berdasarkan kategori.
-- **Interaksi Komunitas**: Mahasiswa dapat membagikan tip positif dan menyukai tip bermanfaat.
+### 5. 💡 Beranda & Tips Komunitas
+- **Feed Tips Self-Care**: Kumpulan kiat praktis kesehatan mental dan produktivitas mahasiswa yang dapat difilter berdasarkan kategori.
+- **Halaman Detail "Isi Tips" (`TipDetailView`)**: Tampilan tips terstruktur (Judul headline tebal, kategori, dan deskripsi) dengan maskot Milo mengintip (*sticky peeking*) di bibir bawah kartu (`mascot_seek.png`).
+- **Modal Terpadu Pembuatan Tips (`CreateTipSheet`)**: Bottom sheet interaktif untuk membuat dan membagikan tips self-care positif ke komunitas.
 
-### 5. 🛡️ Gerbang Verifikasi Konselor (*Approval Gate*)
-- Pendaftaran konselor sebaya melalui proses verifikasi berkas/status (`pending`, `approved`, `rejected`).
-- Konselor yang belum disetujui dialihkan ke layar antarmuka khusus pemantauan status dan dibatasi dari akses sesi konseling mahasiswa.
+### 6. 🧘 Latihan Pernapasan & Relaksasi Zen
+- **Panduan Pernapasan Ritmis 4-7-8**: Latihan relaksasi visual interaktif (*Inhale*, *Hold*, *Exhale*) untuk meredakan kecemasan dan stres akademik.
+- **Pengingat Hidrasi Milo**: Tampilan penutup latihan pernapasan dengan pesan ramah *"Jangan lupa minum air putih, ya"* bersama maskot Milo (`mascot_drink.png`).
 
-### 6. 🚨 Pulse & Hotline Darurat
-- Direktori kontak darurat dan hotline bantuan krisis kesehatan mental universitas yang dapat dihubungi secara cepat saat situasi genting.
+### 7. 🎓 Dashboard & Forum Konselor Sebaya
+- **Pemantauan Antrean & Sesi Aktif**: Dashboard beranda konselor dengan status kehadiran (*Ready to Listen toggle*), ringkasan statistik performa, dan antrean masuk mahasiswa.
+- **Leaderboard Top Isu Per Fakultas 🔥**: Tiga baris kartu vertikal bertingkat (Peringkat 1, 2, 3) yang mengagregasikan tren isu kesehatan mental mahasiswa per fakultas secara real-time dari data postingan rooms.
+- **Creator Studio**: Formulir in-place terpadu bagi konselor untuk mempublikasikan artikel panduan kesehatan mental langsung ke feed tips (`public.tips`).
+- **Kurasi Topik Keahlian Terstandarisasi (`ManageTopicsSheet`)**: Pemilihan topik bimbingan konselor berbasis filter chip resmi pendaftaran, menjaga konsistensi profil konselor.
 
-### 7. 🔔 Push Notification Realtime
-- Didukung oleh integrasi **Firebase Cloud Messaging (FCM HTTP v1)** dan database triggers Supabase untuk memberikan pemberitahuan instan saat ada pesan masuk atau antrean baru.
+### 8. 🚨 Pulse & Hotline Darurat
+- Direktori kontak darurat dan hotline bantuan krisis kesehatan mental universitas (UB, Filkom, Kemenkes Sejiwa 24 Jam) yang dapat dihubungi secara cepat saat situasi genting.
+
+### 9. 🎨 Desain Figma Fidelity & Aksesibilitas
+- **Tipografi Ramah Disleksia**: Standarisasi letter-spacing positif (+0.15px s.d. +0.25px) dan line-height proporsional (1.45–1.5) guna mencegah *visual crowding* dan *line-jumping*.
+- **Ekspresi Kontekstual Maskot Milo**: 5 variasi maskot Milo beresolusi tinggi (Peeking, Leave, Report, Radar Detective, Emergency Siren, Happy Rating).
+- **Paritas Tata Letak Profil**: Desain kartu Informasi Akun membulat 32px, soft dividers, dan tombol logout soft coral konsisten antara mahasiswa dan konselor.
+- **Sistem Skeleton Shimmer Mandiri**: Shimmer sweep gradient halus tanpa dependensi eksternal (`AppSkeleton` & `AppShimmer`) yang mencakup seluruh kartu, riwayat jurnal, chat, profil, dan beranda konselor.
 
 ---
 
@@ -50,13 +67,14 @@ Curhat Finder adalah aplikasi mobile kesehatan mental mahasiswa yang dirancang u
 
 - **Framework**: [Flutter](https://flutter.dev/) (Channel Stable, Dart 3.x)
 - **State Management**: [Flutter Riverpod](https://riverpod.dev/) (`NotifierProvider`, immutable state pattern)
-- **Navigasi & Routing**: [GoRouter](https://pub.dev/packages/go_router) (Declarative routing, guarded redirects)
+- **Navigasi & Routing**: [GoRouter](https://pub.dev/packages/go_router) (Declarative routing, guarded redirects, type-safe routes)
 - **Backend & Database**: [Supabase](https://supabase.com/)
   - PostgreSQL 17 dengan RLS (*Row Level Security*) ketat di semua tabel
   - Supabase Realtime (Broadcast, Presence, Postgres Changes)
   - Supabase Edge Functions (Deno Runtime)
-  - Stored Procedures & Atomic RPCs
-- **Push Notification**: Firebase Core, Firebase Messaging (FCM v1), `flutter_local_notifications`
+  - Database Triggers & Stored Procedures (Sinkronisasi metrik performa konselor, counter likes/comments)
+  - Supabase CLI Migration System (27 migrasi database terkelola)
+- **Push Notification**: Firebase Core, Firebase Messaging (FCM v1 HTTP), `flutter_local_notifications`
 - **Konfigurasi Environment**: `flutter_dotenv` (Isolasi kredensial via `.env` dan `.env.example`)
 - **Code Generation**: Freezed, JSON Serializable, GoRouter Builder, Build Runner
 
@@ -77,19 +95,27 @@ lib/
 │   │   └── supabase_service.dart    # Client Supabase & pembaca konfigurasi .env
 │   ├── theme/
 │   │   ├── app_colors.dart          # Palet warna aplikasi
-│   │   ├── app_text_styles.dart     # Skala tipografi
+│   │   ├── app_radii.dart           # Standarisasi border radius
+│   │   ├── app_text_styles.dart     # Skala tipografi ramah disleksia
 │   │   └── app_theme.dart           # Tema Material Design 3
-│   └── utils/
-│       └── academic_helper.dart     # Resolver kode fakultas & prodi universitas
+│   ├── utils/
+│   │   ├── academic_helper.dart     # Resolver kode fakultas & prodi universitas
+│   │   └── app_error_translator.dart# Terjemahan error auth & jaringan ke bahasa Indonesia
+│   └── widgets/
+│       ├── app_skeleton.dart        # Engine shimmer & skeleton loader mandiri
+│       └── dialogs/                 # Dialog konfirmasi (hapus postingan, logout)
 ├── features/
 │   ├── auth/                        # Registrasi wizard, login, approval gate konselor
-│   ├── beranda/                     # Feed tips self-care & community service
-│   ├── chat/                        # Obrolan konseling, anon chat, matchmaking, rating
-│   ├── counselor/                   # Dashboard & navigasi khusus konselor sebaya
+│   ├── beranda/                     # Feed tips self-care, detail "Isi Tips", CreateTipSheet
+│   ├── chat/                        # Obrolan konseling, anon matchmaking, rooms feed, rating
+│   ├── counselor/                   # Dashboard beranda, forum leaderboard, creator studio, profil
 │   ├── jurnal/                      # Mood check-in & catatan sambat privat
-│   ├── profile/                     # Profil pengguna, avatar, status
+│   ├── main_nav/                    # Bottom navigation bar mahasiswa
+│   ├── onboarding/                  # Layar selamat datang & orientasi pengguna
+│   ├── profile/                     # Profil pengguna, avatar, pengaturan akun
 │   ├── pulse/                       # Hotline darurat & kontak krisis
-│   └── splash/                      # Splash screen & routing otomatis berbasis role
+│   ├── splash/                      # Splash screen & routing otomatis berbasis role
+│   └── zen/                         # Latihan pernapasan & relaksasi ritmis
 └── main.dart                        # Entry point aplikasi
 ```
 
@@ -142,22 +168,24 @@ flutter run
 
 ## 🧪 Pengujian & Kualitas Kode
 
-Aplikasi ini dilengkapi dengan pengujian unit dan pengujian widget komprehensif:
+Aplikasi ini mengadopsi arsitektur pengujian modular (*Feature-First Modular Testing*) dengan **128 unit & widget tests**:
 
 ```bash
-# Jalankan analisis statis kode
+# Jalankan analisis statis kode (Harus 0 issues)
 flutter analyze
 
-# Jalankan seluruh rangkaian test suite
-flutter test test/widget_test.dart
+# Jalankan seluruh rangkaian test suite otomatis
+flutter test
 ```
 
 Cakupan pengujian mencakup:
-- Pemetaan akademik fakultas & program studi
-- Antrean, deduplikasi pesan chat 3-layer, dan rekoneksi anon chat
-- Kebijakan unsend pesan (toleransi 30 menit) dan delete for me
-- Approval gate konselor sebaya & `CounselorPendingView`
-- Keamanan pembacaan environment variables tanpa kebocoran kredensial
+- **Core & Theme**: Skala warna, radius, tipografi disleksia, error translator, dan komponen skeleton shimmer.
+- **Autentikasi**: Registrasi multi-step, verifikasi role, approval gate konselor, dan sesi login/logout.
+- **Beranda & Tips**: Model tips, provider interaksi optimistik, kartu tips, dan halaman detail "Isi Tips".
+- **Ruang Curhat (Rooms) & Komentar**: Postingan curhat, komentar konselor terverifikasi, provider likes/bookmarks optimistik, dialog hapus konten milik sendiri.
+- **Konseling & Chat**: Deduplikasi pesan 3-layer, unsend pesan (toleransi 30 menit), rating konseling, dan sesi chat konselor.
+- **Dashboard Konselor**: Leaderboard vertikal Top Isu Per Fakultas, kurasi topik keahlian, skeleton kartu presensi, dan paritas profil.
+- **Database Integrity**: Integritas file migrasi SQL, trigger database konselor, dan kebijakan keamanan PostgreSQL RLS.
 
 ---
 
@@ -165,10 +193,12 @@ Cakupan pengujian mencakup:
 
 1. **Prinsip Least Privilege**: Seluruh tabel Supabase dilindungi oleh *Row Level Security (RLS)*. Mahasiswa tidak dapat membaca data curhat atau sesi konseling milik pengguna lain.
 2. **Kredensial Aman**: Tidak ada kredensial sensitif, service account private key, atau secret token yang di-hardcode di dalam source code.
-3. **Isolasi Curhat**: Catatan sambat disimpan di tabel terpisah khusus pengguna terotentikasi, terpisah dari konten publik beranda.
+3. **Isolasi Curhat Privat**: Catatan sambat disimpan di tabel `user_private_sambats` terpisah khusus pengguna terotentikasi, terpisah total dari feed publik komunitas.
+4. **Kepemilikan Konten Granular**: Operasi penghapusan tips dan ruang curhat divalidasi langsung di database melalui policy `auth.uid() = user_id`.
 
 ---
 
 ## 📄 Lisensi
 
 Hak Cipta © 2026 Tim Pengembang Curhat Finder. Seluruh hak cipta dilindungi undang-undang.
+

@@ -1,8 +1,12 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_skeleton.dart';
+import '../../domain/counselor_model.dart';
 import '../providers/counselor_provider.dart';
 import '../widgets/presence_status_card.dart';
 import '../widgets/counselor_stats_row.dart';
@@ -24,7 +28,7 @@ class CounselorBerandaView extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 1. Header Section (Salam, Avatar, & Maskot)
-            _buildTopSection(profile.name),
+            _buildTopSection(profile.name, profile, counselorState.isLoading),
 
             // 2. Konten Utama Beranda
             Padding(
@@ -34,22 +38,28 @@ class CounselorBerandaView extends ConsumerWidget {
                 children: [
                   const SizedBox(height: 16),
 
-                  // Status Kehadiran
-                  PresenceStatusCard(
-                    isOnline: profile.isOnline,
-                    onToggle: (value) {
-                      counselorNotifier.toggleOnlineStatus();
-                    },
-                  ),
+                  if (counselorState.isLoading) ...[
+                    const PresenceStatusCardSkeleton(),
+                    const SizedBox(height: 20),
+                    const CounselorStatsSkeleton(),
+                  ] else ...[
+                    // Status Kehadiran
+                    PresenceStatusCard(
+                      isOnline: profile.isOnline,
+                      onToggle: (value) {
+                        counselorNotifier.toggleOnlineStatus();
+                      },
+                    ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  // 3 Kartu Statistik
-                  CounselorStatsRow(
-                    activeSessions: profile.activeSessions,
-                    totalHelped: profile.totalHelped,
-                    responseTime: profile.responseTime,
-                  ),
+                    // 3 Kartu Statistik
+                    CounselorStatsRow(
+                      activeSessions: profile.activeSessions,
+                      totalHelped: profile.totalHelped,
+                      responseTime: profile.responseTime,
+                    ),
+                  ],
 
                   const SizedBox(height: 32),
 
@@ -66,18 +76,19 @@ class CounselorBerandaView extends ConsumerWidget {
     );
   }
 
-  Widget _buildTopSection(String name) {
+  Widget _buildTopSection(String name, CounselorProfile profile, bool isLoading) {
     // Format nama: hapus emoji jika ada untuk greeting, atau gunakan nama panggilan
     final displayName = name.replaceAll('💖', '').trim();
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // Latar Belakang Lengkung Halus
+        // 1. Latar Belakang Lengkung Halus
         Container(
-          height: 230,
+          height: 260,
+          width: double.infinity,
           decoration: const BoxDecoration(
-            color: Color(0xFFFCEDED), // Soft Pink Kemerahan
+            color: AppColors.counselorHeaderBg, // Soft Pink Kemerahan
             borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(32),
               bottomRight: Radius.circular(32),
@@ -100,12 +111,12 @@ class CounselorBerandaView extends ConsumerWidget {
           ),
         ),
 
-        // Karakter Maskot di Kanan Atas
+        // 2. Karakter Maskot Menempel di Ujung Kanan (100% Identik dengan Mahasiswa)
         Positioned(
           right: -10,
-          top: 35,
+          top: 45,
           child: SizedBox(
-            width: 190,
+            width: 200,
             child: Image.asset(
               'assets/images/mascot.png',
               fit: BoxFit.contain,
@@ -113,73 +124,82 @@ class CounselorBerandaView extends ConsumerWidget {
           ),
         ),
 
-        // Konten Teks dan Avatar
+        // 3. Konten Teks dan Avatar
         SafeArea(
           bottom: false,
+          left: false,
+          right: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 120, 0),
-            child: Column(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Avatar Konselor Kecil dengan Badge Hati
-                Stack(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        border: Border.all(
-                          color: const Color(0xFFF88A8A),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/images/mascot.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.favorite,
-                          size: 14,
-                          color: Color(0xFFF88A8A),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
+                Expanded(
+                  child: isLoading
+                      ? const HeaderGreetingSkeleton(avatarSize: 48)
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Avatar Konselor Kecil dengan Badge Hati
+                            Stack(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                    border: Border.all(
+                                      color: const Color(0xFFF88A8A),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: ClipOval(
+                                    child: _buildAvatarImage(profile),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  bottom: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.favorite,
+                                      size: 14,
+                                      color: Color(0xFFF88A8A),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
 
-                // Greeting Teks
-                Text(
-                  'Halo $displayName,\nada apa hari ini?',
-                  style: AppTextStyles.heading2.copyWith(
-                    color: AppColors.twilightDarker,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    height: 1.25,
-                  ),
+                            // Greeting Teks
+                            Text(
+                              'Halo $displayName,\nada apa hari ini?',
+                              style: AppTextStyles.heading2.copyWith(
+                                color: AppColors.twilightDarker,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                height: 1.25,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Yuk, luangin waktu buat dirimu sendiri.',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.twilightNormal.withValues(alpha: 0.8),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Yuk, luangin waktu buat dirimu sendiri.',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.twilightNormal.withValues(alpha: 0.8),
-                    fontSize: 12,
-                  ),
-                ),
+                const SizedBox(width: 140),
               ],
             ),
           ),
@@ -243,7 +263,11 @@ class CounselorBerandaView extends ConsumerWidget {
 
         const SizedBox(height: 20),
 
-        if (queues.isEmpty)
+        if (counselorState.isLoading) ...[
+          const CounselorQueueCardSkeleton(),
+          const SizedBox(height: 16),
+          const CounselorQueueCardSkeleton(),
+        ] else if (queues.isEmpty)
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 36.0),
@@ -340,19 +364,30 @@ class CounselorBerandaView extends ConsumerWidget {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 10),
                           ),
-                          onPressed: () async {
-                            final session = await counselorNotifier.acceptQueue(queue);
-                            if (session != null && context.mounted) {
-                              CounselorChatRoomRoute(
-                                sessionId: session.id,
-                                studentTitle: '${queue.studentAlias} - ${queue.studentFaculty}',
-                              ).push(context);
-                            }
-                          },
-                          child: const Text(
-                            'Terima Sesi',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
+                          onPressed: counselorNotifier.isQueueProcessing(queue.id)
+                              ? null
+                              : () async {
+                                  final session = await counselorNotifier.acceptQueue(queue);
+                                  if (session != null && context.mounted) {
+                                    CounselorChatRoomRoute(
+                                      sessionId: session.id,
+                                      studentTitle: '${queue.studentAlias} - ${queue.studentFaculty}',
+                                    ).push(context);
+                                  }
+                                },
+                          child: counselorNotifier.isQueueProcessing(queue.id)
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Terima Sesi',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -365,7 +400,9 @@ class CounselorBerandaView extends ConsumerWidget {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                         ),
-                        onPressed: () => counselorNotifier.rejectQueue(queue.id),
+                        onPressed: counselorNotifier.isQueueProcessing(queue.id)
+                            ? null
+                            : () => counselorNotifier.rejectQueue(queue.id),
                         child: const Text('Tolak', style: TextStyle(fontSize: 13)),
                       ),
                     ],
@@ -375,6 +412,71 @@ class CounselorBerandaView extends ConsumerWidget {
             );
           }),
       ],
+    );
+  }
+
+  Widget _buildAvatarImage(CounselorProfile profile) {
+    if (profile.localAvatarPath != null && !kIsWeb && File(profile.localAvatarPath!).existsSync()) {
+      return Image.file(
+        File(profile.localAvatarPath!),
+        fit: BoxFit.cover,
+        width: 48,
+        height: 48,
+      );
+    }
+    if (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty) {
+      return Image.network(
+        profile.avatarUrl!,
+        fit: BoxFit.cover,
+        width: 48,
+        height: 48,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded || frame != null) {
+            return child;
+          }
+          return const AppShimmer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (_, _, _) => Image.asset(
+          profile.avatarPath,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    if (profile.localAvatarPath != null && profile.localAvatarPath!.startsWith('http')) {
+      return Image.network(
+        profile.localAvatarPath!,
+        fit: BoxFit.cover,
+        width: 48,
+        height: 48,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded || frame != null) {
+            return child;
+          }
+          return const AppShimmer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (_, _, _) => Image.asset(
+          profile.avatarPath,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    return Image.asset(
+      profile.avatarPath.isNotEmpty ? profile.avatarPath : 'assets/images/mascot.png',
+      fit: BoxFit.cover,
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:curhat_finder/features/chat/data/counseling_service.dart';
 import 'package:curhat_finder/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:curhat_finder/features/chat/presentation/widgets/active_session_banner.dart';
 import 'package:curhat_finder/features/chat/presentation/widgets/cards/counselor_card.dart';
+import 'package:curhat_finder/core/widgets/app_skeleton.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Tab SupportBuddy (Temukan Konselor Sebaya Berdasarkan Topik & Fakultas)
@@ -51,26 +52,11 @@ class _SupportBuddyTabState extends ConsumerState<SupportBuddyTab> {
   }
 
   bool _matchesFaculty(String facultyStr, int subCategoryIndex) {
-    final upper = facultyStr.toUpperCase();
-    switch (subCategoryIndex) {
-      case 1:
-        return upper.contains('FILKOM') || upper.contains('ILMU KOMPUTER');
-      case 2:
-        return upper.contains('FIB') || upper.contains('ILMU BUDAYA');
-      case 3:
-        // Cek Fakultas Teknik eksak, hindari false positive FTP / FTAB
-        final tokens = upper.split(RegExp(r'[\s\(\)\,\.]+'));
-        return tokens.contains('FT') || upper.contains('FAKULTAS TEKNIK');
-      case 4:
-        return upper.contains('FISIP') || upper.contains('FBIPK') || upper.contains('BIPK') || upper.contains('ILMU SOSIAL');
-      case 5:
-        // Cek Fakultas Kedokteran eksak, hindari FKG / FKH
-        final tokens = upper.split(RegExp(r'[\s\(\)\,\.]+'));
-        return (tokens.contains('FK') && !tokens.contains('FKG') && !tokens.contains('FKH')) ||
-            (upper.contains('KEDOKTERAN') && !upper.contains('GIGI') && !upper.contains('HEWAN'));
-      default:
-        return true;
+    const filterFaculties = ['Online', 'FILKOM', 'FIB', 'FT', 'FISIP', 'FK'];
+    if (subCategoryIndex <= 0 || subCategoryIndex >= filterFaculties.length) {
+      return true;
     }
+    return AcademicHelper.matchesFacultyFilter(facultyStr, filterFaculties[subCategoryIndex]);
   }
 
   @override
@@ -140,7 +126,15 @@ class _SupportBuddyTabState extends ConsumerState<SupportBuddyTab> {
             stream: widget.counselorsStream,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
+                return ListView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(left: 24, right: 24, top: 0, bottom: 108),
+                  children: const [
+                    CounselorCardSkeleton(),
+                    CounselorCardSkeleton(),
+                    CounselorCardSkeleton(),
+                  ],
+                );
               }
 
               final counselors = snapshot.data ?? [];
@@ -220,7 +214,7 @@ class _SupportBuddyTabState extends ConsumerState<SupportBuddyTab> {
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.only(left: 24, right: 24, top: 0, bottom: 108),
                 itemCount: filtered.length,
                 itemBuilder: (context, index) {
                   final c = filtered[index];

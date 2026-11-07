@@ -11,6 +11,8 @@ import '../../../../app/config/router.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/expandable_message_text.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../data/anon_chat_service.dart';
 import '../../domain/anon_chat_model.dart';
 import '../../domain/counseling_models.dart';
@@ -82,8 +84,12 @@ class _ChatAnonRoomViewState extends ConsumerState<ChatAnonRoomView> with Widget
     _initConnectivityListener();
     _focusNode.addListener(() {
       if (_focusNode.hasFocus && _showEmoji) {
-        setState(() {
-          _showEmoji = false;
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted && _focusNode.hasFocus) {
+            setState(() {
+              _showEmoji = false;
+            });
+          }
         });
       }
     });
@@ -417,16 +423,24 @@ class _ChatAnonRoomViewState extends ConsumerState<ChatAnonRoomView> with Widget
   void _toggleEmojiKeyboard() {
     if (_showEmoji) {
       _focusNode.requestFocus();
-      setState(() {
-        _showEmoji = false;
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          setState(() {
+            _showEmoji = false;
+          });
+          _broadcastStatus('idle');
+        }
       });
-      _broadcastStatus('idle');
     } else {
       _focusNode.unfocus();
-      setState(() {
-        _showEmoji = true;
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          setState(() {
+            _showEmoji = true;
+          });
+          _broadcastStatus('choosing_emoji');
+        }
       });
-      _broadcastStatus('choosing_emoji');
     }
   }
 
@@ -1055,8 +1069,19 @@ class _ChatAnonRoomViewState extends ConsumerState<ChatAnonRoomView> with Widget
         }
       },
       child: Scaffold(
-      backgroundColor: AppColors.wisteriaLight,
-      body: SafeArea(
+        backgroundColor: Colors.transparent,
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.studentChatGradientTop,
+                AppColors.studentChatGradientBottom,
+              ],
+            ),
+          ),
+          child: SafeArea(
         child: Column(
           children: [
             // App Bar
@@ -1293,6 +1318,10 @@ class _ChatAnonRoomViewState extends ConsumerState<ChatAnonRoomView> with Widget
                   ? StreamBuilder<List<AnonMessageModel>>(
                       stream: _messagesStream,
                       builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting && _cachedAnonMessages.isEmpty) {
+                          return const ChatBubbleSkeleton();
+                        }
+
                         if (snapshot.hasData && snapshot.data != null) {
                           _cachedAnonMessages = snapshot.data!;
                           _isStreamConnected = true;
@@ -1514,12 +1543,13 @@ class _ChatAnonRoomViewState extends ConsumerState<ChatAnonRoomView> with Widget
                                             ],
                                           ),
                                         ),
-                                      Text(
-                                        msg.messageText,
+                                      ExpandableMessageText(
+                                        text: msg.messageText,
                                         style: AppTextStyles.bodyMedium.copyWith(
                                           color: isMe ? Colors.white : AppColors.twilightDarker,
                                           fontSize: 14,
                                         ),
+                                        isMe: isMe,
                                       ),
                                       const SizedBox(height: 4),
                                       Row(
@@ -1743,10 +1773,14 @@ class _ChatAnonRoomViewState extends ConsumerState<ChatAnonRoomView> with Widget
                           onSubmitted: (_) => _sendMessage(),
                           onTap: () {
                             if (_showEmoji) {
-                              setState(() {
-                                _showEmoji = false;
+                              Future.delayed(const Duration(milliseconds: 100), () {
+                                if (mounted) {
+                                  setState(() {
+                                    _showEmoji = false;
+                                  });
+                                  _broadcastStatus('idle');
+                                }
                               });
-                              _broadcastStatus('idle');
                             }
                           },
                           decoration: InputDecoration(
@@ -1835,6 +1869,7 @@ class _ChatAnonRoomViewState extends ConsumerState<ChatAnonRoomView> with Widget
             ],
           ],
         ),
+      ),
       ),
     ),
   );

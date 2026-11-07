@@ -64,6 +64,7 @@ class AppContent extends StatelessWidget {
     return MaterialApp.router(
       title: 'Curhat Finder',
       theme: AppTheme.lightTheme,
+      themeMode: ThemeMode.light,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

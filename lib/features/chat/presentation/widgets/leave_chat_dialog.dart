@@ -23,11 +23,12 @@ class LeaveChatDialog extends StatelessWidget {
           children: [
             // Mascot dengan tanda silang
             Image.asset(
-              'assets/images/profile.png', // Fallback
-              width: 120,
-              height: 120,
+              'assets/images/mascot_leave.png',
+              width: 130,
+              height: 100,
+              fit: BoxFit.contain,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             
             // Judul
             Text(

@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:curhat_finder/core/services/supabase_service.dart';
+import 'package:curhat_finder/core/widgets/dialogs/delete_confirmation_dialog.dart';
+import 'package:curhat_finder/features/chat/presentation/providers/rooms_interaction_provider.dart';
 import 'package:curhat_finder/core/theme/app_colors.dart';
 import 'package:curhat_finder/core/theme/app_text_styles.dart';
 import 'package:curhat_finder/features/chat/domain/room_model.dart';
 
+import 'package:curhat_finder/core/theme/app_radii.dart';
+
 /// Widget Card Room Mandiri dengan Optimistic UI dan Animasi Pegas (Bounce)
-class InteractiveRoomCard extends StatefulWidget {
+class InteractiveRoomCard extends ConsumerStatefulWidget {
   final RoomModel room;
   final bool initialIsLiked;
   final bool initialIsBookmarked;
   final void Function(String roomId, bool newIsLiked) onToggleLike;
   final void Function(String roomId, bool newIsBookmarked) onToggleBookmark;
   final void Function(RoomModel updatedRoom) onTap;
+  final bool isDetailHeader;
+  final VoidCallback? onBackTap;
+  final VoidCallback? onDeleted;
 
   const InteractiveRoomCard({
     super.key,
@@ -20,17 +29,16 @@ class InteractiveRoomCard extends StatefulWidget {
     required this.onToggleLike,
     required this.onToggleBookmark,
     required this.onTap,
+    this.isDetailHeader = false,
+    this.onBackTap,
+    this.onDeleted,
   });
 
   @override
-  State<InteractiveRoomCard> createState() => _InteractiveRoomCardState();
+  ConsumerState<InteractiveRoomCard> createState() => _InteractiveRoomCardState();
 }
 
-class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerProviderStateMixin {
-  late int _likesCount;
-  late bool _isLiked;
-  late bool _isBookmarked;
-
+class _InteractiveRoomCardState extends ConsumerState<InteractiveRoomCard> with TickerProviderStateMixin {
   late AnimationController _likeAnimController;
   late Animation<double> _likeScaleAnim;
 
@@ -40,10 +48,6 @@ class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerPr
   @override
   void initState() {
     super.initState();
-    _likesCount = widget.room.likesCount;
-    _isLiked = widget.initialIsLiked;
-    _isBookmarked = widget.initialIsBookmarked;
-
     _likeAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 180),
@@ -62,26 +66,6 @@ class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerPr
   }
 
   @override
-  void didUpdateWidget(covariant InteractiveRoomCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.room.id != oldWidget.room.id) {
-      _likesCount = widget.room.likesCount;
-      _isLiked = widget.initialIsLiked;
-      _isBookmarked = widget.initialIsBookmarked;
-    } else {
-      if (widget.initialIsLiked != oldWidget.initialIsLiked) {
-        _isLiked = widget.initialIsLiked;
-      }
-      if (widget.initialIsBookmarked != oldWidget.initialIsBookmarked) {
-        _isBookmarked = widget.initialIsBookmarked;
-      }
-      if (widget.room.likesCount != oldWidget.room.likesCount) {
-        _likesCount = widget.room.likesCount;
-      }
-    }
-  }
-
-  @override
   void dispose() {
     _likeAnimController.dispose();
     _bookmarkAnimController.dispose();
@@ -89,44 +73,152 @@ class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerPr
   }
 
   void _handleLikeTap() {
-    setState(() {
-      _isLiked = !_isLiked;
-      _likesCount += _isLiked ? 1 : -1;
-      if (_likesCount < 0) _likesCount = 0;
-    });
-
     _likeAnimController.forward().then((_) => _likeAnimController.reverse());
-    widget.onToggleLike(widget.room.id, _isLiked);
+    widget.onToggleLike(widget.room.id, !widget.initialIsLiked);
   }
 
   void _handleBookmarkTap() {
-    setState(() {
-      _isBookmarked = !_isBookmarked;
-    });
-
     _bookmarkAnimController.forward().then((_) => _bookmarkAnimController.reverse());
-    widget.onToggleBookmark(widget.room.id, _isBookmarked);
+    widget.onToggleBookmark(widget.room.id, !widget.initialIsBookmarked);
+  }
+
+  void _showRoomOptions(BuildContext context) {
+    final currentUserId = SupabaseService.currentUserId;
+    final isOwner = widget.room.userId != null && widget.room.userId == currentUserId;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.twilightLightActive,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                if (isOwner)
+                  ListTile(
+                    leading: const Icon(Icons.delete_outline_rounded, color: Color(0xFFF87171)),
+                    title: Text(
+                      'Hapus Curhat',
+                      style: AppTextStyles.labelLarge.copyWith(
+                        color: const Color(0xFFF87171),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(bottomSheetContext);
+                      final confirmed = await DeleteConfirmationDialog.show(
+                        context,
+                        title: 'Hapus Curhat Ini?',
+                        message: 'Curhat yang sudah dihapus tidak dapat dipulihkan kembali. Apakah kamu yakin ingin menghapusnya?',
+                      );
+                      if (confirmed == true && mounted) {
+                        try {
+                          await ref.read(roomsInteractionProvider.notifier).deleteRoom(widget.room.id);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Curhat berhasil dihapus'),
+                                backgroundColor: AppColors.twilightDarker,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            widget.onDeleted?.call();
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal menghapus curhat: $e'),
+                                backgroundColor: Colors.redAccent,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
+                      }
+                    },
+                  ),
+                ListTile(
+                  leading: const Icon(Icons.share_outlined, color: AppColors.twilightDarker),
+                  title: Text(
+                    'Bagikan Curhat',
+                    style: AppTextStyles.labelLarge.copyWith(color: AppColors.twilightDarker),
+                  ),
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Tautan curhat disalin ke clipboard!'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                ),
+                if (!isOwner)
+                  ListTile(
+                    leading: const Icon(Icons.flag_outlined, color: Color(0xFFF87171)),
+                    title: Text(
+                      'Laporkan Konten',
+                      style: AppTextStyles.labelLarge.copyWith(
+                        color: const Color(0xFFF87171),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(bottomSheetContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Laporan Anda telah kami terima.'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final room = widget.room;
+    final isLiked = widget.initialIsLiked;
+    final isBookmarked = widget.initialIsBookmarked;
+    final likesCount = room.likesCount;
 
     return GestureDetector(
-      onTap: () {
-        widget.onTap(
-          room.copyWith(
-            likesCount: _likesCount,
-            isLiked: _isLiked,
-            isBookmarked: _isBookmarked,
-          ),
-        );
-      },
+      onTap: widget.isDetailHeader
+          ? null
+          : () {
+              widget.onTap(
+                room.copyWith(
+                  likesCount: likesCount,
+                  isLiked: isLiked,
+                  isBookmarked: isBookmarked,
+                ),
+              );
+            },
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: AppRadii.borderLg,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.03),
@@ -144,11 +236,21 @@ class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerPr
               children: [
                 Row(
                   children: [
+                    if (widget.isDetailHeader && widget.onBackTap != null) ...[
+                      GestureDetector(
+                        onTap: widget.onBackTap,
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: AppColors.twilightDarker,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: AppColors.lavenderBlush,
-                        borderRadius: BorderRadius.circular(100),
+                        borderRadius: AppRadii.borderFull,
                       ),
                       child: Text(
                         room.authorTag,
@@ -164,7 +266,7 @@ class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerPr
                       decoration: BoxDecoration(
                         color: Colors.white,
                         border: Border.all(color: AppColors.lavenderBlush, width: 1.5),
-                        borderRadius: BorderRadius.circular(100),
+                        borderRadius: AppRadii.borderFull,
                       ),
                       child: Text(
                         room.category,
@@ -176,9 +278,16 @@ class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerPr
                     ),
                   ],
                 ),
-                const Icon(
-                  Icons.more_horiz,
-                  color: AppColors.wisteriaNormalHover,
+                InkWell(
+                  onTap: () => _showRoomOptions(context),
+                  borderRadius: BorderRadius.circular(100),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.more_horiz,
+                      color: AppColors.wisteriaNormalHover,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -203,8 +312,8 @@ class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerPr
                 fontSize: 14,
                 height: 1.5,
               ),
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
+              maxLines: widget.isDetailHeader ? null : 4,
+              overflow: widget.isDetailHeader ? TextOverflow.visible : TextOverflow.ellipsis,
             ),
             const SizedBox(height: 20),
 
@@ -225,8 +334,8 @@ class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerPr
                             ScaleTransition(
                               scale: _likeScaleAnim,
                               child: Icon(
-                                _isLiked ? Icons.favorite : Icons.favorite_border,
-                                color: _isLiked ? Colors.redAccent : AppColors.wisteriaNormalHover,
+                                isLiked ? Icons.favorite : Icons.favorite_border,
+                                color: isLiked ? Colors.redAccent : AppColors.wisteriaNormalHover,
                                 size: 18,
                               ),
                             ),
@@ -235,12 +344,12 @@ class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerPr
                               duration: const Duration(milliseconds: 150),
                               transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
                               child: Text(
-                                '$_likesCount',
-                                key: ValueKey<int>(_likesCount),
+                                '$likesCount',
+                                key: ValueKey<int>(likesCount),
                                 style: AppTextStyles.labelSmall.copyWith(
-                                  color: _isLiked ? Colors.redAccent : AppColors.wisteriaNormalHover,
+                                  color: isLiked ? Colors.redAccent : AppColors.wisteriaNormalHover,
                                   fontSize: 12,
-                                  fontWeight: _isLiked ? FontWeight.bold : FontWeight.normal,
+                                  fontWeight: isLiked ? FontWeight.bold : FontWeight.normal,
                                 ),
                               ),
                             ),
@@ -257,14 +366,14 @@ class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerPr
                         children: [
                           const Icon(
                             Icons.chat_bubble_outline,
-                            color: AppColors.wisteriaNormalHover,
+                            color: AppColors.wisteriaDarkHover,
                             size: 18,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${room.commentsCount}',
                             style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.wisteriaNormalHover,
+                              color: AppColors.wisteriaDarkHover,
                               fontSize: 12,
                             ),
                           ),
@@ -285,18 +394,18 @@ class _InteractiveRoomCardState extends State<InteractiveRoomCard> with TickerPr
                         ScaleTransition(
                           scale: _bookmarkScaleAnim,
                           child: Icon(
-                            _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                            color: _isBookmarked ? AppColors.sunshineYellow : AppColors.wisteriaNormalHover,
+                            isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                            color: isBookmarked ? AppColors.sunshineYellow : AppColors.wisteriaDarkHover,
                             size: 18,
                           ),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          _isBookmarked ? 'Tersimpan' : 'Simpan',
+                          isBookmarked ? 'Tersimpan' : 'Simpan',
                           style: AppTextStyles.labelSmall.copyWith(
-                            color: _isBookmarked ? AppColors.sunshineYellow : AppColors.wisteriaNormalHover,
+                            color: isBookmarked ? AppColors.sunshineYellow : AppColors.wisteriaDarkHover,
                             fontSize: 12,
-                            fontWeight: _isBookmarked ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: isBookmarked ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
                       ],

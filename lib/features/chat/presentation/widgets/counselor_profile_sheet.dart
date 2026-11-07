@@ -5,6 +5,7 @@ import '../../../../app/config/router.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/utils/app_error_translator.dart';
 import '../../data/counseling_service.dart';
 import '../../domain/counseling_models.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
@@ -542,13 +543,7 @@ class _CounselingQueueWaitingDialogState
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              e.toString().contains('offline')
-                  ? 'Konselor sedang offline dan tidak menerima antrean baru.'
-                  : (e.toString().contains('masih memiliki sesi')
-                      ? 'Kamu masih memiliki sesi konseling aktif yang sedang berjalan.'
-                      : 'Gagal mengajukan antrean. Silakan coba kembali.'),
-            ),
+            content: Text(AppErrorTranslator.translateDatabaseError(e)),
           ),
         );
       }

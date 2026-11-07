@@ -22,7 +22,7 @@ class AnonChatTab extends ConsumerWidget {
       children: [
         // 1. Banner Sesi Anonim Aktif (Reconnection Card)
         if (activeSession != null) ...[
-          _buildActiveSessionCard(context, ref, activeSession),
+          _ActiveAnonSessionCard(session: activeSession),
           const SizedBox(height: 20),
         ],
 
@@ -124,7 +124,102 @@ class AnonChatTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildActiveSessionCard(BuildContext context, WidgetRef ref, AnonSessionModel session) {
+
+
+  Widget _buildAnonOptionCard({
+    required WidgetRef ref,
+    required ChatListState state,
+    required int index,
+    required String title,
+    required String subtitle,
+    required String imagePath,
+  }) {
+    final isSelected = state.selectedAnonType == index;
+    return GestureDetector(
+      onTap: () => ref.read(chatListProvider.notifier).setAnonType(index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.lavenderBlush : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isSelected ? AppColors.twilightDarker : Colors.transparent,
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Image.asset(
+              imagePath,
+              width: 100,
+              height: 100,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: AppTextStyles.heading1.copyWith(
+                color: AppColors.twilightDarker,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.wisteriaNormalHover,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActiveAnonSessionCard extends ConsumerStatefulWidget {
+  final AnonSessionModel session;
+  const _ActiveAnonSessionCard({required this.session});
+
+  @override
+  ConsumerState<_ActiveAnonSessionCard> createState() => _ActiveAnonSessionCardState();
+}
+
+class _ActiveAnonSessionCardState extends ConsumerState<_ActiveAnonSessionCard> {
+  bool _isEnding = false;
+
+  Future<void> _handleEndSession() async {
+    if (_isEnding) return;
+    setState(() => _isEnding = true);
+    try {
+      await ref.read(anonChatServiceProvider).endSession(widget.session.id);
+      ref.invalidate(activeAnonSessionProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengakhiri sesi: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isEnding = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = widget.session;
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -196,10 +291,7 @@ class AnonChatTab extends ConsumerWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () async {
-                    await ref.read(anonChatServiceProvider).endSession(session.id);
-                    ref.invalidate(activeAnonSessionProvider);
-                  },
+                  onPressed: _isEnding ? null : _handleEndSession,
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -207,13 +299,22 @@ class AnonChatTab extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),
-                  child: Text(
-                    'Akhiri Sesi',
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  child: _isEnding
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                          ),
+                        )
+                      : Text(
+                          'Akhiri Sesi',
+                          style: AppTextStyles.labelMedium.copyWith(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -247,61 +348,5 @@ class AnonChatTab extends ConsumerWidget {
       ),
     );
   }
-
-  Widget _buildAnonOptionCard({
-    required WidgetRef ref,
-    required ChatListState state,
-    required int index,
-    required String title,
-    required String subtitle,
-    required String imagePath,
-  }) {
-    final isSelected = state.selectedAnonType == index;
-    return GestureDetector(
-      onTap: () => ref.read(chatListProvider.notifier).setAnonType(index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.lavenderBlush : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isSelected ? AppColors.twilightDarker : Colors.transparent,
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Image.asset(
-              imagePath,
-              width: 100,
-              height: 100,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: AppTextStyles.heading1.copyWith(
-                color: AppColors.twilightDarker,
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.wisteriaNormalHover,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
+

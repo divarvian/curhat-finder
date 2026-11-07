@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/services/storage_service.dart';
@@ -8,25 +10,17 @@ import '../../domain/user_profile_model.dart';
 class ProfileNotifier extends Notifier<UserProfile> {
   @override
   UserProfile build() {
-    final defaultProfile = UserProfile(
-      name: 'Whisky ✨',
-      role: 'Mahasiswa',
-      email: 'whisky@student.ub.ac.id',
-      faculty: 'FILKOM',
-      studyProgram: 'S1 Teknik Informatika',
-      batchYear: '2025',
-      gender: 'Perempuan',
-      hobby: 'Memasak',
-      avatarPath: 'assets/images/mascot.png',
-    );
-
+    final initialProfile = UserProfile.empty(isLoading: true);
     Future.microtask(() => reloadProfile());
-    return defaultProfile;
+    return initialProfile;
   }
 
   Future<void> reloadProfile() async {
     final userId = SupabaseService.currentUserId;
-    if (userId == null) return;
+    if (userId == null) {
+      state = state.copyWith(isLoading: false);
+      return;
+    }
 
     try {
       final data = await SupabaseService.client
@@ -43,7 +37,7 @@ class ProfileNotifier extends Notifier<UserProfile> {
 
         final hobbies = (data['hobbies'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
         state = UserProfile(
-          name: data['nickname'] ?? data['full_name'] ?? state.name,
+          name: data['nickname'] ?? data['full_name'] ?? (SupabaseService.currentUser?.userMetadata?['full_name'] ?? 'Mahasiswa'),
           role: data['role'] == 'konselor' ? 'Konselor' : 'Mahasiswa',
           email: SupabaseService.currentUser?.email ?? state.email,
           faculty: resolvedFaculty,
@@ -52,7 +46,9 @@ class ProfileNotifier extends Notifier<UserProfile> {
           gender: data['gender'] ?? state.gender,
           hobby: hobbies.isNotEmpty ? hobbies.join(', ') : state.hobby,
           avatarPath: state.avatarPath,
-          localAvatarPath: data['avatar_url'] as String?,
+          avatarUrl: data['avatar_url'] as String?,
+          localAvatarPath: null, // Reset path lokal saat load ulang dari Supabase
+          isLoading: false,
         );
 
         // Auto-migrasi ke Supabase jika sebelumnya tersimpan kode numerik
@@ -62,47 +58,56 @@ class ProfileNotifier extends Notifier<UserProfile> {
             'study_program': resolvedProdi,
           }).eq('id', userId);
         }
+      } else {
+        state = state.copyWith(isLoading: false);
       }
-    } catch (_) {}
+    } catch (_) {
+      state = state.copyWith(isLoading: false);
+    }
   }
 
-  Future<void> uploadAvatar(XFile file) async {
+  Future<bool> uploadAvatar(XFile file) async {
     final userId = SupabaseService.currentUserId;
+    final previousState = state;
+    final oldAvatarUrl = state.avatarUrl;
 
-    state = UserProfile(
-      name: state.name,
-      role: state.role,
-      email: state.email,
-      faculty: state.faculty,
-      studyProgram: state.studyProgram,
-      batchYear: state.batchYear,
-      gender: state.gender,
-      hobby: state.hobby,
-      avatarPath: state.avatarPath,
+    // 1. Optimistic Update: langsung pakai path file lokal di HP agar instan
+    state = state.copyWith(
       localAvatarPath: file.path,
     );
 
     if (userId != null) {
-      final storage = StorageService();
-      final publicUrl = await storage.uploadAvatar(file: file, userId: userId);
-      if (publicUrl != null) {
-        state = UserProfile(
-          name: state.name,
-          role: state.role,
-          email: state.email,
-          faculty: state.faculty,
-          studyProgram: state.studyProgram,
-          batchYear: state.batchYear,
-          gender: state.gender,
-          hobby: state.hobby,
-          avatarPath: state.avatarPath,
-          localAvatarPath: publicUrl,
-        );
+      try {
+        final storage = StorageService();
+        final publicUrl = await storage.uploadAvatar(file: file, userId: userId);
+        if (publicUrl != null) {
+          // 2. Bersihkan cache in-memory jika ada avatar lama
+          if (oldAvatarUrl != null && oldAvatarUrl.isNotEmpty) {
+            PaintingBinding.instance.imageCache.evict(NetworkImage(oldAvatarUrl));
+          }
+
+          // 3. Simpan avatarUrl baru untuk sinkronisasi server, namun tetap pertahankan
+          // localAvatarPath agar sesi aktif ini tidak men-download ulang via internet (ZERO-FLICKER)
+          state = state.copyWith(
+            avatarUrl: publicUrl,
+            localAvatarPath: file.path,
+          );
+          return true;
+        } else {
+          state = previousState;
+          return false;
+        }
+      } catch (e) {
+        debugPrint('ProfileNotifier.uploadAvatar error: $e');
+        state = previousState;
+        return false;
       }
     }
+    return true;
   }
 
-  Future<void> updateProfile(UserProfile newProfile) async {
+  Future<bool> updateProfile(UserProfile newProfile) async {
+    final previousProfile = state;
     state = newProfile;
     final userId = SupabaseService.currentUserId;
     if (userId != null) {
@@ -122,8 +127,13 @@ class ProfileNotifier extends Notifier<UserProfile> {
           'hobbies': hobbiesList,
           'updated_at': DateTime.now().toIso8601String(),
         }).eq('id', userId);
-      } catch (_) {}
+        return true;
+      } catch (_) {
+        state = previousProfile;
+        return false;
+      }
     }
+    return true;
   }
 }
 

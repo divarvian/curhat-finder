@@ -1,5 +1,9 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/utils/academic_helper.dart';
 import '../../../chat/data/counseling_service.dart';
@@ -73,7 +77,7 @@ class CounselorNotifier extends Notifier<CounselorState> {
     );
   }
 
-  void initializeSupabaseSync() async {
+  Future<void> initializeSupabaseSync() async {
     final userId = SupabaseService.currentUserId;
     if (userId == null) {
       state = state.copyWith(isLoading: false);
@@ -81,12 +85,32 @@ class CounselorNotifier extends Notifier<CounselorState> {
     }
 
     try {
-      // 1. Muat profil konselor dari tabel profiles
-      final data = await SupabaseService.client
+      // 1. Muat data awal (Profil, Sesi Aktif, & Antrean Masuk) secara paralel (SNAPSHOT AWAL)
+      final Future<dynamic> profileFuture = SupabaseService.client
           .from('profiles')
           .select()
           .eq('id', userId)
           .maybeSingle();
+
+      final Future<dynamic> sessionsFuture = SupabaseService.client
+          .from('counseling_sessions')
+          .select()
+          .eq('counselor_id', userId)
+          .eq('status', 'active');
+
+      final Future<dynamic> queuesFuture = SupabaseService.client
+          .from('counseling_queues')
+          .select()
+          .eq('assigned_counselor_id', userId)
+          .eq('status', 'waiting')
+          .order('created_at', ascending: false);
+
+      final results = await Future.wait<dynamic>([profileFuture, sessionsFuture, queuesFuture]);
+      final data = results[0] as Map<String, dynamic>?;
+      final rawSessions = results[1] as List<dynamic>? ?? [];
+      final rawQueues = results[2] as List<dynamic>? ?? [];
+
+      CounselorProfile updatedProfile = state.profile;
 
       if (data != null) {
         final rawFaculty = (data['faculty'] as String?) ?? state.profile.faculty;
@@ -94,21 +118,33 @@ class CounselorNotifier extends Notifier<CounselorState> {
         final resolvedFaculty = AcademicHelper.resolveFaculty(rawFaculty);
         final resolvedProdi = AcademicHelper.resolveProdi(rawProdi);
 
+        final rawFullName = data['full_name'] as String?;
+        final rawNickname = data['nickname'] as String?;
+        final metaName = SupabaseService.currentUser?.userMetadata?['full_name'] as String?;
+        final counselorName = (rawFullName != null && rawFullName.trim().isNotEmpty)
+            ? rawFullName.trim()
+            : ((rawNickname != null && rawNickname.trim().isNotEmpty)
+                ? rawNickname.trim()
+                : ((metaName != null && metaName.trim().isNotEmpty)
+                    ? metaName.trim()
+                    : state.profile.name));
+
         final topicsList = (data['topics'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? state.profile.topics;
-        final updatedProfile = state.profile.copyWith(
-          name: data['nickname'] ?? data['full_name'] ?? (SupabaseService.currentUser?.userMetadata?['full_name'] ?? state.profile.name),
+        updatedProfile = state.profile.copyWith(
+          name: counselorName,
           email: SupabaseService.currentUser?.email ?? state.profile.email,
           faculty: resolvedFaculty,
           studyProgram: resolvedProdi,
           batchYear: data['batch_year'] ?? state.profile.batchYear,
           gender: data['gender'] ?? state.profile.gender,
           isOnline: data['is_online'] as bool? ?? state.profile.isOnline,
-          activeSessions: data['active_sessions_count'] as int? ?? state.profile.activeSessions,
+          activeSessions: rawSessions.length,
           totalHelped: data['total_helped_count'] as int? ?? state.profile.totalHelped,
           responseTime: data['avg_response_time'] as String? ?? state.profile.responseTime,
           topics: topicsList,
+          avatarUrl: data['avatar_url'] as String?,
+          localAvatarPath: null,
         );
-        state = state.copyWith(profile: updatedProfile, isLoading: false);
 
         if (updatedProfile.isOnline) {
           _counselingService.joinCounselorPresence(userId);
@@ -121,29 +157,62 @@ class CounselorNotifier extends Notifier<CounselorState> {
             'study_program': resolvedProdi,
           }).eq('id', userId);
         }
-      } else {
-        state = state.copyWith(isLoading: false);
       }
 
-      // 2. Stream antrean masuk mahasiswa (counseling_queues)
+      // Parsing sesi aktif awal
+      final initialSessions = rawSessions
+          .map((s) => CounselingSessionModel.fromJson(s as Map<String, dynamic>))
+          .toList();
+      final initialMappedSessions = initialSessions.map((s) {
+        return CounselorChatSession(
+          id: s.id,
+          studentName: s.studentAlias,
+          studentGender: 'Mahasiswa',
+          studentFaculty: s.studentFaculty,
+          statusDescription: 'Sesi Bimbingan Aktif Berjalan..',
+          isOnline: true,
+          lastMessage: 'Sesi aktif',
+          lastMessageTime: 'Sekarang',
+        );
+      }).toList();
+
+      // Parsing antrean awal dengan deduplikasi
+      final initialQueuesList = rawQueues
+          .map((q) => CounselingQueueModel.fromJson(q as Map<String, dynamic>))
+          .toList();
+      final Map<String, CounselingQueueModel> latestByStudent = {};
+      for (final q in initialQueuesList) {
+        if (!latestByStudent.containsKey(q.studentId) ||
+            q.createdAt.isAfter(latestByStudent[q.studentId]!.createdAt)) {
+          latestByStudent[q.studentId] = q;
+        }
+      }
+
+      // 2. Set state awal secara atomik dengan data riil (ZERO-FLICKER & ZERO-BLINK)
+      state = state.copyWith(
+        profile: updatedProfile.copyWith(activeSessions: initialSessions.length),
+        activeSessions: initialSessions,
+        sessions: initialMappedSessions,
+        queues: latestByStudent.values.toList(),
+        isLoading: false,
+      );
+
+      // 3. Pasang Stream Realtime untuk pembaruan kontinu
       _queueSub?.cancel();
       _queueSub = _counselingService.streamPendingQueuesForCounselor(userId).listen((queues) {
-        // Deduplikasi cerdas: pertahankan maksimal 1 antrean paling mutakhir per mahasiswa
-        final Map<String, CounselingQueueModel> latestByStudent = {};
+        final Map<String, CounselingQueueModel> streamLatest = {};
         for (final q in queues) {
-          if (!latestByStudent.containsKey(q.studentId) ||
-              q.createdAt.isAfter(latestByStudent[q.studentId]!.createdAt)) {
-            latestByStudent[q.studentId] = q;
+          if (!streamLatest.containsKey(q.studentId) ||
+              q.createdAt.isAfter(streamLatest[q.studentId]!.createdAt)) {
+            streamLatest[q.studentId] = q;
           }
         }
-        state = state.copyWith(queues: latestByStudent.values.toList());
+        state = state.copyWith(queues: streamLatest.values.toList());
       });
 
-      // 3. Stream sesi konseling aktif (counseling_sessions)
       _sessionSub?.cancel();
       _sessionSub = _counselingService.streamActiveSessionsForCounselor(userId).listen((sessions) {
-        // Konversikan juga ke format list session UI jika ada
-        final mappedSessions = sessions.map((s) {
+        final mapped = sessions.map((s) {
           return CounselorChatSession(
             id: s.id,
             studentName: s.studentAlias,
@@ -158,13 +227,27 @@ class CounselorNotifier extends Notifier<CounselorState> {
 
         state = state.copyWith(
           activeSessions: sessions,
-          sessions: mappedSessions,
+          sessions: mapped,
           profile: state.profile.copyWith(activeSessions: sessions.length),
         );
       });
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('Counselor initializeSupabaseSync error: $e\n$st');
       state = state.copyWith(isLoading: false);
     }
+  }
+
+  void reset() {
+    _queueSub?.cancel();
+    _sessionSub?.cancel();
+    _counselingService.leaveCounselorPresence();
+    state = const CounselorState(
+      profile: CounselorProfile.empty,
+      sessions: [],
+      messages: {},
+      currentNavIndex: 0,
+      isLoading: false,
+    );
   }
 
   void toggleOnlineStatus() async {
@@ -187,7 +270,14 @@ class CounselorNotifier extends Notifier<CounselorState> {
     state = state.copyWith(currentNavIndex: index);
   }
 
+  final Set<String> _processingQueueIds = {};
+
+  bool isQueueProcessing(String queueId) => _processingQueueIds.contains(queueId);
+
   Future<CounselingSessionModel?> acceptQueue(CounselingQueueModel queue) async {
+    if (_processingQueueIds.contains(queue.id)) return null;
+    _processingQueueIds.add(queue.id);
+
     final counselorId = SupabaseService.currentUserId ?? 'counselor-demo';
     try {
       final newSession = await _counselingService.acceptQueue(
@@ -224,13 +314,20 @@ class CounselorNotifier extends Notifier<CounselorState> {
         activeSessions: [...state.activeSessions, fallbackSession],
       );
       return fallbackSession;
+    } finally {
+      _processingQueueIds.remove(queue.id);
     }
   }
 
   Future<void> rejectQueue(String queueId) async {
+    if (_processingQueueIds.contains(queueId)) return;
+    _processingQueueIds.add(queueId);
+
     try {
       await _counselingService.rejectQueue(queueId);
-    } catch (_) {}
+    } catch (_) {} finally {
+      _processingQueueIds.remove(queueId);
+    }
     final updatedQueues = state.queues.where((q) => q.id != queueId).toList();
     state = state.copyWith(queues: updatedQueues);
   }
@@ -259,6 +356,7 @@ class CounselorNotifier extends Notifier<CounselorState> {
     final trimmed = topic.trim();
     if (trimmed.isEmpty || state.profile.topics.contains(trimmed)) return;
 
+    final previousTopics = state.profile.topics;
     final updatedTopics = [...state.profile.topics, trimmed];
     state = state.copyWith(
       profile: state.profile.copyWith(topics: updatedTopics),
@@ -271,11 +369,40 @@ class CounselorNotifier extends Notifier<CounselorState> {
             .from('profiles')
             .update({'topics': updatedTopics})
             .eq('id', userId);
-      } catch (_) {}
+      } catch (_) {
+        state = state.copyWith(
+          profile: state.profile.copyWith(topics: previousTopics),
+        );
+      }
+    }
+  }
+
+  void updateTopics(List<String> newTopics) async {
+    final sanitized = newTopics.map((t) => t.trim()).where((t) => t.isNotEmpty).toSet().toList();
+    if (sanitized.isEmpty) return;
+
+    final previousTopics = state.profile.topics;
+    state = state.copyWith(
+      profile: state.profile.copyWith(topics: sanitized),
+    );
+
+    final userId = SupabaseService.currentUserId;
+    if (userId != null) {
+      try {
+        await SupabaseService.client
+            .from('profiles')
+            .update({'topics': sanitized})
+            .eq('id', userId);
+      } catch (_) {
+        state = state.copyWith(
+          profile: state.profile.copyWith(topics: previousTopics),
+        );
+      }
     }
   }
 
   void removeTopic(String topic) async {
+    final previousTopics = state.profile.topics;
     final updatedTopics = state.profile.topics.where((t) => t != topic).toList();
     state = state.copyWith(
       profile: state.profile.copyWith(topics: updatedTopics),
@@ -288,7 +415,11 @@ class CounselorNotifier extends Notifier<CounselorState> {
             .from('profiles')
             .update({'topics': updatedTopics})
             .eq('id', userId);
-      } catch (_) {}
+      } catch (_) {
+        state = state.copyWith(
+          profile: state.profile.copyWith(topics: previousTopics),
+        );
+      }
     }
   }
 
@@ -341,6 +472,48 @@ class CounselorNotifier extends Notifier<CounselorState> {
         }).eq('id', userId);
       } catch (_) {}
     }
+  }
+
+  Future<bool> uploadAvatar(XFile file) async {
+    final userId = SupabaseService.currentUserId;
+    final previousProfile = state.profile;
+    final oldAvatarUrl = state.profile.avatarUrl;
+
+    // 1. Optimistic Update: langsung pakai path file lokal di HP agar instan
+    state = state.copyWith(
+      profile: state.profile.copyWith(localAvatarPath: file.path),
+    );
+
+    if (userId != null) {
+      try {
+        final storage = StorageService();
+        final publicUrl = await storage.uploadAvatar(file: file, userId: userId);
+        if (publicUrl != null) {
+          // 2. Bersihkan cache in-memory jika ada avatar lama
+          if (oldAvatarUrl != null && oldAvatarUrl.isNotEmpty) {
+            PaintingBinding.instance.imageCache.evict(NetworkImage(oldAvatarUrl));
+          }
+
+          // 3. Simpan avatarUrl baru untuk sinkronisasi server, namun tetap pertahankan
+          // localAvatarPath agar sesi aktif ini tidak men-download ulang via internet (ZERO-FLICKER)
+          state = state.copyWith(
+            profile: state.profile.copyWith(
+              avatarUrl: publicUrl,
+              localAvatarPath: file.path,
+            ),
+          );
+          return true;
+        } else {
+          state = state.copyWith(profile: previousProfile);
+          return false;
+        }
+      } catch (e) {
+        debugPrint('CounselorNotifier.uploadAvatar error: $e');
+        state = state.copyWith(profile: previousProfile);
+        return false;
+      }
+    }
+    return true;
   }
 }
 

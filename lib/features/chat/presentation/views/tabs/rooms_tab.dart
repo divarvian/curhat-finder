@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:curhat_finder/app/config/router.dart';
 import 'package:curhat_finder/core/theme/app_colors.dart';
 import 'package:curhat_finder/core/theme/app_text_styles.dart';
+import 'package:curhat_finder/core/widgets/app_skeleton.dart';
 import 'package:curhat_finder/features/chat/domain/room_model.dart';
 import 'package:curhat_finder/features/chat/presentation/providers/chat_list_provider.dart';
+import 'package:curhat_finder/features/chat/presentation/providers/rooms_interaction_provider.dart';
 import 'package:curhat_finder/features/chat/presentation/widgets/cards/interactive_room_card.dart';
 import 'package:curhat_finder/features/chat/presentation/widgets/dialogs/new_room_post_sheet.dart';
 
@@ -31,6 +33,8 @@ class RoomsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(chatListProvider);
+    final roomInteraction = ref.watch(roomsInteractionProvider);
+    final roomNotifier = ref.read(roomsInteractionProvider.notifier);
 
     String? categoryFilter;
     if (state.selectedSubCategory == 1) categoryFilter = 'Akademik';
@@ -90,11 +94,29 @@ class RoomsTab extends ConsumerWidget {
           child: StreamBuilder<List<RoomModel>>(
             stream: getRoomsStream(categoryFilter),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
+              final serverRooms = snapshot.data ?? [];
+              final interactionState = ref.watch(roomsInteractionProvider);
+              final optimisticRooms = interactionState.optimisticRooms.where((r) {
+                if (categoryFilter != null && categoryFilter != 'Semua') {
+                  return r.category.toLowerCase() == categoryFilter.toLowerCase();
+                }
+                return true;
+              }).toList();
 
-              final rooms = snapshot.data ?? [];
+              final serverIds = serverRooms.map((r) => r.id).toSet();
+              final pendingOptimistic =
+                  optimisticRooms.where((r) => !serverIds.contains(r.id)).toList();
+              final rooms = [...pendingOptimistic, ...serverRooms];
+
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData &&
+                  rooms.isEmpty) {
+                return ListView.builder(
+                  padding: const EdgeInsets.only(left: 24, right: 24, top: 0, bottom: 108),
+                  itemCount: 3,
+                  itemBuilder: (context, index) => const RoomCardSkeleton(),
+                );
+              }
 
               if (rooms.isEmpty) {
                 return Center(
@@ -131,16 +153,18 @@ class RoomsTab extends ConsumerWidget {
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.only(left: 24, right: 24, top: 0, bottom: 108),
                 itemCount: rooms.length,
                 itemBuilder: (context, index) {
                   final room = rooms[index];
-                  final isLiked = likedRoomIds.contains(room.id);
-                  final isBookmarked = bookmarkedRoomIds.contains(room.id);
+                  final isLiked = roomInteraction.likedRoomIds.contains(room.id) || likedRoomIds.contains(room.id);
+                  final isBookmarked = roomInteraction.bookmarkedRoomIds.contains(room.id) || bookmarkedRoomIds.contains(room.id);
+                  final effectiveLikes = roomNotifier.getEffectiveLikesCount(room.id, room.likesCount);
 
                   final updatedRoom = room.copyWith(
                     isLiked: isLiked,
                     isBookmarked: isBookmarked,
+                    likesCount: effectiveLikes,
                   );
 
                   return Padding(
@@ -151,9 +175,11 @@ class RoomsTab extends ConsumerWidget {
                       initialIsLiked: isLiked,
                       initialIsBookmarked: isBookmarked,
                       onToggleLike: (roomId, newIsLiked) {
+                        ref.read(roomsInteractionProvider.notifier).toggleLike(roomId);
                         onToggleLike(roomId, newIsLiked);
                       },
                       onToggleBookmark: (roomId, newIsBookmarked) {
+                        ref.read(roomsInteractionProvider.notifier).toggleBookmark(roomId);
                         onToggleBookmark(roomId, newIsBookmarked);
                       },
                       onTap: (clickedRoom) async {

@@ -7,16 +7,91 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/dialogs/logout_confirmation_dialog.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/utils/academic_helper.dart';
 import '../providers/profile_provider.dart';
+import '../../domain/user_profile_model.dart';
 
 class ProfileView extends ConsumerWidget {
   const ProfileView({super.key});
 
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 24),
+      child: SizedBox(
+        height: 48,
+        width: double.infinity,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            Text(
+              'Profil',
+              style: AppTextStyles.heading1.copyWith(
+                color: AppColors.twilightDarker,
+                fontSize: 24,
+              ),
+            ),
+            Positioned(
+              right: 0,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () {
+                      context.push('/settings');
+                    },
+                    child: const Center(
+                      child: Icon(
+                        Icons.settings_rounded,
+                        color: AppColors.twilightNormal,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(profileProvider);
+
+    if (user.isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              _buildHeader(context),
+              const Expanded(child: ProfileViewSkeleton(isCounselor: false)),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.transparent, // Background mengikuti scaffold utama
@@ -102,24 +177,7 @@ class ProfileView extends ConsumerWidget {
                         ),
                       ),
                       child: ClipOval(
-                        child: user.localAvatarPath != null
-                            ? (kIsWeb || user.localAvatarPath!.startsWith('http')
-                                ? Image.network(
-                                    user.localAvatarPath!,
-                                    fit: BoxFit.cover,
-                                    width: 120,
-                                    height: 120,
-                                  )
-                                : Image.file(
-                                    File(user.localAvatarPath!),
-                                    fit: BoxFit.cover,
-                                    width: 120,
-                                    height: 120,
-                                  ))
-                            : Image.asset(
-                                user.avatarPath,
-                                fit: BoxFit.contain, // Contain karena maskot mungkin ukurannya beda
-                              ),
+                        child: _buildAvatarImage(user),
                       ),
                     ),
                     Positioned(
@@ -243,63 +301,15 @@ class ProfileView extends ConsumerWidget {
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: const Color(0xFFFDE8E8),
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
                 ),
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(24),
                     onTap: () async {
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          title: Text(
-                            'Keluar Akun',
-                            style: AppTextStyles.heading2.copyWith(fontSize: 18),
-                          ),
-                          content: Text(
-                            'Apakah kamu yakin ingin keluar dari akun ini?',
-                            style: AppTextStyles.bodyMedium,
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: Text(
-                                'Batal',
-                                style: AppTextStyles.labelMedium.copyWith(
-                                  color: AppColors.twilightLightActive,
-                                ),
-                              ),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.redAccent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: Text(
-                                'Keluar',
-                                style: AppTextStyles.labelMedium.copyWith(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
+                      final confirmed = await LogoutConfirmationDialog.show(context);
 
                       if (confirmed == true && context.mounted) {
                         await ref.read(authProvider.notifier).logout();
@@ -315,14 +325,14 @@ class ProfileView extends ConsumerWidget {
                         children: [
                           const Icon(
                             Icons.logout_rounded,
-                            color: Colors.redAccent,
+                            color: Color(0xFFF87171),
                             size: 20,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Keluar Akun',
                             style: AppTextStyles.labelMedium.copyWith(
-                              color: Colors.redAccent,
+                              color: const Color(0xFFF87171),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -413,7 +423,7 @@ class ProfileView extends ConsumerWidget {
                     label: 'Kamera',
                     onTap: () {
                       Navigator.pop(context);
-                      _pickImage(ref, ImageSource.camera);
+                      _pickImage(context, ref, ImageSource.camera);
                     },
                   ),
                   const SizedBox(width: 16),
@@ -422,7 +432,7 @@ class ProfileView extends ConsumerWidget {
                     label: 'Gallery',
                     onTap: () {
                       Navigator.pop(context);
-                      _pickImage(ref, ImageSource.gallery);
+                      _pickImage(context, ref, ImageSource.gallery);
                     },
                   ),
                 ],
@@ -433,6 +443,71 @@ class ProfileView extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildAvatarImage(UserProfile user) {
+    if (user.localAvatarPath != null && !kIsWeb && File(user.localAvatarPath!).existsSync()) {
+      return Image.file(
+        File(user.localAvatarPath!),
+        fit: BoxFit.cover,
+        width: 120,
+        height: 120,
+      );
+    }
+    if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty) {
+      return Image.network(
+        user.avatarUrl!,
+        fit: BoxFit.cover,
+        width: 120,
+        height: 120,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded || frame != null) {
+            return child;
+          }
+          return const AppShimmer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (_, _, _) => Image.asset(
+          user.avatarPath,
+          fit: BoxFit.contain,
+        ),
+      );
+    }
+    if (user.localAvatarPath != null && user.localAvatarPath!.startsWith('http')) {
+      return Image.network(
+        user.localAvatarPath!,
+        fit: BoxFit.cover,
+        width: 120,
+        height: 120,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded || frame != null) {
+            return child;
+          }
+          return const AppShimmer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (_, _, _) => Image.asset(
+          user.avatarPath,
+          fit: BoxFit.contain,
+        ),
+      );
+    }
+    return Image.asset(
+      user.avatarPath,
+      fit: BoxFit.contain,
     );
   }
 
@@ -477,11 +552,24 @@ class ProfileView extends ConsumerWidget {
     );
   }
 
-  Future<void> _pickImage(WidgetRef ref, ImageSource source) async {
+  Future<void> _pickImage(BuildContext context, WidgetRef ref, ImageSource source) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+    final pickedFile = await picker.pickImage(
+      source: source,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
     if (pickedFile != null) {
-      await ref.read(profileProvider.notifier).uploadAvatar(pickedFile);
+      final success = await ref.read(profileProvider.notifier).uploadAvatar(pickedFile);
+      if (!success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal mengunggah foto profil. Silakan coba lagi.'),
+            backgroundColor: AppColors.redNormal,
+          ),
+        );
+      }
     }
   }
 }

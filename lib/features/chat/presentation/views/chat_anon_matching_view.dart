@@ -259,27 +259,12 @@ class _ChatAnonMatchingViewState extends ConsumerState<ChatAnonMatchingView>
                         _buildRadarCircle(195, 0.33),
                         _buildRadarCircle(130, 0.66),
 
-                        // Mascot di tengah
-                        Container(
+                        // Mascot di tengah (Detektif Milo dengan Kaca Pembesar)
+                        Image.asset(
+                          'assets/images/mascot_radar.png',
                           width: 76,
                           height: 76,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.twilightDarker.withValues(alpha: 0.15),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ClipOval(
-                            child: Image.asset(
-                              'assets/images/profile.png',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                          fit: BoxFit.contain,
                         ),
                       ],
                     ),

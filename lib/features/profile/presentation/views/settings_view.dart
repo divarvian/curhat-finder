@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -18,6 +19,40 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   bool _chatNotifications = true;
   bool _sessionReminders = true;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _chatNotifications = prefs.getBool('chat_notifications') ?? true;
+          _sessionReminders = prefs.getBool('session_reminders') ?? true;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _setChatNotifications(bool val) async {
+    setState(() => _chatNotifications = val);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('chat_notifications', val);
+    } catch (_) {}
+  }
+
+  Future<void> _setSessionReminders(bool val) async {
+    setState(() => _sessionReminders = val);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('session_reminders', val);
+    } catch (_) {}
+  }
 
   Future<void> _showChangePasswordDialog() async {
     await showDialog(
@@ -196,45 +231,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     }
   }
 
-  Future<void> _showLogoutDialog() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            'Keluar dari Akun',
-            style: AppTextStyles.heading3.copyWith(
-              color: AppColors.twilightDarker,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: const Text('Apakah Anda yakin ingin keluar dari akun ini?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.wisteriaNormalHover,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Keluar', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true) {
-      await ref.read(authProvider.notifier).logout();
-      if (mounted) {
-        context.go('/login');
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -287,7 +283,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                     subtitle: const Text('Terima pemberitahuan saat ada pesan masuk'),
                     activeThumbColor: AppColors.wisteriaNormalHover,
                     value: _chatNotifications,
-                    onChanged: (val) => setState(() => _chatNotifications = val),
+                    onChanged: _setChatNotifications,
                   ),
                   const Divider(height: 1, indent: 56),
                   SwitchListTile(
@@ -296,7 +292,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                     subtitle: const Text('Pengingat waktu sebelum sesi konseling dimulai'),
                     activeThumbColor: AppColors.wisteriaNormalHover,
                     value: _sessionReminders,
-                    onChanged: (val) => setState(() => _sessionReminders = val),
+                    onChanged: _setSessionReminders,
                   ),
                 ]),
 
@@ -327,13 +323,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 // SECTION 4: MANAJEMEN AKUN / DANGER ZONE
                 _buildSectionHeader('Tindakan Akun'),
                 _buildCard([
-                  ListTile(
-                    leading: const Icon(Icons.logout_rounded, color: AppColors.twilightDarker),
-                    title: const Text('Keluar dari Akun', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Akhiri sesi login di perangkat ini'),
-                    onTap: _showLogoutDialog,
-                  ),
-                  const Divider(height: 1, indent: 56),
                   ListTile(
                     leading: const Icon(Icons.delete_forever_rounded, color: Colors.red),
                     title: const Text(

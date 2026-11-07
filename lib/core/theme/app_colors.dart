@@ -57,4 +57,15 @@ class AppColors {
 
   // Border & Divider
   static const Color border = wisteriaLightActive;
+
+  // Canonical Screen Gradients & Role-Specific Colors
+  static const Color studentChatGradientTop = Color(0xFF93A8D7);
+  static const Color studentChatGradientBottom = Color(0xFFF4F8FB);
+  static const Color counselorChatGradientTop = Color(0xFFFDECEE);
+  static const Color counselorChatGradientBottom = Color(0xFFF4F8FB);
+  static const Color counselorHeaderBg = Color(0xFFFCEDED);
+  static const Color counselorRegisterBg = Color(0xFF8198CF);
+  static const Color counselorRegisterBtn = Color(0xFFF8D0D0);
+  static const Color jurnalGradientTop = Color(0xFFB0BFE2);
+  static const Color jurnalGradientBottom = Color(0xFFF4F8FB);
 }

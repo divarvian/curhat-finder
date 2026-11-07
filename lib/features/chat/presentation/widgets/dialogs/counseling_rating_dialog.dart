@@ -57,11 +57,22 @@ class _CounselingRatingDialogState extends ConsumerState<CounselingRatingDialog>
           reviewTags: _selectedTags.toList(),
         );
       }
-    } catch (_) {}
-
-    if (mounted) {
-      Navigator.of(context).pop();
-      widget.onSubmitted?.call();
+      if (mounted) {
+        Navigator.of(context).pop();
+        widget.onSubmitted?.call();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal mengirim ulasan rating. Periksa koneksi internetmu.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 
@@ -95,19 +106,14 @@ class _CounselingRatingDialogState extends ConsumerState<CounselingRatingDialog>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header Icon
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: AppColors.lavender.withValues(alpha: 0.4),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Text('💖', style: TextStyle(fontSize: 30)),
-                ),
+              // Header Mascot Gembira
+              Image.asset(
+                'assets/images/mascot_happy.png',
+                width: 76,
+                height: 76,
+                fit: BoxFit.contain,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               Text(
                 'Sesi Konseling Selesai',

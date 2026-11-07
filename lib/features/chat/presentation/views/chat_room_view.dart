@@ -9,6 +9,8 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/expandable_message_text.dart';
+import '../../../../core/widgets/app_skeleton.dart';
 import '../../data/counseling_service.dart';
 import '../../domain/counseling_models.dart';
 import '../widgets/dialogs/counseling_rating_dialog.dart';
@@ -49,6 +51,7 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
   final List<ChatMessageModel> _optimisticMessages = [];
   List<ChatMessageModel> _cachedServerMessages = [];
   bool _isStreamConnected = true;
+  bool _isRealtimeConnecting = false;
   int _lastMessageCount = 0;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   bool _isAutoRetrying = false;
@@ -89,10 +92,14 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
     _focusNode.addListener(() {
       if (_focusNode.hasFocus) {
         if (_showEmoji) {
-          setState(() {
-            _showEmoji = false;
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted && _focusNode.hasFocus) {
+              setState(() {
+                _showEmoji = false;
+              });
+              _broadcastStatus('idle');
+            }
           });
-          _broadcastStatus('idle');
         }
         _scrollToBottom(animated: true);
       }
@@ -101,7 +108,13 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
 
   void _initConnectivityListener() {
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      if (results.any((r) => r != ConnectivityResult.none)) {
+      final isOnline = results.any((r) => r != ConnectivityResult.none);
+      if (mounted) {
+        setState(() {
+          _isStreamConnected = isOnline;
+        });
+      }
+      if (isOnline) {
         _autoRetryFailedMessages();
       }
     });
@@ -177,6 +190,9 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
     }
 
     if (widget.sessionId.isNotEmpty) {
+      setState(() {
+        _isRealtimeConnecting = true;
+      });
       _statusChannel = ref.read(counselingServiceProvider).createChatStatusChannel(widget.sessionId);
       _statusChannel?.onBroadcast(event: 'user_status', callback: (payload) {
         final senderId = payload['sender_id'] as String?;
@@ -200,6 +216,11 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
           }
         }
       }).subscribe((status, [error]) {
+        if (mounted) {
+          setState(() {
+            _isRealtimeConnecting = (status != RealtimeSubscribeStatus.subscribed);
+          });
+        }
         if (status == RealtimeSubscribeStatus.subscribed) {
           _autoRetryFailedMessages();
         }
@@ -445,16 +466,24 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
   void _toggleEmojiKeyboard() {
     if (_showEmoji) {
       _focusNode.requestFocus();
-      setState(() {
-        _showEmoji = false;
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          setState(() {
+            _showEmoji = false;
+          });
+          _broadcastStatus('idle');
+        }
       });
-      _broadcastStatus('idle');
     } else {
       _focusNode.unfocus();
-      setState(() {
-        _showEmoji = true;
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          setState(() {
+            _showEmoji = true;
+          });
+          _broadcastStatus('choosing_emoji');
+        }
       });
-      _broadcastStatus('choosing_emoji');
     }
     _scrollToBottom(animated: true);
   }
@@ -526,7 +555,8 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
           });
         }
       } catch (e) {
-        final isDuplicateKey = e.toString().contains('23505') ||
+        final isDuplicateKey = (e is PostgrestException && e.code == '23505') ||
+            e.toString().contains('23505') ||
             e.toString().toLowerCase().contains('duplicate key');
         if (mounted) {
           setState(() {
@@ -620,7 +650,8 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
           });
         }
       } catch (e) {
-        final isDuplicateKey = e.toString().contains('23505') ||
+        final isDuplicateKey = (e is PostgrestException && e.code == '23505') ||
+            e.toString().contains('23505') ||
             e.toString().toLowerCase().contains('duplicate key');
         if (mounted) {
           setState(() {
@@ -1030,8 +1061,19 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
           });
         }
       },
-      child: Scaffold(
-        backgroundColor: AppColors.lavender.withValues(alpha: 0.3),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.studentChatGradientTop,
+              AppColors.studentChatGradientBottom,
+            ],
+          ),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
         appBar: _selectedMessageIds.isNotEmpty
             ? PreferredSize(
                 preferredSize: const Size.fromHeight(60),
@@ -1188,6 +1230,36 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
                 ),
               ),
 
+            // Realtime Connecting Status Banner
+            if (_isRealtimeConnecting && _isStreamConnected)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                color: AppColors.wisteriaLight.withValues(alpha: 0.35),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 10,
+                      height: 10,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        color: AppColors.twilightDarker,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Menghubungkan ke layanan realtime...',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        fontSize: 10,
+                        color: AppColors.twilightDarker,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // Area Percakapan Realtime
             Expanded(
               child: GestureDetector(
@@ -1204,6 +1276,10 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
                     ? StreamBuilder<List<ChatMessageModel>>(
                         stream: _messagesStream,
                         builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting && _cachedServerMessages.isEmpty) {
+                            return const ChatBubbleSkeleton();
+                          }
+
                           if (snapshot.hasData && snapshot.data != null) {
                             _cachedServerMessages = snapshot.data!;
                             _isStreamConnected = true;
@@ -1303,10 +1379,14 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
                         onSubmitted: (_) => _sendMessage(),
                         onTap: () {
                           if (_showEmoji) {
-                            setState(() {
-                              _showEmoji = false;
+                            Future.delayed(const Duration(milliseconds: 100), () {
+                              if (mounted) {
+                                setState(() {
+                                  _showEmoji = false;
+                                });
+                                _broadcastStatus('idle');
+                              }
                             });
-                            _broadcastStatus('idle');
                           }
                           _scrollToBottom(animated: true);
                         },
@@ -1397,6 +1477,7 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
               ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -1493,13 +1574,124 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
     );
   }
 
+  Widget _buildOrientationHeader() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.wisteriaNormalHover.withValues(alpha: 0.3),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.wisteriaNormalHover.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.verified_user_rounded,
+                  size: 18,
+                  color: AppColors.wisteriaNormalHover,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Ruang Aman Konseling Sebaya',
+                  style: AppTextStyles.labelLarge.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.twilightDarker,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Percakapan ini bersifat rahasia dan aman. Konselor sebaya adalah rekan mahasiswa terlatih yang siap mendengarkan tanpa menghakimi.',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.twilightNormal.withValues(alpha: 0.85),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Butuh pemantik cerita? Ketuk salah satu:',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.twilightDarker,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildIcebreakerChip('Lagi overthinking tugas kuliah'),
+              _buildIcebreakerChip('Merasa cemas & burnout'),
+              _buildIcebreakerChip('Butuh teman dengar dan saran'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIcebreakerChip(String label) {
+    return InkWell(
+      onTap: () {
+        _messageController.text = label;
+        _focusNode.requestFocus();
+      },
+      borderRadius: BorderRadius.circular(100),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.lavenderBlush,
+          borderRadius: BorderRadius.circular(100),
+          border: Border.all(
+            color: AppColors.redNormalHover.withValues(alpha: 0.5),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.labelSmall.copyWith(
+            color: AppColors.redDarker,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildMessageList(List<_MessageItemData> messages) {
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-      itemCount: messages.length,
+      itemCount: messages.length + 1,
       itemBuilder: (context, index) {
-        final message = messages[index];
+        if (index == 0) {
+          return _buildOrientationHeader();
+        }
+        final message = messages[index - 1];
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: _buildMessageBubble(message),
@@ -1597,6 +1789,16 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
       mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
+        if (isMe && isFailed) ...[
+          IconButton(
+            tooltip: 'Kirim ulang',
+            padding: const EdgeInsets.all(12),
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.redNormal, size: 22),
+            onPressed: () => _retrySendMessage(message.id),
+          ),
+          const SizedBox(width: 4),
+        ],
         if (!isMe) ...[
           Container(
             width: 32,
@@ -1685,13 +1887,14 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
                       ],
                     ),
                   ),
-                Text(
-                  message.text,
+                ExpandableMessageText(
+                  text: message.text,
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: isMe ? Colors.white : AppColors.twilightDarker,
                     fontSize: 14,
                     height: 1.35,
                   ),
+                  isMe: isMe,
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -1714,7 +1917,7 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
                 if (isFailed) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'Gagal terkirim. Ketuk untuk kirim ulang',
+                    'Gagal terkirim. Ketuk ikon untuk kirim ulang',
                     style: AppTextStyles.labelSmall.copyWith(
                       color: Colors.red.shade200,
                       fontSize: 9,

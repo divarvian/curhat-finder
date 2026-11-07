@@ -83,7 +83,7 @@ class _PulseViewState extends ConsumerState<PulseView> {
                     decoration: InputDecoration(
                       hintText: 'Cari kontak atau layanan...',
                       hintStyle: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.twilightNormal.withValues(alpha: 0.6),
+                        color: AppColors.twilightNormal.withValues(alpha: 0.75),
                         fontSize: 14,
                       ),
                       prefixIcon: const Icon(
@@ -179,7 +179,7 @@ class _PulseViewState extends ConsumerState<PulseView> {
                               child: Text(
                                 'Tidak ada kontak yang ditemukan.',
                                 style: AppTextStyles.bodyMedium.copyWith(
-                                  color: AppColors.twilightNormal.withValues(alpha: 0.8),
+                                  color: AppColors.twilightNormal,
                                 ),
                               ),
                             ),
@@ -216,49 +216,47 @@ class _PulseViewState extends ConsumerState<PulseView> {
           ),
         ],
       ),
-      child: Stack(
-        clipBehavior: Clip.none,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Mascot Illustration
-          Positioned(
-            right: -10,
-            top: -15,
-            child: Image.asset(
-              'assets/images/mascot.png', // Fallback, sebaiknya nanti pakai ilustrasi monster nangis
-              width: 80,
-              height: 80,
-            ),
-          ),
-
-          // Content
-          Column(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.55,
-                child: Text(
-                  'Kontak Darurat ULTKSP',
-                  style: AppTextStyles.heading1.copyWith(
-                    color: AppColors.redDarker, // Merah gelap
-                    fontSize: 18,
-                  ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Kontak Darurat ULTKSP',
+                      style: AppTextStyles.heading1.copyWith(
+                        color: AppColors.redDarker, // Merah gelap
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Unit Layanan Terpadu Krisis & Support Psikologikal UB. Siaga 24/7',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.redDarker.withValues(alpha: 0.85),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 6),
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.55,
-                child: Text(
-                  'Unit Layanan Terpadu Krisis & Support Psikologikal UB. Siaga 24/7',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.redDarker.withValues(alpha: 0.85),
-                    fontSize: 12,
-                  ),
-                ),
+              const SizedBox(width: 12),
+              Image.asset(
+                'assets/images/mascot_emergency.png',
+                width: 68,
+                height: 72,
+                fit: BoxFit.contain,
               ),
-              const SizedBox(height: 20),
+            ],
+          ),
+          const SizedBox(height: 18),
 
-              // Action Buttons
-              Row(
+          // Action Buttons
+          Row(
                 children: [
                   Expanded(
                     child: ElevatedButton(
@@ -312,10 +310,8 @@ class _PulseViewState extends ConsumerState<PulseView> {
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
+        );
+      }
 
   Widget _buildContactCard(PulseContact contact) {
     return Container(
@@ -385,7 +381,7 @@ class _PulseViewState extends ConsumerState<PulseView> {
                   Text(
                     contact.description!,
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.twilightNormal.withValues(alpha: 0.7),
+                      color: AppColors.twilightNormal,
                       fontSize: 11,
                     ),
                     maxLines: 2,
@@ -396,7 +392,7 @@ class _PulseViewState extends ConsumerState<PulseView> {
                 Text(
                   contact.phone,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.twilightNormal.withValues(alpha: 0.7),
+                    color: AppColors.twilightNormal,
                     fontSize: 12,
                   ),
                 ),
