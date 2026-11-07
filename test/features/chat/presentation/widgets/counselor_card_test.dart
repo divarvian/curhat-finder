@@ -49,5 +49,31 @@ void main() {
       expect(find.text('Fakultas Teknik (FT)'), findsOneWidget);
       expect(find.text('Burnout'), findsOneWidget);
     });
+
+    testWidgets('Renders max 2 topics and +N badge when counselor has more than 2 topics', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: CounselorCard(
+              counselorId: 'counselor-3',
+              name: 'Kak Citra',
+              gender: 'Perempuan',
+              faculty: 'Fakultas Kedokteran (FK)',
+              tags: ['Akademik', 'Kecemasan', 'Burnout', 'Relasi'],
+              hobbies: ['Menulis'],
+              isOnline: true,
+            ),
+          ),
+        ),
+      );
+
+      // Only the first 2 topics should be rendered on the card
+      expect(find.text('Akademik'), findsOneWidget);
+      expect(find.text('Kecemasan'), findsOneWidget);
+      // Remaining topics should not be on the card, replaced by +2
+      expect(find.text('+2'), findsOneWidget);
+      expect(find.text('Burnout'), findsNothing);
+      expect(find.text('Relasi'), findsNothing);
+    });
   });
 }

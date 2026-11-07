@@ -77,18 +77,22 @@ class AppPill extends StatelessWidget {
             leading!,
             const SizedBox(width: 6),
           ],
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            strutStyle: const StrutStyle(
-              forceStrutHeight: true,
-              height: 1.0,
-            ),
-            style: AppTextStyles.labelMedium.copyWith(
-              color: effectiveTextColor,
-              fontSize: fontSize ?? 12,
-              fontWeight: effectiveFontWeight,
-              height: 1.0,
+          Flexible(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              strutStyle: const StrutStyle(
+                forceStrutHeight: true,
+                height: 1.0,
+              ),
+              style: AppTextStyles.labelMedium.copyWith(
+                color: effectiveTextColor,
+                fontSize: fontSize ?? 12,
+                fontWeight: effectiveFontWeight,
+                height: 1.0,
+              ),
             ),
           ),
           if (trailing != null) ...[

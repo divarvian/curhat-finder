@@ -8,6 +8,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/app_error_translator.dart';
 import '../../data/counseling_service.dart';
 import '../../domain/counseling_models.dart';
+import '../../../../core/widgets/app_pill.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 
 class CounselorProfileSheet extends ConsumerStatefulWidget {
@@ -206,19 +207,14 @@ class _CounselorProfileSheetState extends ConsumerState<CounselorProfileSheet> {
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: widget.topics.map((topic) {
-              return Container(
+              return AppPill(
+                label: topic,
+                backgroundColor: AppColors.twilightDarker,
+                textColor: Colors.white,
+                borderColor: Colors.transparent,
+                borderWidth: 0,
+                fontSize: 12,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.twilightDarker,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Text(
-                  topic,
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
               );
             }).toList(),
           ),

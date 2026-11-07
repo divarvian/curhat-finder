@@ -121,24 +121,53 @@ class CounselorCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: tags.map((tag) {
-                return AppPill(
-                  label: tag,
-                  backgroundColor: AppColors.twilightDarker,
-                  textColor: Colors.white,
-                  borderColor: Colors.transparent,
-                  borderWidth: 0,
-                  fontSize: 11,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                );
-              }).toList(),
-            ),
+            _buildTopicRow(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTopicRow() {
+    if (tags.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    const int maxVisible = 2;
+    final visibleTopics = tags.take(maxVisible).toList();
+    final remainingCount = tags.length - visibleTopics.length;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < visibleTopics.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Flexible(
+            child: AppPill(
+              label: visibleTopics[i],
+              backgroundColor: AppColors.twilightDarker,
+              textColor: Colors.white,
+              borderColor: Colors.transparent,
+              borderWidth: 0,
+              fontSize: 11,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            ),
+          ),
+        ],
+        if (remainingCount > 0) ...[
+          const SizedBox(width: 8),
+          AppPill(
+            label: '+$remainingCount',
+            backgroundColor: AppColors.twilightLightHover,
+            textColor: AppColors.twilightDarker,
+            borderColor: AppColors.twilightLightActive,
+            borderWidth: 1,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          ),
+        ],
+      ],
     );
   }
 }

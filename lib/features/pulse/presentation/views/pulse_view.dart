@@ -15,10 +15,12 @@ class PulseView extends ConsumerStatefulWidget {
 
 class _PulseViewState extends ConsumerState<PulseView> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _categoryScrollController = ScrollController();
 
   @override
   void dispose() {
     _searchController.dispose();
+    _categoryScrollController.dispose();
     super.dispose();
   }
 
@@ -98,44 +100,95 @@ class _PulseViewState extends ConsumerState<PulseView> {
               ),
               const SizedBox(height: 24),
 
-              // Filter Chips
-              SizedBox(
-                height: 32,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20), // Biar jarak kiri kanannya seimbang
-                  itemCount: PulseNotifier.categories.length,
-                  itemBuilder: (context, index) {
-                    final category = PulseNotifier.categories[index];
-                    final isSelected = state.selectedFilterIndex == index;
-                    
-                    return GestureDetector(
-                      onTap: () => notifier.setFilterIndex(index),
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: isSelected ? AppColors.lavenderBlush : Colors.white,
-                          borderRadius: BorderRadius.circular(100),
-                          border: Border.all(
-                            color: isSelected ? AppColors.redNormalHover : AppColors.twilightLight,
-                            width: 1,
-                          ),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          category,
-                          style: AppTextStyles.labelMedium.copyWith(
-                            color: isSelected ? AppColors.twilightDarker : AppColors.twilightDark,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              // Filter Chips dengan panah navigasi presisi sesuai mockup
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  height: 32,
+                  child: Row(
+                    children: [
+                      // Panah kiri
+                      InkWell(
+                        onTap: () {
+                          if (_categoryScrollController.hasClients) {
+                            _categoryScrollController.animateTo(
+                              (_categoryScrollController.offset - 120).clamp(0.0, _categoryScrollController.position.maxScrollExtent),
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(100),
+                        child: const Padding(
+                          padding: EdgeInsets.only(right: 6, top: 4, bottom: 4),
+                          child: Icon(
+                            Icons.chevron_left_rounded,
+                            size: 20,
+                            color: AppColors.twilightNormal,
                           ),
                         ),
                       ),
-                    );
-                  },
+                      Expanded(
+                        child: ListView.builder(
+                          controller: _categoryScrollController,
+                          scrollDirection: Axis.horizontal,
+                          itemCount: PulseNotifier.categories.length,
+                          itemBuilder: (context, index) {
+                            final category = PulseNotifier.categories[index];
+                            final isSelected = state.selectedFilterIndex == index;
+                            
+                            return GestureDetector(
+                              onTap: () => notifier.setFilterIndex(index),
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppColors.lavenderBlush : Colors.white,
+                                  borderRadius: BorderRadius.circular(100),
+                                  border: Border.all(
+                                    color: isSelected ? AppColors.redNormalHover : AppColors.twilightLight,
+                                    width: 1,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  category,
+                                  style: AppTextStyles.labelMedium.copyWith(
+                                    color: isSelected ? AppColors.twilightDarker : AppColors.twilightDark,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      // Panah kanan
+                      InkWell(
+                        onTap: () {
+                          if (_categoryScrollController.hasClients) {
+                            _categoryScrollController.animateTo(
+                              (_categoryScrollController.offset + 120).clamp(0.0, _categoryScrollController.position.maxScrollExtent),
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(100),
+                        child: const Padding(
+                          padding: EdgeInsets.only(left: 6, top: 4, bottom: 4),
+                          child: Icon(
+                            Icons.chevron_right_rounded,
+                            size: 20,
+                            color: AppColors.twilightNormal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Scrollable Content
               Expanded(
@@ -157,57 +210,8 @@ class _PulseViewState extends ConsumerState<PulseView> {
                             ),
                           ),
 
-                        // Section Header Layanan Utama & Darurat
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Layanan Utama & Darurat',
-                              style: AppTextStyles.heading2.copyWith(
-                                color: AppColors.twilightDarker,
-                                fontSize: 18,
-                              ),
-                            ),
-                            Tooltip(
-                              message: 'Informasi ULTKSP & LKM',
-                              child: InkWell(
-                                onTap: () => _showInstitutionInfoSheet(context),
-                                borderRadius: BorderRadius.circular(100),
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: AppColors.twilightLightActive,
-                                      width: 1.5,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.04),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(
-                                    Icons.info_outline_rounded,
-                                    size: 18,
-                                    color: AppColors.twilightNormal,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // ULTKSP Emergency Card
-                        _buildUltkspCard(),
-                        const SizedBox(height: 16),
-
-                        // LKM Counseling Card
-                        _buildLkmCard(),
+                        // Unified Emergency Contact Card (ULTKSP & LKM)
+                        _buildUnifiedEmergencyCard(),
                         const SizedBox(height: 24),
 
                         // Section Title
@@ -483,17 +487,17 @@ class _PulseViewState extends ConsumerState<PulseView> {
     );
   }
 
-  Widget _buildUltkspCard() {
+  Widget _buildUnifiedEmergencyCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.lavenderBlush, // Peach / Pink Latar
+        color: AppColors.lavenderBlush, // Peach / Pink Latar sesuai mockup
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.redNormalHover, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: AppColors.redNormalHover.withValues(alpha: 0.2),
+            color: AppColors.redNormalHover.withValues(alpha: 0.18),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -509,46 +513,21 @@ class _PulseViewState extends ConsumerState<PulseView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            'Kontak Darurat ULTKSP',
-                            style: AppTextStyles.heading1.copyWith(
-                              color: AppColors.redDarker,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Tooltip(
-                          message: 'Info ULTKSP',
-                          child: InkWell(
-                            onTap: () => _showInstitutionInfoSheet(context),
-                            borderRadius: BorderRadius.circular(100),
-                            child: Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.redNormalHover, width: 1),
-                                color: Colors.white.withValues(alpha: 0.9),
-                              ),
-                              child: const Icon(
-                                Icons.info_outline_rounded,
-                                size: 14,
-                                color: AppColors.redDarkHover,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
                     Text(
-                      'Unit Layanan Kekerasan Seksual & Perundungan UB. Siaga 24/7',
+                      'Kontak Darurat\nULTKSP & LKM',
+                      style: AppTextStyles.heading1.copyWith(
+                        color: AppColors.redDarker,
+                        fontSize: 18,
+                        height: 1.25,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Unit Layanan Terpadu Krisis &\nSupport Psikologikal UB. Siaga 24/7',
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.redDarker.withValues(alpha: 0.85),
                         fontSize: 12,
+                        height: 1.35,
                       ),
                     ),
                   ],
@@ -565,53 +544,92 @@ class _PulseViewState extends ConsumerState<PulseView> {
           ),
           const SizedBox(height: 18),
 
-          // Action Buttons
+          // Baris 3 Tombol Aksi (ULTKSP, LKM, dan Lingkaran (i))
           Row(
             children: [
+              // Tombol ULTKSP (Solid Koral Merah)
               Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    _launchUrl('tel:08113770008'); // Hotline ULTKSP UB
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.redDarkHover,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100),
+                child: SizedBox(
+                  height: 40,
+                  child: ElevatedButton(
+                    onPressed: () => _showContactActionSheet(
+                      title: 'Kontak Darurat ULTKSP',
+                      subtitle: 'Unit Layanan Kekerasan Seksual & Perundungan (Satgas PPKSP UB)',
+                      phone: '0811-3770-008',
+                      whatsappNumber: '628113770008',
                     ),
-                  ),
-                  child: Text(
-                    'Telepon',
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.redDarkHover,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                    ),
+                    child: Text(
+                      'ULTKSP',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
+
+              // Tombol LKM (Putih dengan teks koral)
               Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    _launchUrl('https://wa.me/628113770008'); // Hotline WhatsApp ULTKSP UB
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.redDarkHover,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100),
-                      side: const BorderSide(color: AppColors.redNormalHover, width: 1),
+                child: SizedBox(
+                  height: 40,
+                  child: ElevatedButton(
+                    onPressed: () => _showContactActionSheet(
+                      title: 'Layanan Konseling Mahasiswa (LKM)',
+                      subtitle: 'Pusat Layanan Konseling & Pendampingan Psikologis Mahasiswa UB',
+                      phone: '0812-3000-8800',
+                      whatsappNumber: '6281230008800',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.redDarkHover,
+                      elevation: 0,
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(100),
+                        side: const BorderSide(color: AppColors.redNormalHover, width: 1.2),
+                      ),
+                    ),
+                    child: Text(
+                      'LKM',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.redDarkHover,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    'Whatsapp',
-                    style: AppTextStyles.labelMedium.copyWith(
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Tombol Lingkaran Info (i)
+              Tooltip(
+                message: 'Informasi ULTKSP & LKM',
+                child: InkWell(
+                  onTap: () => _showInstitutionInfoSheet(context),
+                  borderRadius: BorderRadius.circular(100),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
                       color: AppColors.redDarkHover,
-                      fontWeight: FontWeight.bold,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.info_outline_rounded,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
                 ),
@@ -623,143 +641,157 @@ class _PulseViewState extends ConsumerState<PulseView> {
     );
   }
 
-  Widget _buildLkmCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F0FA), // Soft lavender pastel latar
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.wisteriaNormalHover, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.wisteriaNormalHover.withValues(alpha: 0.15),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+  void _showContactActionSheet({
+    required String title,
+    required String subtitle,
+    required String phone,
+    String? whatsappNumber,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+        final cleanWa = whatsappNumber?.replaceAll(RegExp(r'\D'), '');
+
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          padding: EdgeInsets.only(
+            top: 14,
+            left: 24,
+            right: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 28,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: AppColors.twilightLightActive,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Sheet Title & Description
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: const BoxDecoration(
+                      color: AppColors.lavenderBlush,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.contact_phone_rounded,
+                      color: AppColors.redDarkHover,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Flexible(
-                          child: Text(
-                            'Layanan Konseling Mahasiswa (LKM)',
-                            style: AppTextStyles.heading1.copyWith(
-                              color: AppColors.twilightDarker,
-                              fontSize: 18,
-                            ),
+                        Text(
+                          title,
+                          style: AppTextStyles.heading2.copyWith(
+                            color: AppColors.twilightDarker,
+                            fontSize: 17,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Tooltip(
-                          message: 'Info LKM',
-                          child: InkWell(
-                            onTap: () => _showInstitutionInfoSheet(context),
-                            borderRadius: BorderRadius.circular(100),
-                            child: Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.wisteriaNormalHover, width: 1),
-                                color: Colors.white.withValues(alpha: 0.9),
-                              ),
-                              child: const Icon(
-                                Icons.info_outline_rounded,
-                                size: 14,
-                                color: AppColors.wisteriaDarker,
-                              ),
-                            ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.twilightDark,
+                            fontSize: 12,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Pusat layanan konseling psikologis, kesehatan mental, & bimbingan sebaya mahasiswa UB.',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.twilightDark.withValues(alpha: 0.85),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Image.asset(
-                'assets/images/mascot.png',
-                width: 68,
-                height: 72,
-                fit: BoxFit.contain,
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          // Action Buttons
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    _launchUrl('tel:081230008800'); // Layanan Telepon LKM UB
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.wisteriaNormalHover,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100),
-                    ),
                   ),
-                  child: Text(
-                    'Telepon',
+                  IconButton(
+                    icon: const Icon(Icons.close, color: AppColors.twilightDark),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Tombol Telepon
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _launchUrl('tel:$cleanPhone');
+                  },
+                  icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 20),
+                  label: Text(
+                    'Panggilan Telepon ($phone)',
                     style: AppTextStyles.labelMedium.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    _launchUrl('https://wa.me/6281230008800'); // Layanan WhatsApp LKM UB
-                  },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.twilightDarker,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    backgroundColor: AppColors.redDarkHover,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(100),
-                      side: const BorderSide(color: AppColors.wisteriaNormalHover, width: 1),
                     ),
-                  ),
-                  child: Text(
-                    'Whatsapp',
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: AppColors.twilightDarker,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    elevation: 0,
                   ),
                 ),
               ),
+
+              // Tombol WhatsApp (Jika tersedia)
+              if (cleanWa != null && cleanWa.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _launchUrl('https://wa.me/$cleanWa');
+                    },
+                    icon: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF25D366), size: 20),
+                    label: Text(
+                      'Chat WhatsApp Resmi',
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.twilightDarker,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE8F8EE),
+                      foregroundColor: AppColors.twilightDarker,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(100),
+                        side: const BorderSide(color: Color(0xFFA6E7BD), width: 1),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -780,18 +812,17 @@ class _PulseViewState extends ConsumerState<PulseView> {
       ),
       child: Row(
         children: [
-          // Avatar Icon
+          // Avatar Icon Pesan Bulat Abu-abu sesuai mockup
           Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.platinum,
+              color: AppColors.lavender.withValues(alpha: 0.35),
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.twilightNormal.withValues(alpha: 0.2)),
             ),
             child: const Icon(
               Icons.chat_bubble_outline_rounded,
-              color: AppColors.wisteriaNormalHover,
+              color: AppColors.twilightLightActive,
               size: 24,
             ),
           ),
@@ -806,7 +837,7 @@ class _PulseViewState extends ConsumerState<PulseView> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.twilightDarker,
+                    color: AppColors.twilightDark,
                     borderRadius: BorderRadius.circular(100),
                   ),
                   child: Text(
@@ -826,18 +857,6 @@ class _PulseViewState extends ConsumerState<PulseView> {
                     fontSize: 15,
                   ),
                 ),
-                if (contact.description != null && contact.description!.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    contact.description!,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.twilightNormal,
-                      fontSize: 11,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
                 const SizedBox(height: 2),
                 Text(
                   contact.phone,
@@ -851,60 +870,31 @@ class _PulseViewState extends ConsumerState<PulseView> {
           ),
           const SizedBox(width: 8),
 
-          // Actions
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (contact.whatsappNumber != null && contact.whatsappNumber!.isNotEmpty) ...[
-                Tooltip(
-                  message: 'WhatsApp',
-                  child: InkWell(
-                    onTap: () {
-                      final cleanWa = contact.whatsappNumber!.replaceAll(RegExp(r'\D'), '');
-                      _launchUrl('https://wa.me/$cleanWa');
-                    },
-                    borderRadius: BorderRadius.circular(100),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE8F8EE),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.chat_bubble_rounded,
-                        color: Color(0xFF25D366),
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              ElevatedButton(
-                onPressed: () {
-                  // Menghapus semua karakter non-digit dari nomor telepon
-                  final cleanPhone = contact.phone.replaceAll(RegExp(r'\D'), '');
-                  _launchUrl('tel:$cleanPhone');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.wisteriaNormalHover, // Biru keunguan muda
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
-                  minimumSize: const Size(0, 34),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                ),
-                child: Text(
-                  'Telepon',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+          // Tombol Tunggal Hubungi sesuai Mockup
+          ElevatedButton(
+            onPressed: () => _showContactActionSheet(
+              title: contact.name,
+              subtitle: contact.description ?? 'Layanan Konseling Fakultas ${contact.faculty}',
+              phone: contact.phone,
+              whatsappNumber: contact.whatsappNumber,
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.wisteriaNormalHover,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 0),
+              minimumSize: const Size(0, 38),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(100),
               ),
-            ],
+            ),
+            child: Text(
+              'Hubungi',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),

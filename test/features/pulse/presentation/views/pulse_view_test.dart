@@ -14,7 +14,7 @@ void main() {
       expect(categories, contains('FK'));
     });
 
-    testWidgets('PulseView renders ULTKSP and LKM cards with contact buttons', (WidgetTester tester) async {
+    testWidgets('PulseView renders unified emergency card matching canonical mockup', (WidgetTester tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -24,12 +24,49 @@ void main() {
       );
 
       await tester.pump();
-      expect(find.text('Layanan Utama & Darurat'), findsOneWidget);
+      // Unified emergency card title and subtitle
+      expect(find.text('Kontak Darurat\nULTKSP & LKM'), findsOneWidget);
+      expect(find.textContaining('Unit Layanan Terpadu Krisis'), findsOneWidget);
+
+      // Buttons inside unified emergency card
+      expect(find.text('ULTKSP'), findsOneWidget);
+      expect(find.text('LKM'), findsOneWidget);
+      expect(find.byIcon(Icons.info_outline_rounded), findsOneWidget);
+
+      // Faculty section and "Hubungi" buttons
+      expect(find.text('Kontak per Fakultas'), findsOneWidget);
+      expect(find.text('Hubungi'), findsWidgets);
+
+      // Category filter chevrons
+      expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
+    });
+
+    testWidgets('Tapping ULTKSP button opens contact action sheet with Telepon and WhatsApp', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: PulseView()),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      // Tap ULTKSP button
+      await tester.tap(find.text('ULTKSP'));
+      await tester.pumpAndSettle();
+
+      // Verify action sheet
       expect(find.text('Kontak Darurat ULTKSP'), findsOneWidget);
-      expect(find.textContaining('Unit Layanan Kekerasan Seksual & Perundungan'), findsWidgets);
-      expect(find.text('Layanan Konseling Mahasiswa (LKM)'), findsOneWidget);
-      expect(find.text('Telepon'), findsWidgets);
-      expect(find.text('Whatsapp'), findsWidgets);
+      expect(find.textContaining('Panggilan Telepon'), findsOneWidget);
+      expect(find.text('Chat WhatsApp Resmi'), findsOneWidget);
+
+      // Dismiss
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Kontak Darurat ULTKSP'), findsNothing);
     });
 
     testWidgets('Tapping circular info button displays institutional explanation sheet', (WidgetTester tester) async {
@@ -43,12 +80,11 @@ void main() {
 
       await tester.pump();
 
-      // Find circular info button by icon
+      // Tap circular info button (i)
       final infoButtonFinder = find.byIcon(Icons.info_outline_rounded);
-      expect(infoButtonFinder, findsWidgets);
+      expect(infoButtonFinder, findsOneWidget);
 
-      // Tap the first circular info button (in header)
-      await tester.tap(infoButtonFinder.first);
+      await tester.tap(infoButtonFinder);
       await tester.pumpAndSettle();
 
       // Verify bottom sheet title and content
