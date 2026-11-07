@@ -14,7 +14,7 @@ void main() {
       expect(categories, contains('FK'));
     });
 
-    testWidgets('PulseView renders emergency card and contact buttons', (WidgetTester tester) async {
+    testWidgets('PulseView renders ULTKSP and LKM cards with contact buttons', (WidgetTester tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -24,10 +24,43 @@ void main() {
       );
 
       await tester.pump();
+      expect(find.text('Layanan Utama & Darurat'), findsOneWidget);
       expect(find.text('Kontak Darurat ULTKSP'), findsOneWidget);
-      expect(find.textContaining('Unit Layanan Terpadu Krisis'), findsOneWidget);
+      expect(find.textContaining('Unit Layanan Kekerasan Seksual & Perundungan'), findsWidgets);
+      expect(find.text('Layanan Konseling Mahasiswa (LKM)'), findsOneWidget);
       expect(find.text('Telepon'), findsWidgets);
       expect(find.text('Whatsapp'), findsWidgets);
+    });
+
+    testWidgets('Tapping circular info button displays institutional explanation sheet', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: PulseView()),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      // Find circular info button by icon
+      final infoButtonFinder = find.byIcon(Icons.info_outline_rounded);
+      expect(infoButtonFinder, findsWidgets);
+
+      // Tap the first circular info button (in header)
+      await tester.tap(infoButtonFinder.first);
+      await tester.pumpAndSettle();
+
+      // Verify bottom sheet title and content
+      expect(find.text('Tentang ULTKSP & LKM'), findsOneWidget);
+      expect(find.text('Panduan layanan resmi Universitas Brawijaya'), findsOneWidget);
+      expect(find.text('Saya Mengerti'), findsOneWidget);
+
+      // Tap close icon button to dismiss
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tentang ULTKSP & LKM'), findsNothing);
     });
   });
 }

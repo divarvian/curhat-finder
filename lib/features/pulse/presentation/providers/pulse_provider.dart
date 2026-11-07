@@ -36,13 +36,33 @@ class PulseNotifier extends Notifier<PulseState> {
 
   static const List<PulseContact> defaultContacts = [
     PulseContact(
+      name: 'ULTKSP (Unit Layanan Kekerasan Seksual & Perundungan)',
+      faculty: 'Semua',
+      phone: '0811-3770-008',
+      whatsappNumber: '628113770008',
+      description: 'Satgas PPKSP Universitas Brawijaya. Penanganan krisis kekerasan seksual, pelecehan verbal/fisik, dan perundungan 24/7.',
+      isEmergency: true,
+      avatarPath: 'assets/images/mascot_emergency.png',
+      displayOrder: 0,
+    ),
+    PulseContact(
+      name: 'LKM (Layanan Konseling Mahasiswa)',
+      faculty: 'Semua',
+      phone: '0812-3000-8800',
+      whatsappNumber: '6281230008800',
+      description: 'Pusat layanan konseling psikologis, kesehatan mental, stres akademik, dan bimbingan sebaya mahasiswa UB.',
+      isEmergency: false,
+      avatarPath: 'assets/images/mascot.png',
+      displayOrder: 1,
+    ),
+    PulseContact(
       name: 'Unit Bimbingan Konseling FILKOM',
       faculty: 'FILKOM',
       phone: '0812-3000-8801',
       whatsappNumber: '6281230008801',
       description: 'Layanan bimbingan akademik dan konseling sebaya FILKOM UB',
       avatarPath: 'assets/images/profile.png',
-      displayOrder: 1,
+      displayOrder: 2,
     ),
     PulseContact(
       name: 'Layanan Konseling Mahasiswa FIB',

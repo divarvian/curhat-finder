@@ -52,8 +52,13 @@ Curhat Finder adalah aplikasi mobile kesehatan mental mahasiswa yang dirancang u
 - **Creator Studio**: Formulir in-place terpadu bagi konselor untuk mempublikasikan artikel panduan kesehatan mental langsung ke feed tips (`public.tips`).
 - **Kurasi Topik Keahlian Terstandarisasi (`ManageTopicsSheet`)**: Pemilihan topik bimbingan konselor berbasis filter chip resmi pendaftaran, menjaga konsistensi profil konselor.
 
-### 8. 🚨 Pulse & Hotline Darurat
-- Direktori kontak darurat dan hotline bantuan krisis kesehatan mental universitas (UB, Filkom, Kemenkes Sejiwa 24 Jam) yang dapat dihubungi secara cepat saat situasi genting.
+### 8. 🚨 Pulse & Layanan Krisis Kampus (ULTKSP & LKM)
+- **Layanan Utama Berdampingan**:
+  - **ULTKSP (Unit Layanan Kekerasan Seksual & Perundungan)**: Satgas PPKSP Universitas Brawijaya untuk penanganan krisis kekerasan seksual, pelecehan fisik/verbal, intimidasi, dan perundungan (*bullying*) siaga 24/7 dengan perlindungan aman, kerahasiaan identitas, dan pendampingan hukum kampus.
+  - **LKM (Layanan Konseling Mahasiswa)**: Pusat layanan konseling psikologis, kesehatan mental, penanganan stres akademik/burnout, dan bimbingan sebaya mahasiswa UB.
+- **Tombol Informasi `(i)` di Lingkaran**: Modal bottom sheet interaktif yang mengedukasi mahasiswa mengenai perbedaan ruang lingkup, wewenang, dan panduan kapan harus menghubungi ULTKSP vs LKM.
+- **Aksi Cepat Telepon & WhatsApp**: Akses instan ke nomor telepon darurat dan WhatsApp resmi masing-masing unit layanan dengan satu ketukan.
+- **Direktori Kontak per Fakultas & Nasional**: Direktori kontak bimbingan konseling seluruh fakultas di lingkungan UB, IGD RS UB 24 Jam, dan Hotline Sejiwa Kemenkes 119.
 
 ### 9. 🎨 Desain Figma Fidelity & Aksesibilitas
 - **Tipografi Ramah Disleksia**: Standarisasi letter-spacing positif (+0.15px s.d. +0.25px) dan line-height proporsional (1.45–1.5) guna mencegah *visual crowding* dan *line-jumping*.
