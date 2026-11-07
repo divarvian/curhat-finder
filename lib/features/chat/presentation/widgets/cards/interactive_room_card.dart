@@ -4,10 +4,10 @@ import 'package:curhat_finder/core/services/supabase_service.dart';
 import 'package:curhat_finder/core/widgets/dialogs/delete_confirmation_dialog.dart';
 import 'package:curhat_finder/features/chat/presentation/providers/rooms_interaction_provider.dart';
 import 'package:curhat_finder/core/theme/app_colors.dart';
-import 'package:curhat_finder/core/theme/app_text_styles.dart';
-import 'package:curhat_finder/features/chat/domain/room_model.dart';
-
 import 'package:curhat_finder/core/theme/app_radii.dart';
+import 'package:curhat_finder/core/theme/app_text_styles.dart';
+import 'package:curhat_finder/core/widgets/app_pill.dart';
+import 'package:curhat_finder/features/chat/domain/room_model.dart';
 
 /// Widget Card Room Mandiri dengan Optimistic UI dan Animasi Pegas (Bounce)
 class InteractiveRoomCard extends ConsumerStatefulWidget {
@@ -246,35 +246,24 @@ class _InteractiveRoomCardState extends ConsumerState<InteractiveRoomCard> with 
                       ),
                       const SizedBox(width: 12),
                     ],
-                    Container(
+                    AppPill(
+                      label: room.authorTag,
+                      backgroundColor: AppColors.lavenderBlush,
+                      textColor: AppColors.twilightDarker,
+                      borderColor: Colors.transparent,
+                      borderWidth: 0,
+                      fontSize: 12,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.lavenderBlush,
-                        borderRadius: AppRadii.borderFull,
-                      ),
-                      child: Text(
-                        room.authorTag,
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.twilightDarker,
-                          fontSize: 12,
-                        ),
-                      ),
                     ),
                     const SizedBox(width: 8),
-                    Container(
+                    AppPill(
+                      label: room.category,
+                      backgroundColor: Colors.white,
+                      textColor: AppColors.twilightDarker,
+                      borderColor: AppColors.lavenderBlush,
+                      borderWidth: 1.5,
+                      fontSize: 12,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: AppColors.lavenderBlush, width: 1.5),
-                        borderRadius: AppRadii.borderFull,
-                      ),
-                      child: Text(
-                        room.category,
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.twilightDarker,
-                          fontSize: 12,
-                        ),
-                      ),
                     ),
                   ],
                 ),

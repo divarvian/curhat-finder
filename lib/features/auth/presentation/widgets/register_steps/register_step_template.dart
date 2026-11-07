@@ -188,6 +188,7 @@ class RegisterPillOption extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? selectedBg : Colors.white,
@@ -206,9 +207,15 @@ class RegisterPillOption extends StatelessWidget {
         ),
         child: Text(
           label,
+          textAlign: TextAlign.center,
+          strutStyle: const StrutStyle(
+            forceStrutHeight: true,
+            height: 1.0,
+          ),
           style: AppTextStyles.bodyMedium.copyWith(
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             color: isSelected ? selectedTextColor : AppColors.twilightDarker,
+            height: 1.0,
           ),
         ),
       ),

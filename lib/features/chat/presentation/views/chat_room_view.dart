@@ -40,6 +40,7 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
   // Nama dan status online konselor (bisa ter-resolve dari DB)
   late String _counselorName;
   late bool _isOnline;
+  bool _isResolvingCounselor = false;
 
   // Realtime Status Pengetikan / Emoji Lawan Bicara
   String _peerStatus = 'idle';
@@ -78,7 +79,14 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _counselorName = widget.counselorName.isNotEmpty ? widget.counselorName : 'Konselor Sebaya';
+    final initialName = widget.counselorName.trim();
+    if (initialName.isNotEmpty && initialName != 'Konselor Sebaya') {
+      _counselorName = initialName;
+      _isResolvingCounselor = false;
+    } else {
+      _counselorName = 'Konselor Sebaya';
+      _isResolvingCounselor = widget.sessionId.isNotEmpty;
+    }
     _isOnline = widget.isOnline;
 
     _cachedServerMessages = ref.read(counselingServiceProvider).getSessionCache(widget.sessionId);
@@ -135,7 +143,12 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
 
   /// Memperbarui nama konselor asli dari database jika dibuka dari banner atau link luar
   void _resolveCounselorInfo() async {
-    if (widget.sessionId.isEmpty) return;
+    if (widget.sessionId.isEmpty) {
+      if (mounted && _isResolvingCounselor) {
+        setState(() => _isResolvingCounselor = false);
+      }
+      return;
+    }
     try {
       final sessionRow = await SupabaseService.client
           .from('counseling_sessions')
@@ -157,11 +170,16 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
             setState(() {
               _counselorName = effective;
               _isOnline = profile['is_online'] as bool? ?? _isOnline;
+              _isResolvingCounselor = false;
             });
+            return;
           }
         }
       }
     } catch (_) {}
+    if (mounted && _isResolvingCounselor) {
+      setState(() => _isResolvingCounselor = false);
+    }
   }
 
   void _markIncomingAsRead() {
@@ -1104,7 +1122,7 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
                       ),
                     ),
                   ),
-                  if (_isOnline)
+                  if (!_isResolvingCounselor && _isOnline)
                     Positioned(
                       right: 0,
                       bottom: 0,
@@ -1122,23 +1140,33 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _counselorName,
-                      style: AppTextStyles.heading2.copyWith(
-                        color: AppColors.twilightDarker,
-                        fontSize: 16,
-                        height: 1.1,
+                child: _isResolvingCounselor
+                    ? const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AppSkeleton(width: 120, height: 16),
+                          SizedBox(height: 6),
+                          AppSkeleton(width: 50, height: 11),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _counselorName,
+                            style: AppTextStyles.heading2.copyWith(
+                              color: AppColors.twilightDarker,
+                              fontSize: 16,
+                              height: 1.1,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 3),
+                          _buildStatusSubtitle(),
+                        ],
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    _buildStatusSubtitle(),
-                  ],
-                ),
               ),
             ],
           ),

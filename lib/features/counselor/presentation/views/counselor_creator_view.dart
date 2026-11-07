@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_categories.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -21,13 +22,7 @@ class _CounselorCreatorViewState extends State<CounselorCreatorView> {
   final _linkController = TextEditingController();
 
   String _selectedCategory = 'Self-care';
-  final _categories = const [
-    'Self-care',
-    'Stres Akademik',
-    'Kecemasan',
-    'Manajemen Waktu',
-    'Relasi',
-  ];
+  final _categories = AppCategories.tipCategories;
 
   bool _isSubmitting = false;
 

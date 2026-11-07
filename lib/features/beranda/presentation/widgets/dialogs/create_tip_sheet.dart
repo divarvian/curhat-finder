@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:curhat_finder/core/constants/app_categories.dart';
 import 'package:curhat_finder/core/theme/app_colors.dart';
 import 'package:curhat_finder/core/theme/app_text_styles.dart';
+import 'package:curhat_finder/core/widgets/app_pill.dart';
 import 'package:curhat_finder/features/profile/presentation/providers/profile_provider.dart';
 import 'package:curhat_finder/features/beranda/data/community_service.dart';
 
@@ -33,7 +35,7 @@ class CreateTipSheet extends ConsumerStatefulWidget {
 class _CreateTipSheetState extends ConsumerState<CreateTipSheet> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
-  final List<String> _categories = const ['Self-care', 'Productivity', 'Afirmasi', 'Musik', 'Curhat'];
+  final List<String> _categories = AppCategories.tipCategories;
   late String _selectedCategory;
   bool _isSubmitting = false;
 
@@ -111,12 +113,13 @@ class _CreateTipSheetState extends ConsumerState<CreateTipSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, 16, 24, bottomInset + 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(24, 16, 24, bottomInset + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Drag Handle
           Center(
             child: Container(
@@ -164,30 +167,15 @@ class _CreateTipSheetState extends ConsumerState<CreateTipSheet> {
             runSpacing: 8,
             children: _categories.map((cat) {
               final isSelected = _selectedCategory == cat;
-              return ChoiceChip(
-                label: Text(cat),
-                selected: isSelected,
-                onSelected: (selected) {
-                  if (selected) {
-                    setState(() {
-                      _selectedCategory = cat;
-                    });
-                  }
+              return AppPill(
+                label: cat,
+                isSelected: isSelected,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                onTap: () {
+                  setState(() {
+                    _selectedCategory = cat;
+                  });
                 },
-                selectedColor: const Color(0xFFF9DADA),
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  side: BorderSide(
-                    color: isSelected ? AppColors.redNormalHover : AppColors.twilightLight,
-                    width: 1,
-                  ),
-                ),
-                labelStyle: TextStyle(
-                  color: isSelected ? AppColors.twilightDarker : AppColors.twilightDark,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  fontSize: 12,
-                ),
               );
             }).toList(),
           ),
@@ -269,6 +257,7 @@ class _CreateTipSheetState extends ConsumerState<CreateTipSheet> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

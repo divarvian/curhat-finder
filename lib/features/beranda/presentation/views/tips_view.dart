@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_categories.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_pill.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../data/community_service.dart';
 import '../../domain/tip_model.dart';
@@ -18,7 +20,7 @@ class TipsView extends ConsumerStatefulWidget {
 }
 
 class _TipsViewState extends ConsumerState<TipsView> {
-  final List<String> _filters = const ['Semua', 'Self-care', 'Productivity', 'Afirmasi', 'Musik', 'Curhat'];
+  final List<String> _filters = AppCategories.tipFilterCategories;
   int _selectedFilterIndex = 0;
   Stream<List<TipModel>>? _tipsStream;
 
@@ -104,27 +106,13 @@ class _TipsViewState extends ConsumerState<TipsView> {
                     itemCount: _filters.length,
                     itemBuilder: (context, index) {
                       final isSelected = _selectedFilterIndex == index;
-                      return GestureDetector(
-                        onTap: () => _onFilterTap(index),
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: AppPill(
+                          label: _filters[index],
+                          isSelected: isSelected,
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFFF9DADA) : Colors.white,
-                            borderRadius: BorderRadius.circular(100),
-                            border: Border.all(
-                              color: isSelected ? AppColors.redNormalHover : AppColors.twilightLight,
-                              width: 1,
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            _filters[index],
-                            style: AppTextStyles.labelMedium.copyWith(
-                              color: isSelected ? AppColors.twilightDarker : AppColors.twilightDark,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                            ),
-                          ),
+                          onTap: () => _onFilterTap(index),
                         ),
                       );
                     },

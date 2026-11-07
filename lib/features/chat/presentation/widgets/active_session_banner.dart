@@ -41,13 +41,13 @@ class ActiveSessionBanner extends ConsumerWidget {
           );
         },
         child: session != null
-            ? _buildBanner(context, session)
+            ? _buildBanner(context, ref, session)
             : const SizedBox.shrink(key: ValueKey('empty_active_session')),
       ),
     );
   }
 
-  Widget _buildBanner(BuildContext context, CounselingSessionModel session) {
+  Widget _buildBanner(BuildContext context, WidgetRef ref, CounselingSessionModel session) {
     return Container(
       key: ValueKey('active_session_${session.id}'),
       margin: margin ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -74,11 +74,19 @@ class ActiveSessionBanner extends ConsumerWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () {
+            final cachedProfile = ref
+                .read(counselingServiceProvider)
+                .getCachedCounselorProfile(session.counselorId);
+            final realName = (cachedProfile?['full_name'] as String?)?.trim() ??
+                (cachedProfile?['nickname'] as String?)?.trim() ??
+                '';
+            final isOnline = cachedProfile?['is_online'] as bool? ?? true;
+
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => ChatRoomView(
-                  counselorName: 'Konselor Sebaya',
-                  isOnline: true,
+                  counselorName: realName,
+                  isOnline: isOnline,
                   sessionId: session.id,
                 ),
               ),

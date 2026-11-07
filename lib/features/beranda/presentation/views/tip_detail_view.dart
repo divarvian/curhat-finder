@@ -5,6 +5,7 @@ import '../../../../core/services/supabase_service.dart';
 import '../../../../core/widgets/dialogs/delete_confirmation_dialog.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_pill.dart';
 import '../../domain/tip_model.dart';
 import '../providers/tips_interaction_provider.dart';
 
@@ -367,20 +368,15 @@ class _TipDetailViewState extends ConsumerState<TipDetailView> with SingleTicker
                                       // Author & Category Tag Row
                                       Row(
                                         children: [
-                                          Container(
+                                          AppPill(
+                                            label: authorTag,
+                                            backgroundColor: const Color(0xFFF9DADA),
+                                            textColor: AppColors.twilightDarker,
+                                            borderColor: Colors.transparent,
+                                            borderWidth: 0,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
                                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFF9DADA),
-                                              borderRadius: BorderRadius.circular(100),
-                                            ),
-                                            child: Text(
-                                              authorTag,
-                                              style: AppTextStyles.labelSmall.copyWith(
-                                                color: AppColors.twilightDarker,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
                                           ),
                                           const SizedBox(width: 12),
                                           Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:curhat_finder/core/theme/app_colors.dart';
 import 'package:curhat_finder/core/theme/app_text_styles.dart';
+import 'package:curhat_finder/core/widgets/app_pill.dart';
 import '../counselor_profile_sheet.dart';
 
 /// Widget Kartu Konselor Mandiri untuk Tab SupportBuddy
@@ -124,19 +125,14 @@ class CounselorCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: tags.map((tag) {
-                return Container(
+                return AppPill(
+                  label: tag,
+                  backgroundColor: AppColors.twilightDarker,
+                  textColor: Colors.white,
+                  borderColor: Colors.transparent,
+                  borderWidth: 0,
+                  fontSize: 11,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.twilightDarker,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    tag,
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: Colors.white,
-                      fontSize: 11,
-                    ),
-                  ),
                 );
               }).toList(),
             ),

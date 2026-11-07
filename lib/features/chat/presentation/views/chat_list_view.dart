@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:curhat_finder/core/constants/app_categories.dart';
 import 'package:curhat_finder/core/theme/app_colors.dart';
 import 'package:curhat_finder/core/theme/app_text_styles.dart';
+import 'package:curhat_finder/core/utils/academic_helper.dart';
+import 'package:curhat_finder/core/widgets/app_pill.dart';
 import 'package:curhat_finder/features/chat/data/counseling_service.dart';
 import 'package:curhat_finder/features/chat/data/room_service.dart';
 import 'package:curhat_finder/features/chat/domain/room_model.dart';
@@ -110,32 +113,19 @@ class _ChatListViewState extends ConsumerState<ChatListView> {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SizedBox(
                   height: 38,
-                  child: ListView(
+                  child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
-                    children: state.selectedMainCategory == 0
-                        ? [
-                            _buildSubCategoryChip(ref, state, 'Online', 0),
-                            const SizedBox(width: 8),
-                            _buildSubCategoryChip(ref, state, 'FILKOM', 1),
-                            const SizedBox(width: 8),
-                            _buildSubCategoryChip(ref, state, 'FIB', 2),
-                            const SizedBox(width: 8),
-                            _buildSubCategoryChip(ref, state, 'FT', 3),
-                            const SizedBox(width: 8),
-                            _buildSubCategoryChip(ref, state, 'FISIP', 4),
-                            const SizedBox(width: 8),
-                            _buildSubCategoryChip(ref, state, 'FK', 5),
-                          ]
-                        : [
-                            _buildSubCategoryChip(ref, state, 'Semua', 0),
-                            const SizedBox(width: 8),
-                            _buildSubCategoryChip(ref, state, 'Akademik', 1),
-                            const SizedBox(width: 8),
-                            _buildSubCategoryChip(ref, state, 'Kesepian', 2),
-                            const SizedBox(width: 8),
-                            _buildSubCategoryChip(ref, state, 'Keuangan', 3),
-                          ],
+                    itemCount: state.selectedMainCategory == 0
+                        ? AcademicHelper.supportBuddyFilterOptions.length
+                        : AppCategories.roomFilterCategories.length,
+                    separatorBuilder: (context, index) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final label = state.selectedMainCategory == 0
+                          ? AcademicHelper.supportBuddyFilterOptions[index]
+                          : AppCategories.roomFilterCategories[index];
+                      return _buildSubCategoryChip(ref, state, label, index);
+                    },
                   ),
                 ),
               ),
@@ -198,53 +188,21 @@ class _ChatListViewState extends ConsumerState<ChatListView> {
 
   Widget _buildMainCategoryChip(WidgetRef ref, ChatListState state, String label, int index) {
     final isSelected = state.selectedMainCategory == index;
-    return GestureDetector(
+    return AppPill(
+      label: label,
+      isSelected: isSelected,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       onTap: () => ref.read(chatListProvider.notifier).setMainCategory(index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.lavenderBlush : Colors.white,
-          borderRadius: BorderRadius.circular(100),
-          border: Border.all(
-            color: isSelected ? AppColors.redNormalHover : AppColors.twilightLight,
-            width: 1,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: AppTextStyles.labelMedium.copyWith(
-            color: isSelected ? AppColors.twilightDarker : AppColors.twilightDark,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          ),
-        ),
-      ),
     );
   }
 
   Widget _buildSubCategoryChip(WidgetRef ref, ChatListState state, String label, int index) {
     final isSelected = state.selectedSubCategory == index;
-    return GestureDetector(
+    return AppPill(
+      label: label,
+      isSelected: isSelected,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       onTap: () => ref.read(chatListProvider.notifier).setSubCategory(index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.lavenderBlush : Colors.white,
-          borderRadius: BorderRadius.circular(100),
-          border: Border.all(
-            color: isSelected ? AppColors.redNormalHover : AppColors.twilightLight,
-            width: 1,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: AppTextStyles.labelMedium.copyWith(
-            color: isSelected ? AppColors.twilightDarker : AppColors.twilightDark,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          ),
-        ),
-      ),
     );
   }
 }

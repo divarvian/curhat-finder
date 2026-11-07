@@ -199,6 +199,10 @@ class AcademicHelper {
   static List<String> get facultyShortNames =>
       _staticFaculties.map((f) => f['singkatan']!).toList();
 
+  /// Opsi filter subkategori pada Support Buddy (Konselor Sebaya)
+  static List<String> get supportBuddyFilterOptions =>
+      ['Online', 'Semua', ...facultyShortNames];
+
   /// Mengambil daftar prodi untuk fakultas tertentu (berdasarkan ID '01'-'18' atau singkatan 'FILKOM')
   static List<Map<String, dynamic>> getProdisByFaculty(String facultyIdOrSingkatan) {
     final facId = resolveFacultyId(facultyIdOrSingkatan);

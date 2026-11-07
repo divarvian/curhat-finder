@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_categories.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/academic_helper.dart';
+import '../../../../core/widgets/app_pill.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../../chat/data/room_service.dart';
 import '../../../chat/domain/room_model.dart';
@@ -18,14 +20,7 @@ class CounselorForumView extends ConsumerStatefulWidget {
 
 class _CounselorForumViewState extends ConsumerState<CounselorForumView> {
   int _selectedFilterIndex = 0;
-  final List<String> _filters = const [
-    'Semua',
-    'Akademik',
-    'Kesepian',
-    'Keuangan',
-    'Relasi',
-    'Mental Health',
-  ];
+  final List<String> _filters = AppCategories.roomFilterCategories;
 
   List<Map<String, String>> _computeTopFacultyIssues(List<RoomModel> rooms) {
     if (rooms.isEmpty) {
@@ -469,6 +464,10 @@ class _CounselorForumViewState extends ConsumerState<CounselorForumView> {
               child: Text(
                 _filters[index],
                 textAlign: TextAlign.center,
+                strutStyle: const StrutStyle(
+                  forceStrutHeight: true,
+                  height: 1.0,
+                ),
                 style: TextStyle(
                   color: isSelected ? Colors.white : AppColors.twilightDarker,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
@@ -546,20 +545,16 @@ class _CounselorForumViewState extends ConsumerState<CounselorForumView> {
                         ),
                       ],
                     ),
-                    Container(
+                    AppPill(
+                      label: room.category,
+                      backgroundColor: const Color(0xFFFCE6E6),
+                      textColor: const Color(0xFFF88A8A),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFCE6E6),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        room.category,
-                        style: const TextStyle(
-                          color: Color(0xFFF88A8A),
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      borderRadius: 10,
+                      borderWidth: 0,
+                      borderColor: Colors.transparent,
                     ),
                   ],
                 ),

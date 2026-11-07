@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:curhat_finder/core/constants/app_categories.dart';
 import 'package:curhat_finder/core/theme/app_colors.dart';
 import 'package:curhat_finder/core/theme/app_text_styles.dart';
 import 'package:curhat_finder/core/utils/app_error_translator.dart';
+import 'package:curhat_finder/core/widgets/app_pill.dart';
 import 'package:curhat_finder/features/profile/presentation/providers/profile_provider.dart';
 import 'package:curhat_finder/features/chat/data/room_service.dart';
 import 'package:curhat_finder/features/chat/presentation/providers/rooms_interaction_provider.dart';
@@ -28,7 +30,7 @@ class _NewRoomPostSheetWidgetState extends ConsumerState<_NewRoomPostSheetWidget
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
   String _selectedCategory = 'Akademik';
-  final List<String> _categories = const ['Akademik', 'Kesepian', 'Keuangan', 'Hubungan', 'Lainnya'];
+  final List<String> _categories = AppCategories.roomCategories;
   bool _isSubmitting = false;
 
   @override
@@ -162,19 +164,21 @@ class _NewRoomPostSheetWidgetState extends ConsumerState<_NewRoomPostSheetWidget
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
+                runSpacing: 8,
                 children: _categories.map((cat) {
                   final isSel = _selectedCategory == cat;
-                  return ChoiceChip(
-                    label: Text(cat),
-                    selected: isSel,
-                    selectedColor: AppColors.twilightDarker,
+                  return AppPill(
+                    label: cat,
+                    isSelected: isSel,
+                    selectedBackgroundColor: AppColors.twilightDarker,
+                    selectedTextColor: Colors.white,
+                    selectedBorderColor: AppColors.twilightDarker,
                     backgroundColor: Colors.grey[100],
-                    labelStyle: TextStyle(
-                      color: isSel ? Colors.white : AppColors.twilightDarker,
-                      fontSize: 12,
-                    ),
-                    onSelected: (val) {
-                      if (val) setState(() => _selectedCategory = cat);
+                    textColor: AppColors.twilightDarker,
+                    borderColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    onTap: () {
+                      setState(() => _selectedCategory = cat);
                     },
                   );
                 }).toList(),

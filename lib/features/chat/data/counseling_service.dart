@@ -18,6 +18,20 @@ class CounselingService {
   // In-memory cache pesan obrolan per session_id (Session-Scoped Cache)
   final Map<String, List<ChatMessageModel>> _sessionChatCache = {};
 
+  // In-memory cache profil konselor (Zero-Blink Header Cache)
+  final Map<String, Map<String, dynamic>> _counselorProfileCache = {};
+
+  Map<String, dynamic>? getCachedCounselorProfile(String counselorId) {
+    if (counselorId.isEmpty) return null;
+    return _counselorProfileCache[counselorId];
+  }
+
+  void cacheCounselorProfile(String counselorId, Map<String, dynamic> profile) {
+    if (counselorId.isNotEmpty) {
+      _counselorProfileCache[counselorId] = profile;
+    }
+  }
+
   List<ChatMessageModel> getSessionCache(String sessionId) {
     if (sessionId.isEmpty) return const [];
     final list = _sessionChatCache[sessionId];
@@ -152,7 +166,11 @@ class CounselingService {
           .limit(1);
 
       if (rows.isNotEmpty) {
-        return CounselingSessionModel.fromJson(rows.first);
+        final session = CounselingSessionModel.fromJson(rows.first);
+        if (!_counselorProfileCache.containsKey(session.counselorId) && session.counselorId.isNotEmpty) {
+          fetchCounselorProfile(session.counselorId); // pre-cache in background
+        }
+        return session;
       }
     } catch (_) {}
     return null;
@@ -346,10 +364,16 @@ class CounselingService {
         .stream(primaryKey: ['id'])
         .eq('student_id', studentId)
         .map((rows) {
-      return rows
+      final sessions = rows
           .where((row) => row['status'] == 'active')
           .map((row) => CounselingSessionModel.fromJson(row))
           .toList();
+      for (final s in sessions) {
+        if (!_counselorProfileCache.containsKey(s.counselorId) && s.counselorId.isNotEmpty) {
+          fetchCounselorProfile(s.counselorId); // pre-cache in background
+        }
+      }
+      return sessions;
     });
   }
 
@@ -525,14 +549,21 @@ class CounselingService {
     }
   }
 
-  /// Mengambil profil konselor berdasarkan counselorId
+  /// Mengambil profil konselor berdasarkan counselorId dengan in-memory cache
   Future<Map<String, dynamic>?> fetchCounselorProfile(String counselorId) async {
+    if (counselorId.isEmpty) return null;
+    if (_counselorProfileCache.containsKey(counselorId)) {
+      return _counselorProfileCache[counselorId];
+    }
     try {
       final res = await _supabase
           .from('profiles')
           .select('id, full_name, nickname, avatar_url, faculty, is_online')
           .eq('id', counselorId)
           .maybeSingle();
+      if (res != null) {
+        _counselorProfileCache[counselorId] = res;
+      }
       return res;
     } catch (_) {
       return null;

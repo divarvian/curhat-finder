@@ -334,14 +334,13 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
                       },
                     ),
 
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
 
             // Bottom Comment Input Bar
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -352,52 +351,58 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
                   ),
                 ],
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.platinum,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: TextField(
-                        controller: _commentController,
-                        decoration: InputDecoration(
-                          hintText: ref.watch(authProvider).role == 'konselor'
-                              ? 'Tulis tanggapan atau bimbingan konselor...'
-                              : 'Tulis balasan atau kata semangat...',
-                          hintStyle: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.twilightNormal.withValues(alpha: 0.6),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: AppColors.platinum,
+                            borderRadius: BorderRadius.circular(24),
                           ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        onSubmitted: (_) => _submitComment(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.twilightDarker,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: _isSubmitting
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
+                          child: TextField(
+                            controller: _commentController,
+                            decoration: InputDecoration(
+                              hintText: ref.watch(authProvider).role == 'konselor'
+                                  ? 'Tulis tanggapan atau bimbingan konselor...'
+                                  : 'Tulis balasan atau kata semangat...',
+                              hintStyle: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.twilightNormal.withValues(alpha: 0.6),
                               ),
-                            )
-                          : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                      onPressed: _isSubmitting ? null : _submitComment,
-                    ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onSubmitted: (_) => _submitComment(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        decoration: const BoxDecoration(
+                          color: AppColors.twilightDarker,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: _isSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                          onPressed: _isSubmitting ? null : _submitComment,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ],

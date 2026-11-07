@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/supabase_service.dart';
+import '../../../../core/widgets/app_pill.dart';
 import '../../../../core/widgets/dialogs/delete_confirmation_dialog.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -206,20 +207,15 @@ class _InteractiveTipCardState extends ConsumerState<InteractiveTipCard> with Si
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
+                AppPill(
+                  label: '${item.authorName} • ${item.authorFaculty} • ${item.category}',
+                  backgroundColor: AppColors.lavenderBlush,
+                  textColor: AppColors.twilightDarker,
+                  borderColor: Colors.transparent,
+                  borderWidth: 0,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.lavenderBlush,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    '${item.authorName} • ${item.authorFaculty} • ${item.category}',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.twilightDarker,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
                 ),
                 InkWell(
                   onTap: () => _showTipOptions(context),

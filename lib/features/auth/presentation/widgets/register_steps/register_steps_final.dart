@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:curhat_finder/core/constants/app_categories.dart';
 import '../../controllers/register_controller.dart';
 import 'register_step_template.dart';
 
@@ -20,7 +21,7 @@ class StepFinal extends ConsumerWidget {
     final controller = ref.read(registerControllerProvider.notifier);
 
     if (isKonselor) {
-      final options = ['Overwhelmed', 'Hilang arah', 'Keuangan', 'Burnout', 'Hubungan', 'Keluarga', 'Anxiety'];
+      final options = AppCategories.counselorSpecializationTopics;
       return RegisterStepTemplate(
         isKonselor: true,
         title: 'Topik yang kamu kuasai',
@@ -43,7 +44,7 @@ class StepFinal extends ConsumerWidget {
         ),
       );
     } else {
-      final options = ['Olahraga', 'Musik', 'Membaca', 'Gaming', 'Traveling', 'Seni', 'Fotografi', 'Menulis', 'Film', 'Kuliner'];
+      final options = AppCategories.studentHobbies;
       return RegisterStepTemplate(
         isKonselor: false,
         title: 'Apa hal yang bisa bikin kamu happy?',

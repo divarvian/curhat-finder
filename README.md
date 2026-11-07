@@ -89,6 +89,8 @@ lib/
 │       ├── router.dart              # Konfigurasi GoRouter dan Route Guards
 │       └── router.g.dart            # Generated routes
 ├── core/
+│   ├── constants/
+│   │   └── app_categories.dart      # Single Source of Truth kategori tips, room, topik, dan hobi
 │   ├── services/
 │   │   ├── notification_service.dart # Inisialisasi FCM & Notifikasi Lokal
 │   │   ├── storage_service.dart     # Manajemen upload avatar Supabase Storage
@@ -99,9 +101,10 @@ lib/
 │   │   ├── app_text_styles.dart     # Skala tipografi ramah disleksia
 │   │   └── app_theme.dart           # Tema Material Design 3
 │   ├── utils/
-│   │   ├── academic_helper.dart     # Resolver kode fakultas & prodi universitas
+│   │   ├── academic_helper.dart     # Resolver kode fakultas (18 UB) & prodi universitas
 │   │   └── app_error_translator.dart# Terjemahan error auth & jaringan ke bahasa Indonesia
 │   └── widgets/
+│       ├── app_pill.dart            # Komponen pill/chip dengan presisi optical vertical centering
 │       ├── app_skeleton.dart        # Engine shimmer & skeleton loader mandiri
 │       └── dialogs/                 # Dialog konfirmasi (hapus postingan, logout)
 ├── features/
@@ -168,7 +171,7 @@ flutter run
 
 ## 🧪 Pengujian & Kualitas Kode
 
-Aplikasi ini mengadopsi arsitektur pengujian modular (*Feature-First Modular Testing*) dengan **128 unit & widget tests**:
+Aplikasi ini mengadopsi arsitektur pengujian modular (*Feature-First Modular Testing*) dengan **139 unit & widget tests** (100% kelulusan):
 
 ```bash
 # Jalankan analisis statis kode (Harus 0 issues)

@@ -52,11 +52,15 @@ class _SupportBuddyTabState extends ConsumerState<SupportBuddyTab> {
   }
 
   bool _matchesFaculty(String facultyStr, int subCategoryIndex) {
-    const filterFaculties = ['Online', 'FILKOM', 'FIB', 'FT', 'FISIP', 'FK'];
-    if (subCategoryIndex <= 0 || subCategoryIndex >= filterFaculties.length) {
+    final filterOptions = AcademicHelper.supportBuddyFilterOptions;
+    if (subCategoryIndex <= 0 || subCategoryIndex >= filterOptions.length) {
       return true;
     }
-    return AcademicHelper.matchesFacultyFilter(facultyStr, filterFaculties[subCategoryIndex]);
+    final selectedFilter = filterOptions[subCategoryIndex];
+    if (selectedFilter == 'Semua' || selectedFilter == 'Online') {
+      return true;
+    }
+    return AcademicHelper.matchesFacultyFilter(facultyStr, selectedFilter);
   }
 
   @override

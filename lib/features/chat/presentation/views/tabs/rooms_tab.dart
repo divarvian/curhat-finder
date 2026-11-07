@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:curhat_finder/app/config/router.dart';
+import 'package:curhat_finder/core/constants/app_categories.dart';
 import 'package:curhat_finder/core/theme/app_colors.dart';
 import 'package:curhat_finder/core/theme/app_text_styles.dart';
 import 'package:curhat_finder/core/widgets/app_skeleton.dart';
@@ -37,9 +38,10 @@ class RoomsTab extends ConsumerWidget {
     final roomNotifier = ref.read(roomsInteractionProvider.notifier);
 
     String? categoryFilter;
-    if (state.selectedSubCategory == 1) categoryFilter = 'Akademik';
-    if (state.selectedSubCategory == 2) categoryFilter = 'Kesepian';
-    if (state.selectedSubCategory == 3) categoryFilter = 'Keuangan';
+    final roomFilters = AppCategories.roomFilterCategories;
+    if (state.selectedSubCategory > 0 && state.selectedSubCategory < roomFilters.length) {
+      categoryFilter = roomFilters[state.selectedSubCategory];
+    }
 
     return Column(
       children: [

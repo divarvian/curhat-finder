@@ -1100,24 +1100,34 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
 
           // Judul Mahasiswa Anonim & Realtime Subtitle
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _studentTitle,
-                  style: AppTextStyles.heading2.copyWith(
-                    color: AppColors.twilightDarker,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    height: 1.1,
+            child: _studentTitle.trim().isEmpty
+                ? const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AppSkeleton(width: 130, height: 16),
+                      SizedBox(height: 6),
+                      AppSkeleton(width: 50, height: 11),
+                    ],
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _studentTitle,
+                        style: AppTextStyles.heading2.copyWith(
+                          color: AppColors.twilightDarker,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          height: 1.1,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      _buildStatusSubtitle(),
+                    ],
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 3),
-                _buildStatusSubtitle(),
-              ],
-            ),
           ),
 
           // Menu Opsi Tiga Titik dengan Opsi Akhiri Sesi

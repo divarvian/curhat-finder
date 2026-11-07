@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_categories.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_pill.dart';
 
 /// Modal Bottom Sheet untuk Kurasi & Pengelolaan Topik Keahlian Konselor
 class ManageTopicsSheet extends StatefulWidget {
@@ -13,18 +15,7 @@ class ManageTopicsSheet extends StatefulWidget {
     required this.onSave,
   });
 
-  static const List<String> canonicalTopics = [
-    'Overwhelmed',
-    'Hilang arah',
-    'Keuangan',
-    'Burnout',
-    'Hubungan',
-    'Keluarga',
-    'Anxiety',
-    'Akademik',
-    'Manajemen Waktu',
-    'Karier',
-  ];
+  static List<String> get canonicalTopics => AppCategories.counselorSpecializationTopics;
 
   static Future<void> show(
     BuildContext context, {
@@ -138,28 +129,24 @@ class _ManageTopicsSheetState extends State<ManageTopicsSheet> {
             runSpacing: 10,
             children: ManageTopicsSheet.canonicalTopics.map((topic) {
               final isSelected = _selectedTopics.contains(topic);
-              return FilterChip(
-                label: Text(topic),
-                selected: isSelected,
-                onSelected: (_) => _toggleTopic(topic),
-                selectedColor: const Color(0xFFFCE6E6),
+              return AppPill(
+                label: topic,
+                isSelected: isSelected,
+                leading: isSelected
+                    ? const Icon(Icons.check, size: 14, color: Color(0xFFF88A8A))
+                    : null,
+                selectedBackgroundColor: const Color(0xFFFCE6E6),
+                selectedTextColor: AppColors.twilightDarker,
+                selectedBorderColor: const Color(0xFFF88A8A),
+                borderWidth: isSelected ? 1.5 : 1,
+                borderColor: AppColors.twilightLightActive.withValues(alpha: 0.4),
                 backgroundColor: AppColors.platinum,
-                checkmarkColor: const Color(0xFFF88A8A),
-                labelStyle: AppTextStyles.labelMedium.copyWith(
-                  color: isSelected ? AppColors.twilightDarker : AppColors.wisteriaDark,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  fontSize: 13,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: isSelected
-                        ? const Color(0xFFF88A8A)
-                        : AppColors.twilightLightActive.withValues(alpha: 0.4),
-                    width: isSelected ? 1.5 : 1,
-                  ),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                textColor: AppColors.wisteriaDark,
+                borderRadius: 16,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                onTap: () => _toggleTopic(topic),
               );
             }).toList(),
           ),
