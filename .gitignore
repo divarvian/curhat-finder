@@ -63,6 +63,13 @@ android/app/google-services.json
 google-services.json
 !android/app/google-services.json.example
 
+# Android Signing & Keystore
+*.jks
+*.keystore
+android/key.properties
+!android/key.properties.example
+
 # Internal Documentation & Audits
 /docs/
 docs/
+

@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_pill.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../../chat/data/room_service.dart';
 import '../../../chat/domain/room_model.dart';
+import '../../../chat/presentation/providers/rooms_interaction_provider.dart';
 import '../../../chat/presentation/views/room_detail_view.dart';
 import '../widgets/anonymous_avatar.dart';
 
@@ -122,6 +123,8 @@ class _CounselorForumViewState extends ConsumerState<CounselorForumView> {
   @override
   Widget build(BuildContext context) {
     final roomService = ref.watch(roomServiceProvider);
+    final roomInteraction = ref.watch(roomsInteractionProvider);
+    final roomNotifier = ref.read(roomsInteractionProvider.notifier);
     final filter = _filters[_selectedFilterIndex];
     final categoryFilter = filter == 'Semua' ? null : filter;
 
@@ -253,7 +256,22 @@ class _CounselorForumViewState extends ConsumerState<CounselorForumView> {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           final room = rooms[index];
-                          return _buildRoomCard(room);
+                          final isLiked = roomInteraction.likedRoomIds.contains(room.id);
+                          final isBookmarked = roomInteraction.bookmarkedRoomIds.contains(room.id);
+                          final effectiveLikes = roomNotifier.getEffectiveLikesCount(room.id, room.likesCount);
+
+                          final updatedRoom = room.copyWith(
+                            isLiked: isLiked,
+                            isBookmarked: isBookmarked,
+                            likesCount: effectiveLikes,
+                          );
+
+                          return _buildRoomCard(
+                            updatedRoom,
+                            isLiked: isLiked,
+                            isBookmarked: isBookmarked,
+                            likesCount: effectiveLikes,
+                          );
                         },
                         childCount: rooms.length,
                       ),
@@ -482,7 +500,12 @@ class _CounselorForumViewState extends ConsumerState<CounselorForumView> {
     );
   }
 
-  Widget _buildRoomCard(RoomModel room) {
+  Widget _buildRoomCard(
+    RoomModel room, {
+    required bool isLiked,
+    required bool isBookmarked,
+    required int likesCount,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
@@ -584,7 +607,7 @@ class _CounselorForumViewState extends ConsumerState<CounselorForumView> {
                 ),
                 const SizedBox(height: 14),
 
-                // Footer Bar (Komentar & Likes)
+                // Footer Bar (Komentar, Likes, Bookmark)
                 Row(
                   children: [
                     Row(
@@ -605,23 +628,48 @@ class _CounselorForumViewState extends ConsumerState<CounselorForumView> {
                         ),
                       ],
                     ),
-                    const SizedBox(width: 16),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.favorite_outline_rounded,
+                    const SizedBox(width: 14),
+                    InkWell(
+                      onTap: () {
+                        ref.read(roomsInteractionProvider.notifier).toggleLike(room.id);
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isLiked ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
+                              size: 16,
+                              color: isLiked ? Colors.redAccent : AppColors.wisteriaNormal,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$likesCount',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: isLiked ? Colors.redAccent : AppColors.wisteriaNormal,
+                                fontSize: 12,
+                                fontWeight: isLiked ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
+                        ref.read(roomsInteractionProvider.notifier).toggleBookmark(room.id);
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Icon(
+                          isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
                           size: 16,
-                          color: AppColors.wisteriaNormal,
+                          color: isBookmarked ? AppColors.sunshineYellow : AppColors.wisteriaNormal,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${room.likesCount}',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.wisteriaNormal,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                     const Spacer(),
                     Text(

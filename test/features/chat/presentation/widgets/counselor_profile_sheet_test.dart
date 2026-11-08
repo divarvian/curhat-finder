@@ -57,5 +57,33 @@ void main() {
 
       expect(find.text('Mulai melakukan konseling'), findsOneWidget);
     });
+
+    testWidgets('Renders topics horizontally on line 1, not vertically stacked', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: CounselorProfileSheet(
+                counselorId: '',
+                name: 'Kak Clara',
+                gender: 'Perempuan',
+                faculty: 'FIB',
+                topics: ['Stress', 'Kecemasan', 'Akademik'],
+                hobbies: ['Menulis'],
+                operationalHours: '18:00 - 21:00 WIB',
+                isOnline: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final stressTop = tester.getTopLeft(find.text('Stress')).dy;
+      final cemasTop = tester.getTopLeft(find.text('Kecemasan')).dy;
+      expect(stressTop, equals(cemasTop));
+    });
   });
 }

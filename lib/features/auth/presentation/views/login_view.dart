@@ -33,6 +33,10 @@ class _LoginViewState extends ConsumerState<LoginView> {
   }
 
   void _handleLogin() async {
+    // Tutup keyboard secara bersih sebelum proses verifikasi & navigasi
+    FocusManager.instance.primaryFocus?.unfocus();
+    FocusScope.of(context).unfocus();
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -51,6 +55,10 @@ class _LoginViewState extends ConsumerState<LoginView> {
         email: formattedEmail,
         password: password,
       );
+
+      // Pastikan keyboard tertutup sebelum berpindah halaman
+      FocusManager.instance.primaryFocus?.unfocus();
+      FocusScope.of(context).unfocus();
 
       // Akun belum terdaftar: Otomatis arahkan ke alur pemilihan peran dan pendaftaran
       ScaffoldMessenger.of(context).showSnackBar(

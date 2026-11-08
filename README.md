@@ -167,16 +167,66 @@ Isi konfigurasi client dari Firebase Console proyek Anda.
 flutter pub get
 ```
 
-### 6. Jalankan Aplikasi
+### 6. Jalankan Aplikasi (Mode Debug)
 ```bash
 flutter run
 ```
+
+### 7. Kompilasi Release APK (Tersertifikasi / Signed)
+Aplikasi telah dilengkapi konfigurasi signing resmi Android (`android/app/upload-keystore.jks` & `android/key.properties`). Anda dapat mem-build APK Release dengan menjalankan salah satu perintah berikut:
+
+```bash
+# Opsi A: Build Universal APK (Satu file APK untuk seluruh arsitektur prosesor)
+flutter build apk --release
+
+# Opsi B: Build Split-per-ABI (Ukuran APK lebih kecil & hemat kuota)
+flutter build apk --release --split-per-abi
+```
+File APK siap instal akan berada di: `build/app/outputs/flutter-apk/app-release.apk` (atau `app-arm64-v8a-release.apk`).
+
+---
+
+## 👥 Akun Demo & Kredensial Pengujian
+
+Untuk keperluan evaluasi, peninjauan, dan pengujian fitur tanpa perlu mendaftar dari awal, seluruh akun demo berikut telah di-seeding secara organik di Supabase.
+
+> **Kata Sandi Seragam**: Seluruh akun menggunakan password **`12345678`**.
+
+### 🎓 1. Akun Konselor Sebaya Terverifikasi (Role: `konselor`, Status: `approved`)
+Konselor memiliki akses ke Dashboard Beranda Konselor, Leaderboard Top Isu Per Fakultas, Creator Studio untuk tips, dan ruang chat konseling dengan background pink gradient lembut.
+
+| Nama Lengkap | Alamat Email | Fakultas & Program Studi | Topik Bimbingan / Keahlian |
+| :--- | :--- | :--- | :--- |
+| **Sarah Amalia** | `sarah.amalia@demo.ub.ac.id` | FISIP • S1 Psikologi | Anxiety, Stres Akademik, Burnout |
+| **Dodo Pratama** | `dodo.pratama@demo.ub.ac.id` | FILKOM • S1 Teknik Informatika | Karier & Masa Depan, Hubungan Sosial |
+| **Dimas Setiawan** | `dimas.setiawan@demo.ub.ac.id` | FT • S1 Teknik Industri | Manajemen Waktu, Overwhelmed |
+| **Nadia Salsabila** | `nadia.salsabila@demo.ub.ac.id` | FK • S1 Kedokteran | Trauma, Regulasi Emosi, Burnout |
+| **Tifa Faradiba** | `tifa.faradiba@demo.ub.ac.id` | FIB • S1 Sastra Inggris | Kesepian, Quarter-Life Crisis |
+| **Rizky Maulana** | `rizky.maulana@demo.ub.ac.id` | FEB • S1 Manajemen | Masalah Finansial, Krisis Identitas |
+
+### 🌱 2. Akun Mahasiswa Organik (Role: `mahasiswa`)
+Mahasiswa memiliki akses ke Ruang Curhat (Campus Rooms) dengan opsi identitas anonim / publik, feed tips komunitas, pernapasan ritmis Zen, antrean konseling, dan sambat privat.
+
+| Nama Lengkap | Alamat Email | Fakultas & Program Studi | Gender | Hobi & Minat |
+| :--- | :--- | :--- | :--- | :--- |
+| **Budi Santoso** | `budi.santoso@demo.ub.ac.id` | FILKOM • S1 Teknik Informatika | Laki-laki | Coding, Gaming, Kopi |
+| **Citra Lestari** | `citra.lestari@demo.ub.ac.id` | FIA • S1 Administrasi Publik | Perempuan | Menulis, Membaca, Podcast |
+| **Fajar Ramadhan** | `fajar.ramadhan@demo.ub.ac.id` | FT • S1 Teknik Mesin | Laki-laki | Otomotif, Olahraga |
+| **Anisa Rahma** | `anisa.rahma@demo.ub.ac.id` | FEB • S1 Akuntansi | Perempuan | Baking, Musik, Desain |
+| **Kevin Wijaya** | `kevin.wijaya@demo.ub.ac.id` | FH • S1 Ilmu Hukum | Laki-laki | Debat, Fotografi, Sepeda |
+| **Putri Handayani** | `putri.handayani@demo.ub.ac.id` | FBiPK • S1 Biologi | Perempuan | Berkebun, Hiking, Anime |
+| **Ahmad Fauzi** | `ahmad.fauzi@demo.ub.ac.id` | FK • S1 Kedokteran | Laki-laki | Berenang, Volunter |
+| **Maya Anggraini** | `maya.anggraini@demo.ub.ac.id` | FIB • S1 Sastra Jepang | Perempuan | Gambar, Cosplay, Musik |
+| **Ilham Pratama** | `ilham.pratama@demo.ub.ac.id` | FP • S1 Agroteknologi | Laki-laki | Futsal, Camping |
+| **Dewi Safitri** | `dewi.safitri@demo.ub.ac.id` | FMIPA • S1 Matematika | Perempuan | Catur, Membaca |
+| **Bayu Nugroho** | `bayu.nugroho@demo.ub.ac.id` | FAPET • S1 Peternakan | Laki-laki | Pet Care, Lari Santai |
+| **Tiara Kusuma** | `tiara.kusuma@demo.ub.ac.id` | FPIK • S1 Ilmu Kelautan | Perempuan | Diving, Jurnalistik |
 
 ---
 
 ## 🧪 Pengujian & Kualitas Kode
 
-Aplikasi ini mengadopsi arsitektur pengujian modular (*Feature-First Modular Testing*) dengan **139 unit & widget tests** (100% kelulusan):
+Aplikasi ini mengadopsi arsitektur pengujian modular (*Feature-First Modular Testing*) dengan **155 unit & widget tests** (100% kelulusan):
 
 ```bash
 # Jalankan analisis statis kode (Harus 0 issues)
@@ -187,13 +237,13 @@ flutter test
 ```
 
 Cakupan pengujian mencakup:
-- **Core & Theme**: Skala warna, radius, tipografi disleksia, error translator, dan komponen skeleton shimmer.
-- **Autentikasi**: Registrasi multi-step, verifikasi role, approval gate konselor, dan sesi login/logout.
+- **Core & Theme**: Skala warna, radius, tipografi disleksia, avatar URL fallback, error translator, dan komponen skeleton shimmer.
+- **Autentikasi & Registrasi**: Registrasi multi-step horizontal wrap pill, pencegahan keyboard overflow, verifikasi role, approval gate konselor, dan sesi login/logout.
 - **Beranda & Tips**: Model tips, provider interaksi optimistik, kartu tips, dan halaman detail "Isi Tips".
-- **Ruang Curhat (Rooms) & Komentar**: Postingan curhat, komentar konselor terverifikasi, provider likes/bookmarks optimistik, dialog hapus konten milik sendiri.
-- **Konseling & Chat**: Deduplikasi pesan 3-layer, unsend pesan (toleransi 30 menit), rating konseling, dan sesi chat konselor.
+- **Ruang Curhat (Rooms) & Komentar**: Postingan curhat, komentar terurut terbaru paling atas (newest-first), komentar konselor terverifikasi, avatar asli pengguna, provider likes/bookmarks optimistik, dialog hapus konten milik sendiri.
+- **Konseling & Chat**: Deduplikasi pesan 3-layer, unsend pesan (toleransi 30 menit), rating konseling, dan sesi chat konselor dengan latar pink gradient.
 - **Dashboard Konselor**: Leaderboard vertikal Top Isu Per Fakultas, kurasi topik keahlian, skeleton kartu presensi, dan paritas profil.
-- **Database Integrity**: Integritas file migrasi SQL, trigger database konselor, dan kebijakan keamanan PostgreSQL RLS.
+- **Database & Seeder Integrity**: Integritas file migrasi SQL, seeder organik 100% terhubung, direktori kontak UB, dan kebijakan keamanan PostgreSQL RLS.
 
 ---
 

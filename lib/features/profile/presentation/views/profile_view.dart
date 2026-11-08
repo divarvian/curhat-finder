@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart'; // Tambahkan untuk kIsWeb
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,12 +5,12 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/dialogs/logout_confirmation_dialog.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/utils/academic_helper.dart';
 import '../providers/profile_provider.dart';
-import '../../domain/user_profile_model.dart';
 
 class ProfileView extends ConsumerWidget {
   const ProfileView({super.key});
@@ -165,19 +163,14 @@ class ProfileView extends ConsumerWidget {
                 },
                 child: Stack(
                   children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.wisteriaLightHover, // Biru pudar
-                        border: Border.all(
-                          color: AppColors.twilightDarker,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: _buildAvatarImage(user),
+                    AppAvatar(
+                      imageUrl: user.avatarUrl,
+                      localPath: user.localAvatarPath,
+                      size: 120,
+                      fallbackAsset: user.avatarPath,
+                      border: Border.all(
+                        color: AppColors.twilightDarker,
+                        width: 1.5,
                       ),
                     ),
                     Positioned(
@@ -443,71 +436,6 @@ class ProfileView extends ConsumerWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildAvatarImage(UserProfile user) {
-    if (user.localAvatarPath != null && !kIsWeb && File(user.localAvatarPath!).existsSync()) {
-      return Image.file(
-        File(user.localAvatarPath!),
-        fit: BoxFit.cover,
-        width: 120,
-        height: 120,
-      );
-    }
-    if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty) {
-      return Image.network(
-        user.avatarUrl!,
-        fit: BoxFit.cover,
-        width: 120,
-        height: 120,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded || frame != null) {
-            return child;
-          }
-          return const AppShimmer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (_, _, _) => Image.asset(
-          user.avatarPath,
-          fit: BoxFit.contain,
-        ),
-      );
-    }
-    if (user.localAvatarPath != null && user.localAvatarPath!.startsWith('http')) {
-      return Image.network(
-        user.localAvatarPath!,
-        fit: BoxFit.cover,
-        width: 120,
-        height: 120,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded || frame != null) {
-            return child;
-          }
-          return const AppShimmer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (_, _, _) => Image.asset(
-          user.avatarPath,
-          fit: BoxFit.contain,
-        ),
-      );
-    }
-    return Image.asset(
-      user.avatarPath,
-      fit: BoxFit.contain,
     );
   }
 

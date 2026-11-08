@@ -259,6 +259,7 @@ mixin $ChatRoomRoute on GoRouteData {
         ) ??
         false,
     sessionId: state.uri.queryParameters['session-id'] ?? '',
+    counselorAvatarUrl: state.uri.queryParameters['counselor-avatar-url'],
   );
 
   ChatRoomRoute get _self => this as ChatRoomRoute;
@@ -271,6 +272,8 @@ mixin $ChatRoomRoute on GoRouteData {
         'counselor-name': _self.counselorName,
       if (_self.isOnline != false) 'is-online': _self.isOnline.toString(),
       if (_self.sessionId != '') 'session-id': _self.sessionId,
+      if (_self.counselorAvatarUrl != null)
+        'counselor-avatar-url': _self.counselorAvatarUrl!,
     },
   );
 

@@ -54,7 +54,7 @@ class RegisterStepTemplate extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Text(
             title,
             style: AppTextStyles.heading2.copyWith(
@@ -72,7 +72,7 @@ class RegisterStepTemplate extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Expanded(
             child: ScrollConfiguration(
               behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
@@ -188,7 +188,6 @@ class RegisterPillOption extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? selectedBg : Colors.white,

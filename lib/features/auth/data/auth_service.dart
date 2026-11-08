@@ -2,11 +2,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/services/supabase_service.dart';
 
 class AuthService {
-  final SupabaseClient _client = SupabaseService.client;
+  final SupabaseClient? _client;
+
+  AuthService([SupabaseClient? client])
+      : _client = client ?? SupabaseService.maybeClient;
 
   Future<bool> checkUserExists(String email) async {
     try {
-      final res = await _client.rpc('check_user_exists', params: {
+      final client = _client ?? SupabaseService.client;
+      final res = await client.rpc('check_user_exists', params: {
         'lookup_email': email.trim().toLowerCase(),
       });
       return res == true;
@@ -16,7 +20,8 @@ class AuthService {
   }
 
   Future<AuthResponse> login(String email, String password) async {
-    return await _client.auth.signInWithPassword(
+    final client = _client ?? SupabaseService.client;
+    return await client.auth.signInWithPassword(
       email: email.trim(),
       password: password,
     );
@@ -35,7 +40,8 @@ class AuthService {
     List<String>? hobbies,
     List<String>? topics,
   }) async {
-    return await _client.auth.signUp(
+    final client = _client ?? SupabaseService.client;
+    return await client.auth.signUp(
       email: email.trim(),
       password: password,
       data: {
@@ -54,7 +60,8 @@ class AuthService {
 
   Future<Map<String, dynamic>?> getProfile(String userId) async {
     try {
-      final response = await _client
+      final client = _client ?? SupabaseService.client;
+      final response = await client
           .from('profiles')
           .select()
           .eq('id', userId)
@@ -66,9 +73,10 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await _client.auth.signOut();
+    final client = _client ?? SupabaseService.client;
+    await client.auth.signOut();
   }
 
-  User? get currentUser => _client.auth.currentUser;
+  User? get currentUser => _client?.auth.currentUser;
   bool get isLoggedIn => currentUser != null;
 }

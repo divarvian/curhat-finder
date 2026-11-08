@@ -104,6 +104,7 @@ class RoomCommentModel {
   final String authorName;
   final String authorFaculty;
   final String authorRole;
+  final String? authorAvatarUrl;
   final String content;
   final int likesCount;
   final DateTime createdAt;
@@ -115,6 +116,7 @@ class RoomCommentModel {
     this.authorName = 'Teman Kampus',
     this.authorFaculty = 'FILKOM',
     this.authorRole = 'mahasiswa',
+    this.authorAvatarUrl,
     required this.content,
     this.likesCount = 0,
     required this.createdAt,
@@ -134,6 +136,7 @@ class RoomCommentModel {
         (rawTag != null && rawTag.contains(' • ') ? rawTag.split(' • ').last : 'FILKOM');
     final parsedRole = json['author_role'] as String? ??
         (rawTag != null && rawTag.toLowerCase().contains('konselor') ? 'konselor' : 'mahasiswa');
+    final parsedAvatar = json['author_avatar_url'] as String? ?? json['avatar_url'] as String?;
 
     return RoomCommentModel(
       id: json['id'] as String? ?? '',
@@ -142,6 +145,7 @@ class RoomCommentModel {
       authorName: parsedName,
       authorFaculty: parsedFaculty,
       authorRole: parsedRole,
+      authorAvatarUrl: parsedAvatar,
       content: json['content'] as String? ?? '',
       likesCount: json['likes_count'] as int? ?? 0,
       createdAt: json['created_at'] != null

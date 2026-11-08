@@ -38,6 +38,7 @@ class _CreateTipSheetState extends ConsumerState<CreateTipSheet> {
   final List<String> _categories = AppCategories.tipCategories;
   late String _selectedCategory;
   bool _isSubmitting = false;
+  bool _isAnonymous = false;
 
   @override
   void initState() {
@@ -74,13 +75,16 @@ class _CreateTipSheetState extends ConsumerState<CreateTipSheet> {
     });
 
     final profile = ref.read(profileProvider);
+    final authorName = _isAnonymous
+        ? 'Teman Kampus'
+        : (profile.name.isNotEmpty ? profile.name : 'Teman Kampus');
 
     try {
       await ref.read(communityServiceProvider).createTip(
             title: title.isNotEmpty ? title : null,
             content: content,
             category: _selectedCategory,
-            authorName: profile.name.isNotEmpty ? profile.name : 'Anon',
+            authorName: authorName,
             authorFaculty: profile.faculty.isNotEmpty ? profile.faculty : 'FILKOM',
             authorGender: profile.gender.isNotEmpty ? profile.gender : 'Laki-laki',
           );
@@ -111,6 +115,7 @@ class _CreateTipSheetState extends ConsumerState<CreateTipSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final profile = ref.watch(profileProvider);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return SingleChildScrollView(
@@ -223,7 +228,72 @@ class _CreateTipSheetState extends ConsumerState<CreateTipSheet> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 16),
+
+          // Switch Anonim
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.lavender.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _isAnonymous
+                    ? AppColors.twilightDarker.withValues(alpha: 0.15)
+                    : Colors.transparent,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _isAnonymous
+                        ? AppColors.twilightDarker
+                        : Colors.grey[400],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _isAnonymous ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Bagikan sebagai Anonim',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.twilightDarker,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _isAnonymous
+                            ? 'Nama aslimu disembunyikan (tampil sebagai Teman Kampus)'
+                            : 'Nama profil (${profile.name.isNotEmpty ? profile.name : 'Mahasiswa'}) akan ditampilkan',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.twilightNormal,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: _isAnonymous,
+                  activeTrackColor: AppColors.twilightDarker,
+                  onChanged: (val) {
+                    setState(() => _isAnonymous = val);
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
 
           // Tombol Submit
           SizedBox(

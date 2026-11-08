@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -767,7 +768,11 @@ class _PulseViewState extends ConsumerState<PulseView> {
                       Navigator.pop(context);
                       _launchUrl('https://wa.me/$cleanWa');
                     },
-                    icon: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF25D366), size: 20),
+                    icon: SvgPicture.asset(
+                      'assets/icons/whatsapp.svg',
+                      width: 22,
+                      height: 22,
+                    ),
                     label: Text(
                       'Chat WhatsApp Resmi',
                       style: AppTextStyles.labelMedium.copyWith(

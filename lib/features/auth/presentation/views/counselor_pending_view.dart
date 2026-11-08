@@ -89,13 +89,24 @@ class _CounselorPendingViewState extends ConsumerState<CounselorPendingView> {
     final auth = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.counselorChatGradientTop,
+              AppColors.counselorChatGradientBottom,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Icon Illustration Container
                 Container(
@@ -296,8 +307,9 @@ class _CounselorPendingViewState extends ConsumerState<CounselorPendingView> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildInfoRow({required String label, required String value}) {
     return Row(

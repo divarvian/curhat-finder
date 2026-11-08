@@ -28,16 +28,28 @@ class CounselorMainNavView extends ConsumerWidget {
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
           extendBody: true,
-          backgroundColor: AppColors.platinum,
-          body: IndexedStack(
-            index: currentIndex,
-            children: const [
-              CounselorBerandaView(),
-              CounselorChatListView(),
-              CounselorForumView(),
-              CounselorCreatorView(),
-              CounselorProfileView(),
-            ],
+          backgroundColor: Colors.transparent,
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.counselorChatGradientTop,
+                  AppColors.counselorChatGradientBottom,
+                ],
+              ),
+            ),
+            child: IndexedStack(
+              index: currentIndex,
+              children: const [
+                CounselorBerandaView(),
+                CounselorChatListView(),
+                CounselorForumView(),
+                CounselorCreatorView(),
+                CounselorProfileView(),
+              ],
+            ),
           ),
           bottomNavigationBar: _buildBottomNavigationBar(ref, currentIndex),
         ),

@@ -234,25 +234,43 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFBF8F5),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.twilightDarker, size: 20),
-          onPressed: () => context.pop(),
-        ),
-        centerTitle: true,
-        title: Text(
-          'Pengaturan Akun',
-          style: AppTextStyles.heading2.copyWith(
-            color: AppColors.twilightDarker,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+    final isCounselor = ref.watch(authProvider).role == 'konselor';
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isCounselor
+              ? const [
+                  AppColors.counselorChatGradientTop,
+                  AppColors.counselorChatGradientBottom,
+                ]
+              : const [
+                  AppColors.jurnalGradientTop,
+                  AppColors.jurnalGradientBottom,
+                ],
         ),
       ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.twilightDarker, size: 20),
+            onPressed: () => context.pop(),
+          ),
+          centerTitle: true,
+          title: Text(
+            'Pengaturan Akun',
+            style: AppTextStyles.heading2.copyWith(
+              color: AppColors.twilightDarker,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.wisteriaNormalHover),
@@ -348,6 +366,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 const SizedBox(height: 20),
               ],
             ),
+      ),
     );
   }
 

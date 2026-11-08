@@ -238,6 +238,7 @@ class _SupportBuddyTabState extends ConsumerState<SupportBuddyTab> {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: CounselorCard(
                       counselorId: counselorId,
+                      avatarUrl: c['avatar_url'] as String?,
                       name: c['nickname'] ?? c['full_name'] ?? 'Konselor',
                       gender: c['gender'] ?? 'Perempuan',
                       faculty: AcademicHelper.resolveFaculty(c['faculty'] as String?),

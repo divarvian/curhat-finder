@@ -81,6 +81,7 @@ class ActiveSessionBanner extends ConsumerWidget {
                 (cachedProfile?['nickname'] as String?)?.trim() ??
                 '';
             final isOnline = cachedProfile?['is_online'] as bool? ?? true;
+            final avatarUrl = cachedProfile?['avatar_url'] as String?;
 
             Navigator.of(context).push(
               MaterialPageRoute(
@@ -88,6 +89,7 @@ class ActiveSessionBanner extends ConsumerWidget {
                   counselorName: realName,
                   isOnline: isOnline,
                   sessionId: session.id,
+                  counselorAvatarUrl: avatarUrl,
                 ),
               ),
             );

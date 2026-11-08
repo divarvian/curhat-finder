@@ -32,6 +32,7 @@ class _NewRoomPostSheetWidgetState extends ConsumerState<_NewRoomPostSheetWidget
   String _selectedCategory = 'Akademik';
   final List<String> _categories = AppCategories.roomCategories;
   bool _isSubmitting = false;
+  bool _isAnonymous = true;
 
   @override
   void initState() {
@@ -58,7 +59,9 @@ class _NewRoomPostSheetWidgetState extends ConsumerState<_NewRoomPostSheetWidget
     final facultyTag = profile.faculty.contains('(')
         ? profile.faculty.split('(').last.replaceAll(')', '').trim()
         : (profile.faculty.isNotEmpty ? profile.faculty.split(' ').first : 'UB');
-    final authorName = profile.name.isNotEmpty ? profile.name : 'Anonim';
+    final authorName = _isAnonymous
+        ? 'Anonim'
+        : (profile.name.isNotEmpty ? profile.name : 'Anonim');
     final authorFaculty = facultyTag;
     final authorGender = profile.gender.isNotEmpty ? profile.gender : 'Laki-laki';
 
@@ -106,6 +109,7 @@ class _NewRoomPostSheetWidgetState extends ConsumerState<_NewRoomPostSheetWidget
 
   @override
   Widget build(BuildContext context) {
+    final profile = ref.watch(profileProvider);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final maxHeight = MediaQuery.of(context).size.height * 0.88;
 
@@ -148,7 +152,7 @@ class _NewRoomPostSheetWidgetState extends ConsumerState<_NewRoomPostSheetWidget
               ),
               const SizedBox(height: 8),
               Text(
-                'Postinganmu akan tampil anonim dan bisa didiskusikan bareng mahasiswa UB lainnya.',
+                'Bagikan keluh kesahmu dengan bebas dan aman. Kamu bisa memilih untuk posting secara anonim.',
                 style: AppTextStyles.bodySmall.copyWith(
                   color: AppColors.twilightNormal,
                 ),
@@ -214,6 +218,70 @@ class _NewRoomPostSheetWidgetState extends ConsumerState<_NewRoomPostSheetWidget
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
                   ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Switch Anonim
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.lavender.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _isAnonymous
+                        ? AppColors.twilightDarker.withValues(alpha: 0.15)
+                        : Colors.transparent,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _isAnonymous
+                            ? AppColors.twilightDarker
+                            : Colors.grey[400],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isAnonymous ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Posting sebagai Anonim',
+                            style: AppTextStyles.labelMedium.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.twilightDarker,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _isAnonymous
+                                ? 'Identitasmu dirahasiakan (tampil sebagai Anonim)'
+                                : 'Nama profil (${profile.name.isNotEmpty ? profile.name : 'Mahasiswa'}) akan ditampilkan',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.twilightNormal,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: _isAnonymous,
+                      activeTrackColor: AppColors.twilightDarker,
+                      onChanged: (val) {
+                        setState(() => _isAnonymous = val);
+                      },
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),

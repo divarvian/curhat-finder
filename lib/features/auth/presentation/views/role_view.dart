@@ -16,6 +16,14 @@ class _RoleViewState extends State<RoleView> {
   // Menyimpan role yang dipilih. 0 untuk Mahasiswa, 1 untuk Konselor, null jika belum memilih.
   int? _selectedRole;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    });
+  }
+
   void _handleMasuk() {
     if (_selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,83 +211,98 @@ class _RoleViewState extends State<RoleView> {
                   ),
                 ),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 40),
-                        Text(
-                          'Kamu disini sebagai?',
-                          style: AppTextStyles.heading2.copyWith(
-                            color: AppColors.twilightDarker,
-                            fontWeight: FontWeight.w400,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
                           ),
-                        ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Pilih peran kamu!!',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.twilightNormal,
-                    ),
-                  ),
-                  const SizedBox(height: 48),
+                          child: IntrinsicHeight(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const SizedBox(height: 40),
+                                  Text(
+                                    'Kamu disini sebagai?',
+                                    style: AppTextStyles.heading2.copyWith(
+                                      color: AppColors.twilightDarker,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Pilih peran kamu!!',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: AppColors.twilightNormal,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 48),
 
-                  // Pilihan Mahasiswa
-                  _buildRoleCard(
-                    index: 0,
-                    title: 'Aku Mahasiswa',
-                    icon: Icons.school_outlined,
-                    isSelected: _selectedRole == 0,
-                  ),
+                                  // Pilihan Mahasiswa
+                                  _buildRoleCard(
+                                    index: 0,
+                                    title: 'Aku Mahasiswa',
+                                    icon: Icons.school_outlined,
+                                    isSelected: _selectedRole == 0,
+                                  ),
 
-                  // Pilihan Konselor
-                  _buildRoleCard(
-                    index: 1,
-                    title: 'Aku Konselor',
-                    icon: Icons.badge_outlined, // Icon mirip name tag/doctor
-                    isSelected: _selectedRole == 1,
-                  ),
+                                  // Pilihan Konselor
+                                  _buildRoleCard(
+                                    index: 1,
+                                    title: 'Aku Konselor',
+                                    icon: Icons.badge_outlined, // Icon mirip name tag/doctor
+                                    isSelected: _selectedRole == 1,
+                                  ),
 
-                  const Spacer(),
+                                  const Spacer(),
+                                  const SizedBox(height: 16),
 
-                  // Tombol Masuk
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 32),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7D1D4), // Soft kemerahan
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 15,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(24),
-                        onTap: _handleMasuk,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20.0),
-                          child: Center(
-                            child: Text(
-                              'Masuk',
-                              style: AppTextStyles.labelLarge.copyWith(
-                                color: AppColors.twilightDarker,
-                                fontWeight: FontWeight.w500,
+                                  // Tombol Masuk
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 32),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF7D1D4), // Soft kemerahan
+                                      borderRadius: BorderRadius.circular(24),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.04),
+                                          blurRadius: 15,
+                                          spreadRadius: 2,
+                                          offset: const Offset(0, 5),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(24),
+                                        onTap: _handleMasuk,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 20.0),
+                                          child: Center(
+                                            child: Text(
+                                              'Masuk',
+                                              style: AppTextStyles.labelLarge.copyWith(
+                                                color: AppColors.twilightDarker,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],

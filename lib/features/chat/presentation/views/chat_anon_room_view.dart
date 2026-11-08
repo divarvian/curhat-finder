@@ -11,6 +11,7 @@ import '../../../../app/config/router.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/anonymous_avatar.dart';
 import '../../../../core/widgets/expandable_message_text.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../data/anon_chat_service.dart';
@@ -1000,7 +1001,6 @@ class _ChatAnonRoomViewState extends ConsumerState<ChatAnonRoomView> with Widget
   Widget _buildContextualActionBar() {
     final currentMessages = _getCurrentCombinedMessages();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.only(
@@ -1015,34 +1015,177 @@ class _ChatAnonRoomViewState extends ConsumerState<ChatAnonRoomView> with Widget
           ),
         ],
       ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.close_rounded, color: AppColors.twilightDarker),
-            tooltip: 'Batal',
-            onPressed: _clearSelection,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.close_rounded, color: AppColors.twilightDarker),
+                tooltip: 'Batal',
+                onPressed: _clearSelection,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${_selectedMessageIds.length} dipilih',
+                style: AppTextStyles.titleLarge.copyWith(
+                  color: AppColors.twilightDarker,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.copy_rounded, color: AppColors.twilightDarker),
+                tooltip: 'Salin',
+                onPressed: () => _copySelectedMessages(currentMessages),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: AppColors.redNormal),
+                tooltip: 'Hapus',
+                onPressed: () => _showDeleteOptionsModal(context, currentMessages),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Text(
-            '${_selectedMessageIds.length} dipilih',
-            style: AppTextStyles.titleLarge.copyWith(
-              color: AppColors.twilightDarker,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.copy_rounded, color: AppColors.twilightDarker),
-            tooltip: 'Salin',
-            onPressed: () => _copySelectedMessages(currentMessages),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.redNormal),
-            tooltip: 'Hapus',
-            onPressed: () => _showDeleteOptionsModal(context, currentMessages),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNormalAppBar(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () => _showLeaveChatDialog(context),
+                child: const Icon(
+                  Icons.arrow_back,
+                  color: AppColors.twilightDarker,
+                ),
+              ),
+              const SizedBox(width: 16),
+              
+              // Anonymous Avatar
+              AnonymousAvatar(
+                size: 40,
+                isOnline: _isBotSession || _partnerPresenceState == 'online',
+                showBadge: true,
+              ),
+              const SizedBox(width: 12),
+              
+              // Title & Mode / Subtitle Status
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Chat Anon',
+                      style: AppTextStyles.heading2.copyWith(
+                        color: AppColors.twilightDarker,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (_peerStatus == 'typing')
+                      Text(
+                        'sedang mengetik...',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.wisteriaNormalHover,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      )
+                    else if (_peerStatus == 'choosing_emoji')
+                      Text(
+                        'sedang memilih emoji... 😊',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.wisteriaNormalHover,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      )
+                    else if (!_isBotSession && _partnerPresenceState == 'in_background')
+                      Text(
+                        'sedang di luar aplikasi... 🟡',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: Colors.amber.shade800,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      )
+                    else if (!_isBotSession && _partnerPresenceState == 'disconnected')
+                      Text(
+                        'terputus... ($_graceSecondsRemaining dtk) ⚪',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.redNormalHover,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      )
+                    else
+                      Text(
+                        widget.mode,
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.wisteriaNormalHover,
+                          fontSize: 11,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+              
+              // 3-dots Menu
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, color: AppColors.twilightDarker),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                onSelected: (value) {
+                  if (value == 'report') {
+                    _showReportDialog(context);
+                  }
+                },
+                itemBuilder: (BuildContext context) => [
+                  PopupMenuItem(
+                    value: 'report',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.report_problem_outlined, size: 20, color: AppColors.twilightDarker),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Laporkan chat',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.twilightDarker,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1052,205 +1195,56 @@ class _ChatAnonRoomViewState extends ConsumerState<ChatAnonRoomView> with Widget
     final currentUserId = SupabaseService.currentUserId;
     final isRealSession = widget.sessionId.isNotEmpty && widget.sessionId != 'local-session';
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        if (_selectedMessageIds.isNotEmpty) {
-          _clearSelection();
-          return;
-        }
-        if (_showEmoji) {
-          setState(() {
-            _showEmoji = false;
-          });
-        } else {
-          _showLeaveChatDialog(context);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppColors.studentChatGradientTop,
-                AppColors.studentChatGradientBottom,
-              ],
-            ),
-          ),
-          child: SafeArea(
-        child: Column(
-          children: [
-            // App Bar
-            if (_selectedMessageIds.isNotEmpty)
-              _buildContextualActionBar()
-            else
-              Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          if (_selectedMessageIds.isNotEmpty) {
+            _clearSelection();
+            return;
+          }
+          if (_showEmoji) {
+            setState(() {
+              _showEmoji = false;
+            });
+          } else {
+            _showLeaveChatDialog(context);
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.studentChatGradientTop,
+                  AppColors.studentChatGradientBottom,
                 ],
               ),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => _showLeaveChatDialog(context),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.twilightDarker,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  
-                  // Mascot Avatar
-                  Stack(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.twilightNormal, width: 2),
-                        ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/profile.png',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: _isBotSession
-                                ? Colors.green
-                                : (_partnerPresenceState == 'online'
-                                    ? Colors.green
-                                    : (_partnerPresenceState == 'in_background'
-                                        ? Colors.amber
-                                        : Colors.grey)),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-                  
-                  // Title & Mode / Subtitle Status
-                  Expanded(
+            ),
+            child: Column(
+              children: [
+                // App Bar (Extends to top: 0, covers status bar in white, curves at bottom)
+                if (_selectedMessageIds.isNotEmpty)
+                  _buildContextualActionBar()
+                else
+                  _buildNormalAppBar(context),
+
+                // Content Area (Messages & Input)
+                Expanded(
+                  child: SafeArea(
+                    top: false,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Chat Anon',
-                          style: AppTextStyles.heading2.copyWith(
-                            color: AppColors.twilightDarker,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (_peerStatus == 'typing')
-                          Text(
-                            'sedang mengetik...',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.wisteriaNormalHover,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                          )
-                        else if (_peerStatus == 'choosing_emoji')
-                          Text(
-                            'sedang memilih emoji... 😊',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.wisteriaNormalHover,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                          )
-                        else if (!_isBotSession && _partnerPresenceState == 'in_background')
-                          Text(
-                            'sedang di luar aplikasi... 🟡',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: Colors.amber.shade800,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                          )
-                        else if (!_isBotSession && _partnerPresenceState == 'disconnected')
-                          Text(
-                            'terputus... ($_graceSecondsRemaining dtk) ⚪',
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.redNormalHover,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                          )
-                        else
-                          Text(
-                            widget.mode,
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.wisteriaNormalHover,
-                              fontSize: 11,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                  ),
-                  
-                  // 3-dots Menu
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, color: AppColors.twilightDarker),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    onSelected: (value) {
-                      if (value == 'report') {
-                        _showReportDialog(context);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) => [
-                      PopupMenuItem(
-                        value: 'report',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.report_problem_outlined, size: 20, color: AppColors.twilightDarker),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Laporkan chat',
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.twilightDarker,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            
-            // Grace Period Disconnect Notice Banner
+                        // Grace Period Disconnect Notice Banner
             if (!_isBotSession && !_isSessionEnded && _partnerPresenceState == 'disconnected')
               Container(
                 width: double.infinity,
@@ -1866,14 +1860,18 @@ class _ChatAnonRoomViewState extends ConsumerState<ChatAnonRoomView> with Widget
                     ),
                   ),
                 ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
-      ),
-    ),
-  );
-  }
+    ],
+  ),
+),
+),
+),
+);
+}
 
   void _showLeaveChatDialog(BuildContext context) {
     showDialog(

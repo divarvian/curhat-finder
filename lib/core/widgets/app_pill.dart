@@ -67,7 +67,6 @@ class AppPill extends StatelessWidget {
             ? Border.all(color: effectiveBorderColor, width: borderWidth)
             : null,
       ),
-      alignment: Alignment.center,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,

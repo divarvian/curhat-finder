@@ -1,10 +1,9 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../domain/counselor_model.dart';
 import '../providers/counselor_provider.dart';
@@ -143,19 +142,14 @@ class CounselorBerandaView extends ConsumerWidget {
                             // Avatar Konselor Kecil dengan Badge Hati
                             Stack(
                               children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.white,
-                                    border: Border.all(
-                                      color: const Color(0xFFF88A8A),
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: ClipOval(
-                                    child: _buildAvatarImage(profile),
+                                AppAvatar(
+                                  imageUrl: profile.avatarUrl,
+                                  localPath: profile.localAvatarPath,
+                                  size: 48,
+                                  fallbackAsset: profile.avatarPath,
+                                  border: Border.all(
+                                    color: const Color(0xFFF88A8A),
+                                    width: 1.5,
                                   ),
                                 ),
                                 Positioned(
@@ -412,71 +406,6 @@ class CounselorBerandaView extends ConsumerWidget {
             );
           }),
       ],
-    );
-  }
-
-  Widget _buildAvatarImage(CounselorProfile profile) {
-    if (profile.localAvatarPath != null && !kIsWeb && File(profile.localAvatarPath!).existsSync()) {
-      return Image.file(
-        File(profile.localAvatarPath!),
-        fit: BoxFit.cover,
-        width: 48,
-        height: 48,
-      );
-    }
-    if (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty) {
-      return Image.network(
-        profile.avatarUrl!,
-        fit: BoxFit.cover,
-        width: 48,
-        height: 48,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded || frame != null) {
-            return child;
-          }
-          return const AppShimmer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (_, _, _) => Image.asset(
-          profile.avatarPath,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    if (profile.localAvatarPath != null && profile.localAvatarPath!.startsWith('http')) {
-      return Image.network(
-        profile.localAvatarPath!,
-        fit: BoxFit.cover,
-        width: 48,
-        height: 48,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded || frame != null) {
-            return child;
-          }
-          return const AppShimmer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (_, _, _) => Image.asset(
-          profile.avatarPath,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    return Image.asset(
-      profile.avatarPath.isNotEmpty ? profile.avatarPath : 'assets/images/mascot.png',
-      fit: BoxFit.cover,
     );
   }
 }

@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,12 +5,12 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../app/config/router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../../../core/widgets/dialogs/logout_confirmation_dialog.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/utils/academic_helper.dart';
 import '../providers/counselor_provider.dart';
-import '../../domain/counselor_model.dart';
 import '../widgets/counselor_stats_row.dart';
 import '../widgets/manage_topics_sheet.dart';
 
@@ -123,19 +121,14 @@ class CounselorProfileView extends ConsumerWidget {
                 child: Stack(
                   alignment: Alignment.bottomRight,
                   children: [
-                    Container(
-                      width: 110,
-                      height: 110,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFFFCEDED),
-                        border: Border.all(
-                          color: AppColors.twilightNormal.withValues(alpha: 0.3),
-                          width: 2,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: _buildAvatarImage(profile),
+                    AppAvatar(
+                      imageUrl: profile.avatarUrl,
+                      localPath: profile.localAvatarPath,
+                      size: 110,
+                      fallbackAsset: profile.avatarPath,
+                      border: Border.all(
+                        color: AppColors.twilightNormal.withValues(alpha: 0.3),
+                        width: 2,
                       ),
                     ),
                     Positioned(
@@ -448,71 +441,6 @@ class CounselorProfileView extends ConsumerWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildAvatarImage(CounselorProfile profile) {
-    if (profile.localAvatarPath != null && !kIsWeb && File(profile.localAvatarPath!).existsSync()) {
-      return Image.file(
-        File(profile.localAvatarPath!),
-        fit: BoxFit.cover,
-        width: 110,
-        height: 110,
-      );
-    }
-    if (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty) {
-      return Image.network(
-        profile.avatarUrl!,
-        fit: BoxFit.cover,
-        width: 110,
-        height: 110,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded || frame != null) {
-            return child;
-          }
-          return const AppShimmer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (_, _, _) => Image.asset(
-          profile.avatarPath,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    if (profile.localAvatarPath != null && profile.localAvatarPath!.startsWith('http')) {
-      return Image.network(
-        profile.localAvatarPath!,
-        fit: BoxFit.cover,
-        width: 110,
-        height: 110,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded || frame != null) {
-            return child;
-          }
-          return const AppShimmer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (_, _, _) => Image.asset(
-          profile.avatarPath,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    return Image.asset(
-      profile.avatarPath,
-      fit: BoxFit.cover,
     );
   }
 

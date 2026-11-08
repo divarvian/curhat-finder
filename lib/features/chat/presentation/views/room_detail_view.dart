@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/services/supabase_service.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_skeleton.dart';
+import '../../../../core/widgets/dialogs/delete_confirmation_dialog.dart';
 import '../../data/room_service.dart';
 import '../../domain/room_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -31,11 +34,13 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
   bool _isBookmarked = false;
   final TextEditingController _commentController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey _commentHeaderKey = GlobalKey();
   bool _isSubmitting = false;
 
   Stream<List<RoomCommentModel>>? _commentsStream;
   String? _cachedRoomId;
   final List<RoomCommentModel> _optimisticComments = [];
+  final Set<String> _deletedCommentIds = {};
 
   @override
   void initState() {
@@ -117,6 +122,7 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
     final String authorName;
     final String authorFaculty;
     final String authorRole;
+    final String? authorAvatarUrl;
 
     if (auth.role == 'konselor') {
       final counselor = ref.read(counselorProvider).profile;
@@ -129,6 +135,7 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
               ? counselor.faculty.split('(').last.replaceAll(')', '').trim()
               : counselor.faculty.split(' ').first)
           : 'FILKOM';
+      authorAvatarUrl = counselor.avatarUrl;
     } else {
       final profile = ref.read(profileProvider);
       final facultyTag = profile.faculty.contains('(')
@@ -137,31 +144,42 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
       authorName = profile.name.isNotEmpty ? profile.name : 'Anonim';
       authorFaculty = facultyTag;
       authorRole = profile.role.isNotEmpty ? profile.role : 'mahasiswa';
+      authorAvatarUrl = profile.avatarUrl;
     }
 
+    FocusScope.of(context).unfocus();
     _commentController.clear();
 
+    final currentUserId = SupabaseService.currentUserId;
     final optimisticComment = RoomCommentModel(
       id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
       roomId: targetId,
+      userId: currentUserId,
       authorName: authorName,
       authorFaculty: authorFaculty,
       authorRole: authorRole,
+      authorAvatarUrl: authorAvatarUrl,
       content: text,
       createdAt: DateTime.now(),
     );
 
     setState(() {
-      _optimisticComments.add(optimisticComment);
+      _optimisticComments.insert(0, optimisticComment);
       if (_room != null) {
         _room = _room!.copyWith(commentsCount: _room!.commentsCount + 1);
       }
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
+      if (_commentHeaderKey.currentContext != null) {
+        Scrollable.ensureVisible(
+          _commentHeaderKey.currentContext!,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      } else if (_scrollController.hasClients) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent + 120,
+          0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
         );
@@ -169,13 +187,22 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
     });
 
     try {
-      await ref.read(roomServiceProvider).addComment(
+      final createdComment = await ref.read(roomServiceProvider).addComment(
         roomId: targetId,
         content: text,
         authorName: authorName,
         authorFaculty: authorFaculty,
         authorRole: authorRole,
+        authorAvatarUrl: authorAvatarUrl,
       );
+      if (createdComment != null && mounted) {
+        setState(() {
+          final idx = _optimisticComments.indexWhere((c) => c.id == optimisticComment.id);
+          if (idx != -1) {
+            _optimisticComments[idx] = createdComment;
+          }
+        });
+      }
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -210,6 +237,48 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
     }
   }
 
+  void _handleDeleteComment(RoomCommentModel comment) async {
+    FocusScope.of(context).unfocus();
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    final confirm = await DeleteConfirmationDialog.show(
+      context,
+      title: 'Hapus Komentar?',
+      message: 'Apakah kamu yakin ingin menghapus komentar ini? Tindakan ini tidak dapat dibatalkan.',
+    );
+
+    if (confirm == true) {
+      setState(() {
+        _deletedCommentIds.add(comment.id);
+        _optimisticComments.removeWhere((c) => c.id == comment.id);
+        if (_room != null) {
+          _room = _room!.copyWith(
+            commentsCount: (_room!.commentsCount - 1).clamp(0, 999999),
+          );
+        }
+      });
+
+      final success = await ref.read(roomServiceProvider).deleteComment(comment.id);
+      if (!success && mounted) {
+        setState(() {
+          _deletedCommentIds.remove(comment.id);
+          if (_room != null) {
+            _room = _room!.copyWith(
+              commentsCount: _room!.commentsCount + 1,
+            );
+          }
+        });
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal menghapus komentar dari server. Silakan coba lagi.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
   String _formatTimeAgo(DateTime dateTime) {
     final diff = DateTime.now().difference(dateTime);
     if (diff.inMinutes < 2) return 'Baru saja';
@@ -237,6 +306,8 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
         ? roomNotifier.getEffectiveLikesCount(effectiveId, currentRoom.likesCount)
         : (currentRoom?.likesCount ?? 0);
 
+    final isCounselor = ref.watch(authProvider).role == 'konselor';
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -244,10 +315,26 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
         _handleBack();
       },
       child: Scaffold(
-        backgroundColor: AppColors.platinum,
-        body: SafeArea(
-          bottom: false,
-          child: Column(
+        backgroundColor: Colors.transparent,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isCounselor
+                  ? const [
+                      AppColors.counselorChatGradientTop,
+                      AppColors.counselorChatGradientBottom,
+                    ]
+                  : const [
+                      AppColors.jurnalGradientTop,
+                      AppColors.jurnalGradientBottom,
+                    ],
+            ),
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Column(
             children: [
               // Konten Detail & Komentar
               Expanded(
@@ -275,6 +362,7 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
                   // Header Komentar
                   Text(
                     'Komentar & Dukungan',
+                    key: _commentHeaderKey,
                     style: AppTextStyles.heading2.copyWith(
                       color: AppColors.twilightDarker,
                       fontSize: 16,
@@ -289,15 +377,19 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
                       stream: _commentsStream,
                       builder: (context, snapshot) {
                         final serverComments = snapshot.data ?? [];
-                        final displayComments = <RoomCommentModel>[...serverComments];
+                        final displayComments = serverComments
+                            .where((c) => !_deletedCommentIds.contains(c.id))
+                            .toList();
                         for (final opt in _optimisticComments) {
-                          final alreadyInServer = serverComments.any((sc) =>
-                            sc.content == opt.content && sc.authorTag == opt.authorTag
+                          final alreadyInServer = displayComments.any((sc) =>
+                            sc.id == opt.id || (sc.content == opt.content && sc.authorTag == opt.authorTag)
                           );
-                          if (!alreadyInServer) {
+                          if (!alreadyInServer && !_deletedCommentIds.contains(opt.id)) {
                             displayComments.add(opt);
                           }
                         }
+                        // Pastikan komentar terurut: yang terbaru selalu di paling atas
+                        displayComments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
                         if ((snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) && displayComments.isEmpty) {
                           return const Column(
@@ -409,7 +501,8 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
         ),
       ),
     ),
-  );
+  ),
+);
 }
 
   Widget _buildCommentCard(RoomCommentModel comment) {
@@ -430,19 +523,9 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Avatar
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.twilightNormal, width: 1.5),
-            ),
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/profile.png',
-                fit: BoxFit.cover,
-              ),
-            ),
+          AppAvatar(
+            imageUrl: comment.authorAvatarUrl,
+            size: 36,
           ),
           const SizedBox(width: 12),
           
@@ -454,58 +537,88 @@ class _RoomDetailViewState extends ConsumerState<RoomDetailView> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              comment.authorName,
+                              style: AppTextStyles.heading2.copyWith(
+                                color: AppColors.twilightDarker,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (comment.isCounselor) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.lavenderBlush,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.verified, size: 12, color: AppColors.wisteriaNormal),
+                                  const SizedBox(width: 3),
+                                  const Text(
+                                    'Konselor Sebaya',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.twilightNormal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ] else ...[
+                            Flexible(
+                              child: Text(
+                                ' • ${comment.authorFaculty}',
+                                style: AppTextStyles.heading2.copyWith(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          comment.authorName,
-                          style: AppTextStyles.heading2.copyWith(
-                            color: AppColors.twilightDarker,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                          _formatTimeAgo(comment.createdAt),
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: Colors.grey[500],
+                            fontSize: 11,
                           ),
                         ),
-                        if (comment.isCounselor) ...[
+                        if (comment.userId != null &&
+                            SupabaseService.currentUserId != null &&
+                            comment.userId == SupabaseService.currentUserId) ...[
                           const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.lavenderBlush,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.verified, size: 12, color: AppColors.wisteriaNormal),
-                                const SizedBox(width: 3),
-                                const Text(
-                                  'Konselor Sebaya',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.twilightNormal,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ] else ...[
-                          Text(
-                            ' • ${comment.authorFaculty}',
-                            style: AppTextStyles.heading2.copyWith(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                              fontWeight: FontWeight.normal,
+                          GestureDetector(
+                            onTap: () => _handleDeleteComment(comment),
+                            child: const Padding(
+                              padding: EdgeInsets.all(2.0),
+                              child: Icon(
+                                Icons.delete_outline_rounded,
+                                size: 16,
+                                color: AppColors.redNormal,
+                              ),
                             ),
                           ),
                         ],
                       ],
-                    ),
-                    Text(
-                      _formatTimeAgo(comment.createdAt),
-                      style: AppTextStyles.labelSmall.copyWith(
-                        color: Colors.grey[500],
-                        fontSize: 11,
-                      ),
                     ),
                   ],
                 ),

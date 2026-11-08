@@ -50,30 +50,68 @@ void main() {
       expect(find.text('Burnout'), findsOneWidget);
     });
 
-    testWidgets('Renders max 2 topics and +N badge when counselor has more than 2 topics', (WidgetTester tester) async {
+    testWidgets('Renders only topics that fit horizontally without any +1 or +N badge', (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: CounselorCard(
-              counselorId: 'counselor-3',
-              name: 'Kak Citra',
-              gender: 'Perempuan',
-              faculty: 'Fakultas Kedokteran (FK)',
-              tags: ['Akademik', 'Kecemasan', 'Burnout', 'Relasi'],
-              hobbies: ['Menulis'],
-              isOnline: true,
+            body: SizedBox(
+              width: 400,
+              child: CounselorCard(
+                counselorId: 'counselor-3',
+                name: 'Kak Citra',
+                gender: 'Perempuan',
+                faculty: 'Fakultas Kedokteran (FK)',
+                tags: ['Akademik', 'Kecemasan', 'Burnout', 'Relasi'],
+                hobbies: ['Menulis'],
+                isOnline: true,
+              ),
             ),
           ),
         ),
       );
 
-      // Only the first 2 topics should be rendered on the card
+      // On 400px width, 3 topics fit
       expect(find.text('Akademik'), findsOneWidget);
       expect(find.text('Kecemasan'), findsOneWidget);
-      // Remaining topics should not be on the card, replaced by +2
-      expect(find.text('+2'), findsOneWidget);
+      expect(find.text('Burnout'), findsOneWidget);
+
+      // Topic that exceeds width is not rendered
+      expect(find.text('Relasi'), findsNothing);
+
+      // Verify NO +1 or +N badge is rendered
+      expect(find.text('+1'), findsNothing);
+      expect(find.text('+2'), findsNothing);
+    });
+
+    testWidgets('Renders fewer topics on narrower screen without +N badge', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 300,
+              child: CounselorCard(
+                counselorId: 'counselor-4',
+                name: 'Kak Dedi',
+                gender: 'Laki-laki',
+                faculty: 'Fakultas Teknik (FT)',
+                tags: ['Akademik', 'Kecemasan', 'Burnout', 'Relasi'],
+                hobbies: ['Membaca'],
+                isOnline: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // On 300px width, exactly 2 topics fit
+      expect(find.text('Akademik'), findsOneWidget);
+      expect(find.text('Kecemasan'), findsOneWidget);
       expect(find.text('Burnout'), findsNothing);
       expect(find.text('Relasi'), findsNothing);
+
+      // Verify NO +1 or +N badge is rendered
+      expect(find.text('+1'), findsNothing);
+      expect(find.text('+2'), findsNothing);
     });
   });
 }

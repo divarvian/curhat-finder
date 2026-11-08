@@ -1,10 +1,9 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../chat/presentation/widgets/active_session_banner.dart';
@@ -138,16 +137,12 @@ class _BerandaViewState extends ConsumerState<BerandaView> {
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  width: 52,
-                                  height: 52,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: AppColors.twilightNormal, width: 2),
-                                  ),
-                                  child: ClipOval(
-                                    child: _buildAvatarImage(user),
-                                  ),
+                                AppAvatar(
+                                  imageUrl: user.avatarUrl,
+                                  localPath: user.localAvatarPath,
+                                  size: 52,
+                                  fallbackAsset: user.avatarPath,
+                                  border: Border.all(color: AppColors.twilightNormal, width: 2),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
@@ -569,71 +564,6 @@ class _BerandaViewState extends ConsumerState<BerandaView> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildAvatarImage(UserProfile user) {
-    if (user.localAvatarPath != null && !kIsWeb && File(user.localAvatarPath!).existsSync()) {
-      return Image.file(
-        File(user.localAvatarPath!),
-        fit: BoxFit.cover,
-        width: 52,
-        height: 52,
-      );
-    }
-    if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty) {
-      return Image.network(
-        user.avatarUrl!,
-        fit: BoxFit.cover,
-        width: 52,
-        height: 52,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded || frame != null) {
-            return child;
-          }
-          return const AppShimmer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (_, _, _) => Image.asset(
-          user.avatarPath,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    if (user.localAvatarPath != null && user.localAvatarPath!.startsWith('http')) {
-      return Image.network(
-        user.localAvatarPath!,
-        fit: BoxFit.cover,
-        width: 52,
-        height: 52,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded || frame != null) {
-            return child;
-          }
-          return const AppShimmer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-            ),
-          );
-        },
-        errorBuilder: (_, _, _) => Image.asset(
-          user.avatarPath,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    return Image.asset(
-      user.avatarPath.isNotEmpty ? user.avatarPath : 'assets/images/profile.png',
-      fit: BoxFit.cover,
     );
   }
 }

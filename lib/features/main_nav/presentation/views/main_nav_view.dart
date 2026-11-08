@@ -28,17 +28,29 @@ class MainNavView extends ConsumerWidget {
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-          extendBody: true, // Agar background halaman (seperti Jurnal) tembus ke sudut lengkung navbar
-          backgroundColor: AppColors.platinum,
-          body: IndexedStack(
-            index: currentIndex,
-            children: [
-              const BerandaView(),
-              const ChatListView(),
-              const JurnalView(),
-              const PulseView(),
-              const ProfileView(),
-            ],
+          extendBody: true, // Agar background halaman tembus ke sudut lengkung navbar
+          backgroundColor: Colors.transparent,
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.jurnalGradientTop,
+                  AppColors.jurnalGradientBottom,
+                ],
+              ),
+            ),
+            child: IndexedStack(
+              index: currentIndex,
+              children: const [
+                BerandaView(),
+                ChatListView(),
+                JurnalView(),
+                PulseView(),
+                ProfileView(),
+              ],
+            ),
           ),
         
         floatingActionButton: AnimatedScale(

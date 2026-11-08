@@ -774,41 +774,52 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
       }
     }
 
-    return PopScope(
-      canPop: !_showEmoji && _selectedMessageIds.isEmpty,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        if (_showEmoji) {
-          setState(() {
-            _showEmoji = false;
-          });
-          _broadcastStatus('idle');
-          return;
-        }
-        if (_selectedMessageIds.isNotEmpty) {
-          _clearSelection();
-          return;
-        }
-      },
-      child: Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFFDECEE),
-                Color(0xFFF4F8FB),
-              ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: PopScope(
+        canPop: !_showEmoji && _selectedMessageIds.isEmpty,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          if (_showEmoji) {
+            setState(() {
+              _showEmoji = false;
+            });
+            _broadcastStatus('idle');
+            return;
+          }
+          if (_selectedMessageIds.isNotEmpty) {
+            _clearSelection();
+            return;
+          }
+        },
+        child: Scaffold(
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.counselorChatGradientTop,
+                  AppColors.counselorChatGradientBottom,
+                ],
+              ),
             ),
-          ),
-          child: SafeArea(
             child: Column(
               children: [
-                // 1. Custom App Bar Melengkung (Normal / Seleksi)
+                // 1. Custom App Bar Melengkung (Extends to top: 0, covers status bar)
                 _buildAppBar(context, currentDisplayMessages),
 
-                // Offline Notice Banner
+                // 2. Chat Content (Offline banner + Messages + Input)
+                Expanded(
+                  child: SafeArea(
+                    top: false,
+                    child: Column(
+                      children: [
+                        // Offline Notice Banner
                 if (!_isStreamConnected && _cachedDbMessages.isNotEmpty)
                   Container(
                     width: double.infinity,
@@ -1009,18 +1020,21 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
                       ),
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
-    );
+    ),
+  ),
+),
+);
   }
 
   Widget _buildAppBar(BuildContext context, List<_CounselorViewMessage> activeMessages) {
     if (_selectedMessageIds.isNotEmpty) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: const BorderRadius.only(
@@ -1035,39 +1049,44 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
             ),
           ],
         ),
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.close_rounded, color: AppColors.twilightDarker),
-              onPressed: _clearSelection,
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: AppColors.twilightDarker),
+                  onPressed: _clearSelection,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${_selectedMessageIds.length} dipilih',
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.twilightDarker,
+                    fontSize: 16,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Salin Pesan',
+                  icon: const Icon(Icons.copy_rounded, color: AppColors.twilightDarker),
+                  onPressed: () => _copySelectedMessages(activeMessages),
+                ),
+                IconButton(
+                  tooltip: 'Hapus Pesan',
+                  icon: const Icon(Icons.delete_outline_rounded, color: AppColors.redNormal),
+                  onPressed: () => _showDeleteOptionsModal(context, activeMessages),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Text(
-              '${_selectedMessageIds.length} dipilih',
-              style: AppTextStyles.bodyLarge.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColors.twilightDarker,
-                fontSize: 16,
-              ),
-            ),
-            const Spacer(),
-            IconButton(
-              tooltip: 'Salin Pesan',
-              icon: const Icon(Icons.copy_rounded, color: AppColors.twilightDarker),
-              onPressed: () => _copySelectedMessages(activeMessages),
-            ),
-            IconButton(
-              tooltip: 'Hapus Pesan',
-              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.redNormal),
-              onPressed: () => _showDeleteOptionsModal(context, activeMessages),
-            ),
-          ],
+          ),
         ),
       );
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.only(
@@ -1082,87 +1101,93 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.twilightDarker),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          const SizedBox(width: 4),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: AppColors.twilightDarker),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              const SizedBox(width: 4),
 
-          // Avatar dengan Online Badge
-          const AnonymousAvatar(
-            size: 40,
-            isOnline: true,
-            showBadge: true,
-          ),
-          const SizedBox(width: 12),
+              // Avatar dengan Online Badge
+              const AnonymousAvatar(
+                size: 40,
+                isOnline: true,
+                showBadge: true,
+              ),
+              const SizedBox(width: 12),
 
-          // Judul Mahasiswa Anonim & Realtime Subtitle
-          Expanded(
-            child: _studentTitle.trim().isEmpty
-                ? const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AppSkeleton(width: 130, height: 16),
-                      SizedBox(height: 6),
-                      AppSkeleton(width: 50, height: 11),
-                    ],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _studentTitle,
-                        style: AppTextStyles.heading2.copyWith(
-                          color: AppColors.twilightDarker,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          height: 1.1,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+              // Judul Mahasiswa Anonim & Realtime Subtitle
+              Expanded(
+                child: _studentTitle.trim().isEmpty
+                    ? const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AppSkeleton(width: 130, height: 16),
+                          SizedBox(height: 6),
+                          AppSkeleton(width: 50, height: 11),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _studentTitle,
+                            style: AppTextStyles.heading2.copyWith(
+                              color: AppColors.twilightDarker,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              height: 1.1,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 3),
+                          _buildStatusSubtitle(),
+                        ],
                       ),
-                      const SizedBox(height: 3),
-                      _buildStatusSubtitle(),
-                    ],
-                  ),
-          ),
+              ),
 
-          // Menu Opsi Tiga Titik dengan Opsi Akhiri Sesi
-          if (!_isSessionCompleted)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: AppColors.twilightDarker),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              onSelected: (value) {
-                if (value == 'end_session') {
-                  _showEndSessionDialog(context);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'end_session',
-                  child: Row(
-                    children: [
-                      Icon(Icons.check_circle_outline, color: Color(0xFFF88A8A), size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'Selesaikan Sesi',
-                        style: TextStyle(
-                          color: Color(0xFFF88A8A),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+              // Menu Opsi Tiga Titik dengan Opsi Akhiri Sesi
+              if (!_isSessionCompleted)
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: AppColors.twilightDarker),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  onSelected: (value) {
+                    if (value == 'end_session') {
+                      _showEndSessionDialog(context);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'end_session',
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle_outline, color: Color(0xFFF88A8A), size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Selesaikan Sesi',
+                            style: TextStyle(
+                              color: Color(0xFFF88A8A),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            )
-          else
-            const SizedBox(width: 48),
-        ],
+                    ),
+                  ],
+                )
+              else
+                const SizedBox(width: 48),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1188,27 +1213,13 @@ class _CounselorChatRoomViewState extends ConsumerState<CounselorChatRoomView> {
         ),
       );
     }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: Colors.greenAccent[700],
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          'Online',
-          style: AppTextStyles.bodySmall.copyWith(
-            color: Colors.green[700],
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
+    return Text(
+      'Online',
+      style: AppTextStyles.bodySmall.copyWith(
+        color: Colors.green[700],
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 

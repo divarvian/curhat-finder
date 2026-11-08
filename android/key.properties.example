@@ -1,0 +1,4 @@
+storePassword=curhatfinder123
+keyPassword=curhatfinder123
+keyAlias=curhatfinder
+storeFile=upload-keystore.jks

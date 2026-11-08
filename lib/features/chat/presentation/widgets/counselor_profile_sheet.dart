@@ -8,11 +8,13 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/app_error_translator.dart';
 import '../../data/counseling_service.dart';
 import '../../domain/counseling_models.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/app_pill.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 
 class CounselorProfileSheet extends ConsumerStatefulWidget {
   final String counselorId;
+  final String? avatarUrl;
   final String name;
   final String gender;
   final String faculty;
@@ -24,6 +26,7 @@ class CounselorProfileSheet extends ConsumerStatefulWidget {
   const CounselorProfileSheet({
     super.key,
     this.counselorId = '',
+    this.avatarUrl,
     required this.name,
     required this.gender,
     required this.faculty,
@@ -84,7 +87,12 @@ class _CounselorProfileSheetState extends ConsumerState<CounselorProfileSheet> {
     final currentUserId = SupabaseService.currentUserId;
     if (currentUserId == null) {
       // Jika belum login, buka langsung room demo
-      ChatRoomRoute(counselorName: widget.name, isOnline: widget.isOnline, sessionId: 'demo').push(context);
+      ChatRoomRoute(
+        counselorName: widget.name,
+        isOnline: widget.isOnline,
+        sessionId: 'demo',
+        counselorAvatarUrl: widget.avatarUrl,
+      ).push(context);
       return;
     }
 
@@ -96,6 +104,7 @@ class _CounselorProfileSheetState extends ConsumerState<CounselorProfileSheet> {
         return _CounselingQueueWaitingDialog(
           counselorId: widget.counselorId,
           counselorName: widget.name,
+          counselorAvatarUrl: widget.avatarUrl,
           faculty: widget.faculty,
           gender: widget.gender,
           topics: widget.topics,
@@ -134,37 +143,14 @@ class _CounselorProfileSheetState extends ConsumerState<CounselorProfileSheet> {
           const SizedBox(height: 24),
 
           // Avatar
-          Stack(
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.twilightNormal, width: 3),
-                ),
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/images/profile.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              if (widget.isOnline)
-                Positioned(
-                  right: 4,
-                  bottom: 4,
-                  child: Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: Colors.greenAccent[400],
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                    ),
-                  ),
-                ),
-            ],
+          AppAvatar(
+            imageUrl: widget.avatarUrl,
+            size: 96,
+            isOnline: widget.isOnline,
+            showOnlineBadge: widget.isOnline,
+            badgeSize: 20,
+            badgeBorderWidth: 3,
+            border: Border.all(color: AppColors.twilightNormal, width: 3),
           ),
           const SizedBox(height: 16),
 
@@ -202,21 +188,24 @@ class _CounselorProfileSheetState extends ConsumerState<CounselorProfileSheet> {
             ),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: widget.topics.map((topic) {
-              return AppPill(
-                label: topic,
-                backgroundColor: AppColors.twilightDarker,
-                textColor: Colors.white,
-                borderColor: Colors.transparent,
-                borderWidth: 0,
-                fontSize: 12,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              );
-            }).toList(),
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: widget.topics.map((topic) {
+                return AppPill(
+                  label: topic,
+                  backgroundColor: AppColors.twilightDarker,
+                  textColor: Colors.white,
+                  borderColor: Colors.transparent,
+                  borderWidth: 0,
+                  fontSize: 11,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                );
+              }).toList(),
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -327,6 +316,7 @@ class _CounselorProfileSheetState extends ConsumerState<CounselorProfileSheet> {
                             counselorName: widget.name,
                             isOnline: widget.isOnline,
                             sessionId: _activeSession!.id,
+                            counselorAvatarUrl: widget.avatarUrl,
                           ).push(context);
                         },
                         style: ElevatedButton.styleFrom(
@@ -418,6 +408,7 @@ class _CounselorProfileSheetState extends ConsumerState<CounselorProfileSheet> {
 class _CounselingQueueWaitingDialog extends ConsumerStatefulWidget {
   final String counselorId;
   final String counselorName;
+  final String? counselorAvatarUrl;
   final String faculty;
   final String gender;
   final List<String> topics;
@@ -426,6 +417,7 @@ class _CounselingQueueWaitingDialog extends ConsumerStatefulWidget {
   const _CounselingQueueWaitingDialog({
     required this.counselorId,
     required this.counselorName,
+    this.counselorAvatarUrl,
     required this.faculty,
     required this.gender,
     required this.topics,
@@ -528,6 +520,7 @@ class _CounselingQueueWaitingDialogState
               counselorName: widget.counselorName,
               isOnline: widget.isOnline,
               sessionId: realSessionId ?? _queueId ?? '',
+              counselorAvatarUrl: widget.counselorAvatarUrl,
             ).push(context);
           }
         }

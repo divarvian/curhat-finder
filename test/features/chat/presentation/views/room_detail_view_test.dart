@@ -26,15 +26,17 @@ class FakeRoomDetailService implements RoomService {
   }
 
   @override
-  Future<void> addComment({
+  Future<RoomCommentModel?> addComment({
     required String roomId,
     required String content,
     String? authorName,
     String? authorFaculty,
     String? authorRole,
     String? authorTag,
+    String? authorAvatarUrl,
   }) async {
     onAddComment?.call(roomId, content, authorName, authorFaculty, authorRole);
+    return null;
   }
 
   @override
@@ -184,6 +186,93 @@ void main() {
       expect(sentRole, 'konselor');
       expect(sentName, 'Konselor Budi');
       expect(sentFaculty, 'FILKOM');
+    });
+
+    testWidgets('RoomDetailView renders comment with AppAvatar', (WidgetTester tester) async {
+      final comments = [
+        RoomCommentModel(
+          id: 'c-2',
+          roomId: 'room-101',
+          authorName: 'Budi Santoso',
+          authorFaculty: 'FILKOM',
+          authorAvatarUrl: 'https://example.com/avatar.jpg',
+          content: 'Komentar dengan avatar pengguna.',
+          createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authProvider.overrideWith(
+              () => FakeAuthNotifier(const AuthState()),
+            ),
+            roomServiceProvider.overrideWithValue(FakeRoomDetailService(comments: comments)),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: RoomDetailView(
+                roomId: sampleRoom.id,
+                room: sampleRoom,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Budi Santoso'), findsOneWidget);
+      expect(find.text('Komentar dengan avatar pengguna.'), findsOneWidget);
+    });
+
+    testWidgets('RoomDetailView displays newest comments at the top', (WidgetTester tester) async {
+      final olderComment = RoomCommentModel(
+        id: 'c-old',
+        roomId: 'room-101',
+        authorName: 'User Lama',
+        content: 'Komentar yang lama',
+        createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
+      );
+      final newerComment = RoomCommentModel(
+        id: 'c-new',
+        roomId: 'room-101',
+        authorName: 'User Baru',
+        content: 'Komentar yang lebih baru',
+        createdAt: DateTime.now().subtract(const Duration(minutes: 2)),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authProvider.overrideWith(
+              () => FakeAuthNotifier(const AuthState()),
+            ),
+            roomServiceProvider.overrideWithValue(FakeRoomDetailService(comments: [olderComment, newerComment])),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: RoomDetailView(
+                roomId: sampleRoom.id,
+                room: sampleRoom,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      final newerFinder = find.text('Komentar yang lebih baru');
+      final olderFinder = find.text('Komentar yang lama');
+
+      expect(newerFinder, findsOneWidget);
+      expect(olderFinder, findsOneWidget);
+
+      final newerY = tester.getTopLeft(newerFinder).dy;
+      final olderY = tester.getTopLeft(olderFinder).dy;
+
+      expect(newerY < olderY, isTrue);
     });
   });
 }

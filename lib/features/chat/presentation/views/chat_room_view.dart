@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_avatar.dart';
 import '../../../../core/widgets/expandable_message_text.dart';
 import '../../../../core/widgets/app_skeleton.dart';
 import '../../data/counseling_service.dart';
@@ -19,12 +20,14 @@ class ChatRoomView extends ConsumerStatefulWidget {
   final String counselorName;
   final bool isOnline;
   final String sessionId;
+  final String? counselorAvatarUrl;
 
   const ChatRoomView({
     super.key,
     required this.counselorName,
     required this.isOnline,
     this.sessionId = '',
+    this.counselorAvatarUrl,
   });
 
   @override
@@ -37,9 +40,10 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
   final FocusNode _focusNode = FocusNode();
   bool _showEmoji = false;
 
-  // Nama dan status online konselor (bisa ter-resolve dari DB)
+  // Nama, avatar, dan status online konselor (bisa ter-resolve dari DB)
   late String _counselorName;
   late bool _isOnline;
+  String? _counselorAvatarUrl;
   bool _isResolvingCounselor = false;
 
   // Realtime Status Pengetikan / Emoji Lawan Bicara
@@ -88,6 +92,7 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
       _isResolvingCounselor = widget.sessionId.isNotEmpty;
     }
     _isOnline = widget.isOnline;
+    _counselorAvatarUrl = widget.counselorAvatarUrl;
 
     _cachedServerMessages = ref.read(counselingServiceProvider).getSessionCache(widget.sessionId);
     _resolveCounselorInfo();
@@ -131,6 +136,9 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
   @override
   void didUpdateWidget(covariant ChatRoomView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.counselorAvatarUrl != widget.counselorAvatarUrl && widget.counselorAvatarUrl != null) {
+      _counselorAvatarUrl = widget.counselorAvatarUrl;
+    }
     if (oldWidget.sessionId != widget.sessionId) {
       _cachedServerMessages = ref.read(counselingServiceProvider).getSessionCache(widget.sessionId);
       _resolveCounselorInfo();
@@ -141,7 +149,7 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
     }
   }
 
-  /// Memperbarui nama konselor asli dari database jika dibuka dari banner atau link luar
+  /// Memperbarui nama dan avatar konselor asli dari database jika dibuka dari banner atau link luar
   void _resolveCounselorInfo() async {
     if (widget.sessionId.isEmpty) {
       if (mounted && _isResolvingCounselor) {
@@ -165,15 +173,19 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
           final effective = (realName != null && realName.isNotEmpty)
               ? realName
               : (nick != null && nick.isNotEmpty ? nick : null);
+          final avatarUrl = profile['avatar_url'] as String?;
 
-          if (effective != null && effective.isNotEmpty) {
-            setState(() {
+          setState(() {
+            if (effective != null && effective.isNotEmpty) {
               _counselorName = effective;
-              _isOnline = profile['is_online'] as bool? ?? _isOnline;
-              _isResolvingCounselor = false;
-            });
-            return;
-          }
+            }
+            if (avatarUrl != null && avatarUrl.isNotEmpty) {
+              _counselorAvatarUrl = avatarUrl;
+            }
+            _isOnline = profile['is_online'] as bool? ?? _isOnline;
+            _isResolvingCounselor = false;
+          });
+          return;
         }
       }
     } catch (_) {}
@@ -1016,7 +1028,6 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
   Widget _buildContextualActionBar() {
     final currentMessages = _getCurrentCombinedMessages();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.only(
@@ -1031,112 +1042,106 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
           ),
         ],
       ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.close_rounded, color: AppColors.twilightDarker),
-            tooltip: 'Batal',
-            onPressed: _clearSelection,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.close_rounded, color: AppColors.twilightDarker),
+                tooltip: 'Batal',
+                onPressed: _clearSelection,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${_selectedMessageIds.length} dipilih',
+                style: AppTextStyles.titleLarge.copyWith(
+                  color: AppColors.twilightDarker,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.copy_rounded, color: AppColors.twilightDarker),
+                tooltip: 'Salin',
+                onPressed: () => _copySelectedMessages(currentMessages),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: AppColors.redNormal),
+                tooltip: 'Hapus',
+                onPressed: () => _showDeleteOptionsModal(context, currentMessages),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Text(
-            '${_selectedMessageIds.length} dipilih',
-            style: AppTextStyles.titleLarge.copyWith(
-              color: AppColors.twilightDarker,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.copy_rounded, color: AppColors.twilightDarker),
-            tooltip: 'Salin',
-            onPressed: () => _copySelectedMessages(currentMessages),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.redNormal),
-            tooltip: 'Hapus',
-            onPressed: () => _showDeleteOptionsModal(context, currentMessages),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_showEmoji && _selectedMessageIds.isEmpty,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        if (_selectedMessageIds.isNotEmpty) {
-          _clearSelection();
-          return;
-        }
-        if (_showEmoji) {
-          setState(() {
-            _showEmoji = false;
-          });
-        }
-      },
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.studentChatGradientTop,
-              AppColors.studentChatGradientBottom,
-            ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: PopScope(
+        canPop: !_showEmoji && _selectedMessageIds.isEmpty,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          if (_selectedMessageIds.isNotEmpty) {
+            _clearSelection();
+            return;
+          }
+          if (_showEmoji) {
+            setState(() {
+              _showEmoji = false;
+            });
+          }
+        },
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.studentChatGradientTop,
+                AppColors.studentChatGradientBottom,
+              ],
+            ),
           ),
-        ),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-        appBar: _selectedMessageIds.isNotEmpty
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(60),
-                child: SafeArea(child: _buildContextualActionBar()),
-              )
-            : AppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: _selectedMessageIds.isNotEmpty
+                ? PreferredSize(
+                    preferredSize: Size.fromHeight(60 + MediaQuery.of(context).padding.top),
+                    child: _buildContextualActionBar(),
+                  )
+                : AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    systemOverlayStyle: const SystemUiOverlayStyle(
+                      statusBarColor: Colors.transparent,
+                      statusBarIconBrightness: Brightness.dark,
+                      statusBarBrightness: Brightness.light,
+                    ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.twilightDarker),
             onPressed: () => Navigator.pop(context),
           ),
           title: Row(
             children: [
-              Stack(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.twilightNormal, width: 2),
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/images/profile.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  if (!_isResolvingCounselor && _isOnline)
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: Colors.greenAccent[400],
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                      ),
-                    ),
-                ],
+              AppAvatar(
+                imageUrl: _counselorAvatarUrl,
+                size: 40,
+                isOnline: _isOnline,
+                showOnlineBadge: !_isResolvingCounselor && _isOnline,
+                badgeSize: 12,
+                badgeBorderWidth: 2,
+                border: Border.all(color: AppColors.twilightNormal, width: 2),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1507,6 +1512,7 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
         ),
       ),
       ),
+      ),
     );
   }
 
@@ -1578,27 +1584,13 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
         ),
       );
     }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: _isOnline ? Colors.greenAccent[700] : AppColors.twilightNormal.withValues(alpha: 0.4),
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          _isOnline ? 'Online' : 'Offline',
-          style: AppTextStyles.bodySmall.copyWith(
-            color: _isOnline ? Colors.green[700] : AppColors.twilightNormal.withValues(alpha: 0.6),
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
+    return Text(
+      _isOnline ? 'Online' : 'Offline',
+      style: AppTextStyles.bodySmall.copyWith(
+        color: _isOnline ? Colors.green[700] : AppColors.twilightNormal.withValues(alpha: 0.6),
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 
@@ -1828,19 +1820,10 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> with WidgetsBinding
           const SizedBox(width: 4),
         ],
         if (!isMe) ...[
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.twilightNormal, width: 1.5),
-            ),
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/profile.png',
-                fit: BoxFit.cover,
-              ),
-            ),
+          AppAvatar(
+            imageUrl: _counselorAvatarUrl,
+            size: 32,
+            border: Border.all(color: AppColors.twilightNormal, width: 1.5),
           ),
           const SizedBox(width: 10),
         ],

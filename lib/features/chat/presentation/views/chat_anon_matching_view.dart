@@ -187,51 +187,63 @@ class _ChatAnonMatchingViewState extends ConsumerState<ChatAnonMatchingView>
         if (didPop) return;
         _handleCancel();
       },
-      child: Scaffold(
-        backgroundColor: AppColors.platinum,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.only(top: 24, bottom: 8),
-                child: Center(
-                  child: Text(
-                    'Chat',
-                    style: AppTextStyles.heading1.copyWith(
-                      color: AppColors.twilightDarker,
-                      fontSize: 24,
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.jurnalGradientTop,
+              AppColors.jurnalGradientBottom,
+            ],
+          ),
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.only(top: 24, bottom: 8),
+                  child: Center(
+                    child: Text(
+                      'Chat',
+                      style: AppTextStyles.heading1.copyWith(
+                        color: AppColors.twilightDarker,
+                        fontSize: 24,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Center(
-                child: Text(
-                  'Pilih cara cerita yang paling nyaman buat kamu.',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.twilightNormal,
+                Center(
+                  child: Text(
+                    'Pilih cara cerita yang paling nyaman buat kamu.',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.twilightNormal,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Chips visual
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildStaticChip('SupportBuddy', false),
-                  const SizedBox(width: 8),
-                  _buildStaticChip('Rooms', false),
-                  const SizedBox(width: 8),
-                  _buildStaticChip('Chat Anon', true),
-                ],
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 16),
+                // Chips visual
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildStaticChip('SupportBuddy', false),
+                    const SizedBox(width: 8),
+                    _buildStaticChip('Rooms', false),
+                    const SizedBox(width: 8),
+                    _buildStaticChip('Chat Anon', true),
+                  ],
+                ),
+                const SizedBox(height: 8),
 
-              // Content: Switch between Searching & Timeout
-              Expanded(
-                child: _isTimeout ? _buildTimeoutState() : _buildSearchingState(),
-              ),
-            ],
+                // Content: Switch between Searching & Timeout
+                Expanded(
+                  child: _isTimeout ? _buildTimeoutState() : _buildSearchingState(),
+                ),
+              ],
+            ),
           ),
         ),
       ),

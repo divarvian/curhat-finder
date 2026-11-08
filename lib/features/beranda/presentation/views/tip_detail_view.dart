@@ -8,6 +8,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_pill.dart';
 import '../../domain/tip_model.dart';
 import '../providers/tips_interaction_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class TipDetailStep {
   final String title;
@@ -273,16 +274,23 @@ class _TipDetailViewState extends ConsumerState<TipDetailView> with SingleTicker
             ),
           ];
 
+    final isCounselor = ref.watch(authProvider).role == 'konselor';
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFB0BFE2),
-              Color(0xFFF4F8FB),
-            ],
+            colors: isCounselor
+                ? const [
+                    AppColors.counselorChatGradientTop,
+                    AppColors.counselorChatGradientBottom,
+                  ]
+                : const [
+                    Color(0xFFB0BFE2),
+                    Color(0xFFF4F8FB),
+                  ],
           ),
         ),
         child: SafeArea(

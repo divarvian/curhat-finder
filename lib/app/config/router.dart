@@ -167,10 +167,12 @@ class ChatRoomRoute extends GoRouteData with $ChatRoomRoute {
     this.counselorName = 'Konselor',
     this.isOnline = false,
     this.sessionId = '',
+    this.counselorAvatarUrl,
   });
   final String counselorName;
   final bool isOnline;
   final String sessionId;
+  final String? counselorAvatarUrl;
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
@@ -178,6 +180,7 @@ class ChatRoomRoute extends GoRouteData with $ChatRoomRoute {
       counselorName: counselorName,
       isOnline: isOnline,
       sessionId: sessionId,
+      counselorAvatarUrl: counselorAvatarUrl,
     );
   }
 }

@@ -4,13 +4,16 @@ import '../../../core/services/supabase_service.dart';
 import '../domain/room_model.dart';
 
 class RoomService {
-  final SupabaseClient _supabase;
+  final SupabaseClient? _supabase;
 
   RoomService({SupabaseClient? client})
-      : _supabase = client ?? SupabaseService.client;
+      : _supabase = client ?? SupabaseService.maybeClient;
+
+  SupabaseClient get _client => _supabase ?? SupabaseService.client;
 
   /// Stream feed ruang curhat (rooms) dari Supabase Realtime dengan limit
   Stream<List<RoomModel>> streamRooms({String? category, int limit = 20}) {
+    if (_supabase == null) return const Stream.empty();
     return _supabase
         .from('rooms')
         .stream(primaryKey: ['id'])
@@ -33,7 +36,7 @@ class RoomService {
   /// Ambil data single room berdasarkan ID
   Future<RoomModel?> getRoom(String roomId) async {
     try {
-      final res = await _supabase.from('rooms').select().eq('id', roomId).single();
+      final res = await _client.from('rooms').select().eq('id', roomId).single();
       return RoomModel.fromJson(res);
     } catch (_) {
       return null;
@@ -50,7 +53,7 @@ class RoomService {
     String? authorGender,
     String? authorTag,
   }) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = _client.auth.currentUser?.id;
 
     final name = authorName ?? (authorTag != null ? (authorTag.contains(' • ') ? authorTag.split(' • ').first : authorTag) : 'Anonim');
     final faculty = authorFaculty ?? (authorTag != null && authorTag.contains(' • ') ? authorTag.split(' • ').last : 'FILKOM');
@@ -71,17 +74,17 @@ class RoomService {
       payload['user_id'] = userId;
     }
 
-    final response = await _supabase.from('rooms').insert(payload).select().single();
+    final response = await _client.from('rooms').insert(payload).select().single();
     return RoomModel.fromJson(response);
   }
 
   /// Menghapus postingan room curhat milik pengguna aktif
   Future<bool> deleteRoom(String roomId) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = _client.auth.currentUser?.id;
     if (userId == null) return false;
 
     try {
-      await _supabase.from('rooms').delete().eq('id', roomId).eq('user_id', userId);
+      await _client.from('rooms').delete().eq('id', roomId).eq('user_id', userId);
       return true;
     } catch (_) {
       rethrow;
@@ -90,11 +93,11 @@ class RoomService {
 
   /// Mengambil set ID room yang disukai pengguna saat ini
   Future<Set<String>> fetchUserRoomLikes() async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = _client.auth.currentUser?.id;
     if (userId == null) return {};
 
     try {
-      final rows = await _supabase.from('room_likes').select('room_id').eq('user_id', userId);
+      final rows = await _client.from('room_likes').select('room_id').eq('user_id', userId);
       return (rows as List).map((r) => r['room_id'].toString()).toSet();
     } catch (_) {
       return {};
@@ -103,11 +106,11 @@ class RoomService {
 
   /// Mengambil set ID room yang disimpan/bookmark oleh pengguna saat ini
   Future<Set<String>> fetchUserRoomBookmarks() async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = _client.auth.currentUser?.id;
     if (userId == null) return {};
 
     try {
-      final rows = await _supabase.from('room_bookmarks').select('room_id').eq('user_id', userId);
+      final rows = await _client.from('room_bookmarks').select('room_id').eq('user_id', userId);
       return (rows as List).map((r) => r['room_id'].toString()).toSet();
     } catch (_) {
       return {};
@@ -116,11 +119,11 @@ class RoomService {
 
   /// Toggle suka / tidak suka pada sebuah room curhat
   Future<bool> toggleLikeRoom(String roomId) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = _client.auth.currentUser?.id;
     if (userId == null) return false;
 
     try {
-      final existing = await _supabase
+      final existing = await _client
           .from('room_likes')
           .select()
           .eq('user_id', userId)
@@ -128,10 +131,10 @@ class RoomService {
           .maybeSingle();
 
       if (existing != null) {
-        await _supabase.from('room_likes').delete().eq('user_id', userId).eq('room_id', roomId);
+        await _client.from('room_likes').delete().eq('user_id', userId).eq('room_id', roomId);
         return false;
       } else {
-        await _supabase.from('room_likes').insert({
+        await _client.from('room_likes').insert({
           'user_id': userId,
           'room_id': roomId,
         });
@@ -144,11 +147,11 @@ class RoomService {
 
   /// Toggle simpan / bookmark pada sebuah room curhat
   Future<bool> toggleBookmarkRoom(String roomId) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = _client.auth.currentUser?.id;
     if (userId == null) return false;
 
     try {
-      final existing = await _supabase
+      final existing = await _client
           .from('room_bookmarks')
           .select()
           .eq('user_id', userId)
@@ -156,10 +159,10 @@ class RoomService {
           .maybeSingle();
 
       if (existing != null) {
-        await _supabase.from('room_bookmarks').delete().eq('user_id', userId).eq('room_id', roomId);
+        await _client.from('room_bookmarks').delete().eq('user_id', userId).eq('room_id', roomId);
         return false;
       } else {
-        await _supabase.from('room_bookmarks').insert({
+        await _client.from('room_bookmarks').insert({
           'user_id': userId,
           'room_id': roomId,
         });
@@ -170,30 +173,32 @@ class RoomService {
     }
   }
 
-  /// Stream komentar realtime untuk sebuah room
+  /// Stream komentar realtime untuk sebuah room (diurutkan terbaru paling atas)
   Stream<List<RoomCommentModel>> streamComments(String roomId) {
+    if (_supabase == null) return const Stream.empty();
     return _supabase
         .from('room_comments')
         .stream(primaryKey: ['id'])
         .eq('room_id', roomId)
-        .order('created_at', ascending: true)
+        .order('created_at', ascending: false)
         .map((rows) {
           final list = rows.map((r) => RoomCommentModel.fromJson(r)).toList();
-          list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return list;
         });
   }
 
   /// Mengirim komentar baru ke dalam room
-  Future<void> addComment({
+  Future<RoomCommentModel?> addComment({
     required String roomId,
     required String content,
     String? authorName,
     String? authorFaculty,
     String? authorRole,
     String? authorTag,
+    String? authorAvatarUrl,
   }) async {
-    final userId = _supabase.auth.currentUser?.id;
+    final userId = _client.auth.currentUser?.id;
 
     final name = authorName ?? (authorTag != null ? (authorTag.contains(' • ') ? authorTag.split(' • ').first : authorTag) : 'Teman Kampus');
     final faculty = authorFaculty ?? (authorTag != null && authorTag.contains(' • ') ? authorTag.split(' • ').last : 'FILKOM');
@@ -207,11 +212,42 @@ class RoomService {
       'author_role': role,
       'likes_count': 0,
     };
+    if (authorAvatarUrl != null && authorAvatarUrl.isNotEmpty) {
+      payload['author_avatar_url'] = authorAvatarUrl;
+    }
     if (userId != null) {
       payload['user_id'] = userId;
     }
 
-    await _supabase.from('room_comments').insert(payload);
+    try {
+      final res = await _client.from('room_comments').insert(payload).select().single();
+      return RoomCommentModel.fromJson(res);
+    } catch (e) {
+      if (payload.containsKey('author_avatar_url')) {
+        payload.remove('author_avatar_url');
+        final res = await _client.from('room_comments').insert(payload).select().single();
+        return RoomCommentModel.fromJson(res);
+      }
+      rethrow;
+    }
+  }
+
+  /// Menghapus komentar milik pengguna aktif
+  Future<bool> deleteComment(String commentId) async {
+    if (commentId.startsWith('temp_')) return true;
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return false;
+
+    try {
+      await _client
+          .from('room_comments')
+          .delete()
+          .eq('id', commentId)
+          .eq('user_id', userId);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }
 

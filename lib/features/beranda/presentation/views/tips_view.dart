@@ -11,6 +11,7 @@ import '../../domain/tip_model.dart';
 import '../providers/tips_interaction_provider.dart';
 import '../widgets/dialogs/create_tip_sheet.dart';
 import '../widgets/interactive_tip_card.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class TipsView extends ConsumerStatefulWidget {
   const TipsView({super.key});
@@ -48,12 +49,29 @@ class _TipsViewState extends ConsumerState<TipsView> {
   @override
   Widget build(BuildContext context) {
     final currentCategory = _filters[_selectedFilterIndex];
+    final isCounselor = ref.watch(authProvider).role == 'konselor';
 
     return Scaffold(
-      backgroundColor: AppColors.platinum,
-      body: SafeArea(
-        bottom: false,
-        child: CustomScrollView(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isCounselor
+                ? const [
+                    AppColors.counselorChatGradientTop,
+                    AppColors.counselorChatGradientBottom,
+                  ]
+                : const [
+                    AppColors.jurnalGradientTop,
+                    AppColors.jurnalGradientBottom,
+                  ],
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: CustomScrollView(
           slivers: [
             // App Bar Header (Back button, Title, Subtitle)
             SliverToBoxAdapter(
@@ -263,6 +281,7 @@ class _TipsViewState extends ConsumerState<TipsView> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
