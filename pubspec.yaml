@@ -71,6 +71,10 @@ icons_launcher:
       enable: true
     ios:
       enable: true
+    web:
+      enable: true
+      image_path: "assets/icons/icon_launcher.png"
+      favicon_path: "assets/icons/icon_launcher.png"
 
 flutter_native_splash:
   color: "#F4F8FB" # Warna background splash screen (Platinum)
@@ -78,6 +82,7 @@ flutter_native_splash:
   image: "assets/images/logo.png" # Menggunakan logo.png
   android: true # Aktifkan di Android
   ios: true # Aktifkan di iOS
+  web: true # Aktifkan di Web
   android_12:
     color: "#F4F8FB"
     color_dark: "#F4F8FB"
