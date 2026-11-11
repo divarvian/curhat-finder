@@ -3,12 +3,22 @@
     "short_name": "Curhat Finder",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F4F8FB",
+    "theme_color": "#303969",
+    "description": "Platform Konseling & Sambat Mahasiswa Universitas Brawijaya",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
+        {
+            "src": "favicon.ico",
+            "sizes": "16x16 32x32 48x48 64x64",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "favicon.png",
+            "sizes": "48x48",
+            "type": "image/png"
+        },
         {
             "src": "icons/Icon-192.png",
             "sizes": "192x192",
