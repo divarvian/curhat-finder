@@ -226,7 +226,7 @@ Mahasiswa memiliki akses ke Ruang Curhat (Campus Rooms) dengan opsi identitas an
 
 ## 🧪 Pengujian & Kualitas Kode
 
-Aplikasi ini mengadopsi arsitektur pengujian modular (*Feature-First Modular Testing*) dengan **155 unit & widget tests** (100% kelulusan):
+Aplikasi ini mengadopsi arsitektur pengujian modular (*Feature-First Modular Testing*) dengan **174 unit & widget tests** (100% kelulusan):
 
 ```bash
 # Jalankan analisis statis kode (Harus 0 issues)
@@ -237,8 +237,8 @@ flutter test
 ```
 
 Cakupan pengujian mencakup:
-- **Core & Theme**: Skala warna, radius, tipografi disleksia, avatar URL fallback, error translator, dan komponen skeleton shimmer.
-- **Autentikasi & Registrasi**: Registrasi multi-step horizontal wrap pill, pencegahan keyboard overflow, verifikasi role, approval gate konselor, dan sesi login/logout.
+- **Core & Theme**: Skala warna, radius, tipografi disleksia, avatar URL fallback, validasi domain email UB (`UbEmailValidator`), error translator, dan komponen skeleton shimmer.
+- **Autentikasi & Registrasi**: Validasi ketat domain resmi UB (`*.ub.ac.id`, `student.ub.ac.id`, `demo.ub.ac.id`), penolakan domain publik (`gmail.com`, `yahoo.com`), formatting otomatis NIM/username mahasiswa, registrasi multi-step horizontal wrap pill, pencegahan keyboard overflow, verifikasi role, approval gate konselor, dan sesi login/logout.
 - **Beranda & Tips**: Model tips, provider interaksi optimistik, kartu tips, dan halaman detail "Isi Tips".
 - **Ruang Curhat (Rooms) & Komentar**: Postingan curhat, komentar terurut terbaru paling atas (newest-first), komentar konselor terverifikasi, avatar asli pengguna, provider likes/bookmarks optimistik, dialog hapus konten milik sendiri.
 - **Konseling & Chat**: Deduplikasi pesan 3-layer, unsend pesan (toleransi 30 menit), rating konseling, dan sesi chat konselor dengan latar pink gradient.

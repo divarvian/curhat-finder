@@ -5,6 +5,7 @@ import 'package:curhat_finder/features/auth/data/auth_repository.dart';
 import 'package:curhat_finder/core/services/notification_service.dart';
 import 'package:curhat_finder/core/services/supabase_service.dart';
 import 'package:curhat_finder/core/utils/app_error_translator.dart';
+import 'package:curhat_finder/core/utils/ub_email_validator.dart';
 import 'package:curhat_finder/features/counselor/presentation/providers/counselor_provider.dart';
 import 'package:curhat_finder/features/profile/presentation/providers/profile_provider.dart';
 import 'auth_state.dart';
@@ -92,10 +93,23 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<bool> checkUserExists(String email) => _authRepository.checkUserExists(email);
+  Future<bool> checkUserExists(String email) {
+    if (!UbEmailValidator.isUbEmail(email)) {
+      return Future.value(false);
+    }
+    return _authRepository.checkUserExists(email);
+  }
 
   Future<bool> login(String email, String password) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
+
+    if (!UbEmailValidator.isUbEmail(email)) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: UbEmailValidator.invalidDomainMessage,
+      );
+      return false;
+    }
 
     try {
       final response = await _authRepository.login(email, password);
@@ -154,6 +168,14 @@ class AuthNotifier extends Notifier<AuthState> {
     List<String>? topics,
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
+
+    if (!UbEmailValidator.isUbEmail(email)) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: UbEmailValidator.invalidDomainMessage,
+      );
+      return false;
+    }
 
     try {
       final response = await _authRepository.register(

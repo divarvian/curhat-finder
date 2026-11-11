@@ -16,6 +16,7 @@ import '../widgets/register_steps/register_steps_academic.dart';
 import '../widgets/register_steps/register_steps_final.dart';
 import '../widgets/register_steps/register_step_template.dart';
 import '../../../../core/utils/academic_helper.dart';
+import '../../../../core/utils/ub_email_validator.dart';
 
 class RegisterView extends ConsumerStatefulWidget {
   final bool isKonselor;
@@ -64,6 +65,16 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
 
     final email = registerCtrl.inputEmail.isNotEmpty ? registerCtrl.inputEmail : fallbackEmail;
     final password = registerCtrl.inputPassword.isNotEmpty ? registerCtrl.inputPassword : 'password123';
+
+    if (!UbEmailValidator.isUbEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(UbEmailValidator.invalidDomainMessage),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
 
     // Tampilkan loading dialog
     showDialog(

@@ -9,6 +9,7 @@ import '../../../counselor/presentation/providers/counselor_provider.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/ub_email_validator.dart';
 
 class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
@@ -43,7 +44,17 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
     final rawInput = _emailController.text.trim();
     final password = _passwordController.text;
-    final formattedEmail = rawInput.contains('@') ? rawInput : '$rawInput@student.ub.ac.id';
+    final formattedEmail = UbEmailValidator.formatLoginEmail(rawInput);
+
+    if (!UbEmailValidator.isUbEmail(formattedEmail)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(UbEmailValidator.invalidDomainMessage),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
 
     // 1. Cek apakah akun sudah terdaftar di Supabase
     final exists = await ref.read(authProvider.notifier).checkUserExists(formattedEmail);
@@ -242,12 +253,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Email/Username wajib diisi';
-                              }
-                              return null;
-                            },
+                            validator: UbEmailValidator.validateLoginInput,
                           ),
                           const SizedBox(height: 24),
 
