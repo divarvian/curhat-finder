@@ -61,6 +61,16 @@ class _LoginViewState extends ConsumerState<LoginView> {
     if (!mounted) return;
 
     if (!exists) {
+      if (!UbEmailValidator.isUbEmail(formattedEmail)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(UbEmailValidator.invalidDomainMessage),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+
       // Simpan kredensial ke registerController agar digunakan saat registrasi
       ref.read(registerControllerProvider.notifier).setCredentials(
         email: formattedEmail,
@@ -123,6 +133,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
     TextInputType keyboardType = TextInputType.text,
     TextInputAction textInputAction = TextInputAction.next,
     String? Function(String?)? validator,
+    AutovalidateMode autovalidateMode = AutovalidateMode.onUserInteraction,
     Widget? suffixIcon,
   }) {
     return Container(
@@ -145,6 +156,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
         obscureText: obscureText,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
+        autovalidateMode: autovalidateMode,
         style: AppTextStyles.bodyLarge.copyWith(color: AppColors.twilightDarker),
         decoration: InputDecoration(
           hintText: hintText,
